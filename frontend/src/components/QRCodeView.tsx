@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import {QRCode} from 'react-qr-code';
+import QRCode from 'react-qr-code';
 import { Shield, AlertTriangle, Clock } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { ghostPassApi } from '../lib/api';
