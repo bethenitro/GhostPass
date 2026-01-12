@@ -50,10 +50,14 @@ SCHEMA_SQL = """
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- User roles enum
+CREATE TYPE user_role AS ENUM ('USER', 'VENDOR', 'ADMIN');
+
 -- Users table (Supabase Auth handles this, but we can extend)
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email TEXT UNIQUE NOT NULL,
+    role user_role NOT NULL DEFAULT 'USER',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -104,12 +108,51 @@ CREATE TABLE IF NOT EXISTS fee_configs (
     CHECK (valid_pct + vendor_pct + pool_pct + promoter_pct = 100)
 );
 
+-- Admin audit logs table
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    admin_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    action TEXT NOT NULL,
+    resource_type TEXT NOT NULL,
+    resource_id TEXT,
+    old_value JSONB,
+    new_value JSONB,
+    timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    metadata JSONB DEFAULT '{}'::jsonb
+);
+
+-- Global system configurations
+CREATE TABLE IF NOT EXISTS system_configs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    config_key TEXT NOT NULL UNIQUE,
+    config_value JSONB NOT NULL,
+    updated_by UUID REFERENCES users(id),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Vendor payout requests
+CREATE TABLE IF NOT EXISTS payout_requests (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    vendor_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    amount_cents INTEGER NOT NULL CHECK (amount_cents > 0),
+    status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED', 'PROCESSED')),
+    requested_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    processed_at TIMESTAMP WITH TIME ZONE,
+    processed_by UUID REFERENCES users(id),
+    notes TEXT,
+    metadata JSONB DEFAULT '{}'::jsonb
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_wallets_user_id ON wallets(user_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_wallet_id ON transactions(wallet_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_timestamp ON transactions(timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_ghost_passes_user_id ON ghost_passes(user_id);
 CREATE INDEX IF NOT EXISTS idx_ghost_passes_expires_at ON ghost_passes(expires_at);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_admin_user_id ON audit_logs(admin_user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_payout_requests_vendor_user_id ON payout_requests(vendor_user_id);
+CREATE INDEX IF NOT EXISTS idx_payout_requests_status ON payout_requests(status);
 
 -- Atomic wallet funding function
 CREATE OR REPLACE FUNCTION fund_wallet(
@@ -202,6 +245,16 @@ BEGIN
     RETURN v_updated_count;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Function to get total balance across all wallets
+CREATE OR REPLACE FUNCTION get_total_balance() RETURNS INTEGER AS $
+DECLARE
+    v_total_balance INTEGER;
+BEGIN
+    SELECT COALESCE(SUM(balance_cents), 0) INTO v_total_balance FROM wallets;
+    RETURN v_total_balance;
+END;
+$ LANGUAGE plpgsql;
 
 -- Trigger to automatically update wallet timestamp
 CREATE OR REPLACE FUNCTION update_wallet_timestamp()

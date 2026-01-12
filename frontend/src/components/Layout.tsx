@@ -1,14 +1,25 @@
 import React from 'react';
 import { Wallet, Scan, Shield, History } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import AdminModeToggle from './AdminModeToggle';
 
 interface LayoutProps {
   children: React.ReactNode;
   activeTab: 'wallet' | 'scan' | 'trust' | 'history';
   onTabChange: (tab: 'wallet' | 'scan' | 'trust' | 'history') => void;
+  userRole?: string;
+  isAdminMode?: boolean;
+  onAdminModeToggle?: () => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange }) => {
+const Layout: React.FC<LayoutProps> = ({ 
+  children, 
+  activeTab, 
+  onTabChange, 
+  userRole = 'USER',
+  isAdminMode = false,
+  onAdminModeToggle = () => {}
+}) => {
   const tabs = [
     { id: 'wallet' as const, icon: Wallet, label: 'Wallet' },
     { id: 'scan' as const, icon: Scan, label: 'Scan' },
@@ -49,6 +60,17 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange }) => 
             </button>
           ))}
         </div>
+        
+        {/* Mobile Admin Toggle */}
+        {userRole === 'ADMIN' && (
+          <div className="border-t border-slate-700 p-3">
+            <AdminModeToggle
+              isAdminMode={isAdminMode}
+              onToggle={onAdminModeToggle}
+              userRole={userRole}
+            />
+          </div>
+        )}
       </nav>
 
       {/* Desktop Sidebar Navigation */}
@@ -94,7 +116,14 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange }) => 
         </div>
 
         {/* Footer */}
-        <div className="p-4 lg:p-6 border-t border-slate-700">
+        <div className="p-4 lg:p-6 border-t border-slate-700 space-y-3">
+          {/* Admin Mode Toggle */}
+          <AdminModeToggle
+            isAdminMode={isAdminMode}
+            onToggle={onAdminModeToggle}
+            userRole={userRole}
+          />
+          
           <div className="hidden lg:block text-xs text-slate-500 text-center">
             <p>Secure • Encrypted • Private</p>
           </div>

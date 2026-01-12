@@ -7,6 +7,7 @@ import WalletDashboard from './components/WalletDashboard';
 import QRCodeView from './components/QRCodeView';
 import TrustCenter from './components/TrustCenter';
 import TransactionHistory from './components/TransactionHistory';
+import CommandCenter from './components/CommandCenter';
 import { ghostPassApi } from './lib/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -23,6 +24,8 @@ const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<'wallet' | 'scan' | 'trust' | 'history'>('wallet');
   const [purchasingDuration, setPurchasingDuration] = useState<number | null>(null);
+  const [isAdminMode, setIsAdminMode] = useState(false);
+  const [isCommandCenterOpen, setIsCommandCenterOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const purchaseMutation = useMutation({
@@ -59,6 +62,20 @@ const AppContent: React.FC = () => {
     purchaseMutation.mutate(duration);
   };
 
+  const handleAdminModeToggle = () => {
+    setIsAdminMode(!isAdminMode);
+    if (!isAdminMode) {
+      setIsCommandCenterOpen(true);
+    } else {
+      setIsCommandCenterOpen(false);
+    }
+  };
+
+  const handleCommandCenterClose = () => {
+    setIsCommandCenterOpen(false);
+    setIsAdminMode(false);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
@@ -90,9 +107,22 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <Layout activeTab={activeTab} onTabChange={setActiveTab}>
-      {renderActiveTab()}
-    </Layout>
+    <>
+      <Layout 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab}
+        userRole={user.role}
+        isAdminMode={isAdminMode}
+        onAdminModeToggle={handleAdminModeToggle}
+      >
+        {renderActiveTab()}
+      </Layout>
+      
+      <CommandCenter
+        isOpen={isCommandCenterOpen}
+        onClose={handleCommandCenterClose}
+      />
+    </>
   );
 };
 

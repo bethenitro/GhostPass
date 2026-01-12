@@ -4,6 +4,7 @@ import { authApi } from '../lib/api';
 interface User {
   id: string;
   email: string;
+  role: 'USER' | 'VENDOR' | 'ADMIN';
   created_at?: string;
 }
 

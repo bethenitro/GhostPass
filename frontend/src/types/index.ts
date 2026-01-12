@@ -1,6 +1,7 @@
 export interface User {
   id: string;
   email: string;
+  role: 'USER' | 'VENDOR' | 'ADMIN';
   created_at?: string;
 }
 
@@ -48,4 +49,109 @@ export interface ApiResponse<T> {
   data: T;
   message?: string;
   error?: string;
+}
+// Admin Types
+export interface AdminUser {
+  id: string;
+  email: string;
+  role: 'USER' | 'VENDOR' | 'ADMIN';
+  created_at: string;
+}
+
+export interface FeeConfig {
+  id: string;
+  venue_id: string;
+  valid_pct: number;
+  vendor_pct: number;
+  pool_pct: number;
+  promoter_pct: number;
+}
+
+export interface FeeConfigUpdate {
+  venue_id?: string;
+  valid_pct: number;
+  vendor_pct: number;
+  pool_pct: number;
+  promoter_pct: number;
+}
+
+export interface ScanFeeUpdate {
+  venue_id: string;
+  fee_cents: number;
+}
+
+export interface GhostPassPricingUpdate {
+  one_day_cents: number;
+  three_day_cents: number;
+  seven_day_cents: number;
+}
+
+export interface PayoutRequest {
+  id: string;
+  vendor_user_id: string;
+  vendor_email: string;
+  amount_cents: number;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'PROCESSED';
+  requested_at: string;
+  processed_at?: string;
+  processed_by?: string;
+  notes?: string;
+}
+
+export interface PayoutAction {
+  action: 'approve' | 'reject' | 'process';
+  notes?: string;
+}
+
+export interface RetentionOverride {
+  retention_days: number;
+  justification: string;
+}
+
+export interface AuditLog {
+  id: string;
+  admin_user_id: string;
+  admin_email: string;
+  action: string;
+  resource_type: string;
+  resource_id?: string;
+  old_value?: Record<string, any>;
+  new_value?: Record<string, any>;
+  timestamp: string;
+  metadata?: Record<string, any>;
+}
+
+export interface SystemStats {
+  total_users: number;
+  total_wallets: number;
+  total_balance_cents: number;
+  active_passes: number;
+  expired_passes: number;
+  pending_payouts: number;
+  total_transactions: number;
+  revenue_today_cents: number;
+  revenue_week_cents: number;
+  revenue_month_cents: number;
+}
+
+export interface AdminDashboard {
+  stats: SystemStats;
+  recent_transactions: Transaction[];
+  pending_payouts: PayoutRequest[];
+  recent_audit_logs: AuditLog[];
+  current_fee_config?: {
+    valid_pct: number;
+    vendor_pct: number;
+    pool_pct: number;
+    promoter_pct: number;
+  };
+  current_scan_fees?: Record<string, number>;
+  current_pricing?: {
+    "1": number;
+    "3": number;
+    "7": number;
+  };
+  current_retention?: {
+    retention_days: number;
+  };
 }

@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from supabase import Client
 from database import get_db
+from models import UserRole, AdminUser
 from pydantic import BaseModel
 from typing import Optional
 import logging
@@ -32,6 +33,7 @@ class AuthResponse(BaseModel):
 class UserResponse(BaseModel):
     id: str
     email: str
+    role: UserRole
     created_at: Optional[str] = None
 
 # JWT Secret from environment
@@ -50,17 +52,35 @@ def get_current_user(
         if not user_response.user:
             raise HTTPException(status_code=401, detail="Invalid token")
         
-        # Ensure user exists in our users table
+        # Ensure user exists in our users table and get role
         user = user_response.user
-        db.table("users").upsert({
+        user_data = db.table("users").upsert({
             "id": user.id,
             "email": user.email
         }, on_conflict="id").execute()
+        
+        # Get user with role from database
+        user_record = db.table("users").select("*").eq("id", user.id).execute()
+        if user_record.data:
+            user.role = user_record.data[0].get("role", "USER")
+        else:
+            user.role = "USER"
         
         return user
     except Exception as e:
         logger.error(f"Auth error: {e}")
         raise HTTPException(status_code=401, detail="Authentication failed")
+
+def get_admin_user(
+    user=Depends(get_current_user)
+):
+    """Require admin role for access"""
+    if not hasattr(user, 'role') or user.role != UserRole.ADMIN.value:
+        raise HTTPException(
+            status_code=403, 
+            detail="Admin access required"
+        )
+    return user
 
 @router.post("/login", response_model=AuthResponse)
 async def login(
@@ -90,11 +110,16 @@ async def login(
             "email": user.email
         }, on_conflict="id").execute()
         
+        # Get user role from database
+        user_record = db.table("users").select("role").eq("id", user.id).execute()
+        user_role = user_record.data[0].get("role", "USER") if user_record.data else "USER"
+        
         return AuthResponse(
             access_token=session.access_token,
             user={
                 "id": user.id,
                 "email": user.email,
+                "role": user_role,
                 "created_at": user.created_at.isoformat() if user.created_at else None
             }
         )
@@ -180,14 +205,20 @@ async def logout(
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(
-    user=Depends(get_current_user)
+    user=Depends(get_current_user),
+    db: Client = Depends(get_db)
 ):
     """
     Get current user information - PROXY PATTERN
     """
+    # Get user role from database
+    user_record = db.table("users").select("role").eq("id", user.id).execute()
+    user_role = user_record.data[0].get("role", "USER") if user_record.data else "USER"
+    
     return UserResponse(
         id=user.id,
         email=user.email,
+        role=UserRole(user_role),
         created_at=user.created_at.isoformat() if user.created_at else None
     )
 
