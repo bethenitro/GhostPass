@@ -77,7 +77,7 @@ const AppContent: React.FC = () => {
   const renderActiveTab = () => {
     switch (activeTab) {
       case 'wallet':
-        return <WalletDashboard onPurchase={handlePurchase} isPurchasing={purchaseMutation.isPending} purchasingDuration={purchasingDuration} />;
+        return <WalletDashboard onPurchase={handlePurchase} isPurchasing={purchaseMutation.isPending} purchasingDuration={purchasingDuration ?? undefined} />;
       case 'scan':
         return <QRCodeView />;
       case 'trust':
@@ -85,7 +85,7 @@ const AppContent: React.FC = () => {
       case 'history':
         return <TransactionHistory />;
       default:
-        return <WalletDashboard onPurchase={handlePurchase} isPurchasing={purchaseMutation.isPending} purchasingDuration={purchasingDuration} />;
+        return <WalletDashboard onPurchase={handlePurchase} isPurchasing={purchaseMutation.isPending} purchasingDuration={purchasingDuration ?? undefined} />;
     }
   };
 

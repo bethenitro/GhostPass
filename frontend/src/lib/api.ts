@@ -3,8 +3,7 @@ import type {
   WalletBalance, 
   Transaction, 
   GhostPass, 
-  FundingSource, 
-  ApiResponse 
+  FundingSource
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -51,7 +50,9 @@ export const authApi = {
     });
     
     authToken = data.access_token;
-    localStorage.setItem('auth_token', authToken);
+    if (authToken) {
+      localStorage.setItem('auth_token', authToken);
+    }
     
     return data;
   },
@@ -63,7 +64,9 @@ export const authApi = {
     });
     
     authToken = data.access_token;
-    localStorage.setItem('auth_token', authToken);
+    if (authToken) {
+      localStorage.setItem('auth_token', authToken);
+    }
     
     return data;
   },
