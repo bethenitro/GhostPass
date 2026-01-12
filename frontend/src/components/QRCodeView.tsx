@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import QRCode from 'react-qr-code';
+import QRCodeLib from 'react-qr-code';
 import { Shield, AlertTriangle, Clock } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { ghostPassApi } from '../lib/api';
 import { cn } from '@/lib/utils';
+
+const QRCode = (QRCodeLib as any).default || QRCodeLib;
 
 const QRCodeView: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -171,16 +173,20 @@ const QRCodeView: React.FC = () => {
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.5 }}
-                  className="relative"
+                  className="relative flex items-center justify-center"
                   style={{ filter: 'drop-shadow(0 0 10px rgba(6,182,212,0.5))' }}
                 >
                   <QRCode
                     value={ghostPass.qr_code || `ghostpass:${ghostPass.id}`}
-                    size={128} // Smaller base size for mobile
-                    className="w-32 h-32 sm:w-40 sm:h-40" // Responsive sizing
+                    size={128}
                     fgColor="#06b6d4"
                     bgColor="transparent"
                     level="M"
+                    style={{
+                      height: "auto",
+                      maxWidth: "100%",
+                      width: "100%",
+                    }}
                   />
                 </motion.div>
               )}
