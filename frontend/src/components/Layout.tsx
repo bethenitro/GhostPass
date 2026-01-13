@@ -33,6 +33,18 @@ const Layout: React.FC<LayoutProps> = ({
       <nav className="md:hidden fixed top-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-b border-slate-700 z-50">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center space-x-3">
+            {/* Mobile Admin Toggle - Left of GHOSTPASS */}
+            {userRole === 'ADMIN' && (
+              <div className="mr-2 relative">
+                <AdminModeToggle
+                  isAdminMode={isAdminMode}
+                  onToggle={onAdminModeToggle}
+                  userRole={userRole}
+                  compact={true}
+                />
+              </div>
+            )}
+            
             <div className="w-8 h-8 bg-cyan-500/20 rounded-lg flex items-center justify-center border border-cyan-500/50">
               <div className="w-4 h-4 bg-cyan-400 rounded-sm"></div>
             </div>
@@ -60,17 +72,6 @@ const Layout: React.FC<LayoutProps> = ({
             </button>
           ))}
         </div>
-        
-        {/* Mobile Admin Toggle */}
-        {userRole === 'ADMIN' && (
-          <div className="border-t border-slate-700 p-3">
-            <AdminModeToggle
-              isAdminMode={isAdminMode}
-              onToggle={onAdminModeToggle}
-              userRole={userRole}
-            />
-          </div>
-        )}
       </nav>
 
       {/* Desktop Sidebar Navigation */}
