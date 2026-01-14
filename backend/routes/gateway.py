@@ -23,7 +23,8 @@ async def get_gateway_points(
         # For now, using a default venue_id
         venue_id = "venue_001"
         
-        query = db.table("gateway_points").select("*").eq("venue_id", venue_id)
+        # Explicitly select all fields including linked_area_id
+        query = db.table("gateway_points").select("id, venue_id, name, number, accepts_ghostpass, status, type, linked_area_id, created_at, updated_at, created_by").eq("venue_id", venue_id)
         
         if type:
             query = query.eq("type", type.upper())
@@ -74,6 +75,29 @@ async def create_gateway_point(
         
         # Always include accepts_ghostpass (defaults to True in model)
         new_point["accepts_ghostpass"] = point.accepts_ghostpass
+        
+        # Handle linked_area_id for TABLE_SEAT type
+        if point.type == GatewayType.TABLE_SEAT:
+            if not point.linked_area_id:
+                raise HTTPException(
+                    status_code=400,
+                    detail="linked_area_id is required for TABLE_SEAT type"
+                )
+            
+            # Verify the linked area exists and is an INTERNAL_AREA
+            linked_area = db.table("gateway_points").select("id, type").eq("id", str(point.linked_area_id)).execute()
+            if not linked_area.data:
+                raise HTTPException(status_code=400, detail="Linked area not found")
+            
+            if linked_area.data[0]["type"] != "INTERNAL_AREA":
+                raise HTTPException(
+                    status_code=400,
+                    detail="linked_area_id must reference an INTERNAL_AREA"
+                )
+            
+            new_point["linked_area_id"] = str(point.linked_area_id)
+        elif point.linked_area_id:
+            new_point["linked_area_id"] = str(point.linked_area_id)
 
         
         result = db.table("gateway_points").insert(new_point).execute()
@@ -139,6 +163,20 @@ async def update_gateway_point(
         
         if point.accepts_ghostpass is not None:
             update_data["accepts_ghostpass"] = point.accepts_ghostpass
+        
+        if point.linked_area_id is not None:
+            # Verify the linked area exists and is an INTERNAL_AREA
+            linked_area = db.table("gateway_points").select("id, type").eq("id", str(point.linked_area_id)).execute()
+            if not linked_area.data:
+                raise HTTPException(status_code=400, detail="Linked area not found")
+            
+            if linked_area.data[0]["type"] != "INTERNAL_AREA":
+                raise HTTPException(
+                    status_code=400,
+                    detail="linked_area_id must reference an INTERNAL_AREA"
+                )
+            
+            update_data["linked_area_id"] = str(point.linked_area_id)
         
         if not update_data:
             return old_point

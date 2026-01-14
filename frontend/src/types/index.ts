@@ -201,3 +201,15 @@ export interface InternalArea {
   created_at: string;
   updated_at: string;
 }
+
+export interface TableSeat {
+  id: string;
+  venue_id: string;
+  name: string;
+  number?: number;
+  linked_area_id: string;
+  status: GatewayStatus;
+  type: 'TABLE_SEAT';
+  created_at: string;
+  updated_at: string;
+}

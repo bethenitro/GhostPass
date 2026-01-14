@@ -240,6 +240,7 @@ class GatewayPoint(BaseModel):
     accepts_ghostpass: bool = True
     status: GatewayStatus
     type: GatewayType
+    linked_area_id: Optional[UUID] = None  # For TABLE_SEAT: references INTERNAL_AREA
     created_at: datetime
     updated_at: datetime
     created_by: Optional[UUID] = None
@@ -250,9 +251,11 @@ class GatewayPointCreate(BaseModel):
     accepts_ghostpass: bool = True
     status: GatewayStatus = GatewayStatus.ENABLED
     type: GatewayType
+    linked_area_id: Optional[UUID] = None  # Required for TABLE_SEAT type
 
 class GatewayPointUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     number: Optional[int] = Field(None, ge=0)
     accepts_ghostpass: Optional[bool] = None
     status: Optional[GatewayStatus] = None
+    linked_area_id: Optional[UUID] = None

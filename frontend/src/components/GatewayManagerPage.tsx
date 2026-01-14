@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, Building2, Utensils, Plus, Edit2, Trash2, Power, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { gatewayApi } from '@/lib/api';
-import type { EntryPoint, InternalArea, GatewayStatus } from '@/types';
+import type { EntryPoint, InternalArea, TableSeat, GatewayStatus } from '@/types';
 
 interface GatewayManagerPageProps {
     onBack: () => void;
@@ -19,6 +19,13 @@ interface InternalAreaFormData {
     name: string;
     number: string;
     accepts_ghostpass: boolean;
+    status: GatewayStatus;
+}
+
+interface TableSeatFormData {
+    name: string;
+    number: string;
+    linked_area_id: string;
     status: GatewayStatus;
 }
 
@@ -55,6 +62,22 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
     const [areaFormError, setAreaFormError] = useState<string>('');
     const [savingArea, setSavingArea] = useState(false);
 
+    // Tables & Seats State
+    const [tableSeats, setTableSeats] = useState<TableSeat[]>([]);
+    const [loadingTables, setLoadingTables] = useState(false);
+    const [tableError, setTableError] = useState<string>('');
+    const [showTableModal, setShowTableModal] = useState(false);
+    const [editingTable, setEditingTable] = useState<TableSeat | null>(null);
+    const [tableForm, setTableForm] = useState<TableSeatFormData>({
+        name: '',
+        number: '',
+        linked_area_id: '',
+        status: 'ENABLED'
+    });
+    const [deleteTableConfirmId, setDeleteTableConfirmId] = useState<string | null>(null);
+    const [tableFormError, setTableFormError] = useState<string>('');
+    const [savingTable, setSavingTable] = useState(false);
+
     // Load entry points from backend
     const loadEntryPoints = async () => {
         try {
@@ -85,11 +108,36 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
         }
     };
 
+    // Load tables & seats from backend
+    const loadTableSeats = async () => {
+        try {
+            setLoadingTables(true);
+            setTableError('');
+            const data = await gatewayApi.getTableSeats();
+            console.log('Loaded tables from API:', data);
+            if (data.length > 0) {
+                console.log('First table object:', JSON.stringify(data[0], null, 2));
+            }
+            data.forEach((table: any) => {
+                console.log(`Table "${table.name}": linked_area_id = ${table.linked_area_id}`);
+            });
+            setTableSeats(data);
+        } catch (err: any) {
+            console.error('Error loading tables & seats:', err);
+            setTableError(err.response?.data?.detail || 'Failed to load tables & seats');
+        } finally {
+            setLoadingTables(false);
+        }
+    };
+
     useEffect(() => {
         if (activeTab === 'entry-points') {
             loadEntryPoints();
         } else if (activeTab === 'internal-areas') {
             loadInternalAreas();
+        } else if (activeTab === 'tables-seats') {
+            loadInternalAreas(); // Load areas for dropdown
+            loadTableSeats();
         }
     }, [activeTab]);
 
@@ -247,6 +295,99 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
             console.error('Error toggling status:', err);
             setAreaError(err.response?.data?.detail || 'Failed to update status');
         }
+    };
+
+    // Tables & Seats CRUD Operations
+    const handleOpenAddTableModal = () => {
+        if (internalAreas.length === 0) {
+            setTableError('Please create an Internal Area first before adding tables');
+            return;
+        }
+        setEditingTable(null);
+        setTableForm({ name: '', number: '', linked_area_id: '', status: 'ENABLED' });
+        setTableFormError('');
+        setShowTableModal(true);
+    };
+
+    const handleOpenEditTableModal = (table: TableSeat) => {
+        setEditingTable(table);
+        setTableForm({
+            name: table.name,
+            number: table.number?.toString() || '',
+            linked_area_id: table.linked_area_id,
+            status: table.status
+        });
+        setTableFormError('');
+        setShowTableModal(true);
+    };
+
+    const handleSaveTable = async () => {
+        if (!tableForm.name.trim()) {
+            setTableFormError('Table/Seat name is required');
+            return;
+        }
+
+        if (!tableForm.linked_area_id) {
+            setTableFormError('Please select a linked area');
+            return;
+        }
+
+        try {
+            setSavingTable(true);
+            setTableFormError('');
+
+            const tableData = {
+                name: tableForm.name,
+                number: tableForm.number ? parseInt(tableForm.number) : undefined,
+                linked_area_id: tableForm.linked_area_id,
+                status: tableForm.status
+            };
+
+            if (editingTable) {
+                const updated = await gatewayApi.updateTableSeat(editingTable.id, tableData);
+                setTableSeats(prev => prev.map(t => t.id === updated.id ? updated : t));
+            } else {
+                const newTable = await gatewayApi.createTableSeat(tableData);
+                setTableSeats(prev => [newTable, ...prev]);
+            }
+
+            setShowTableModal(false);
+            setTableForm({ name: '', number: '', linked_area_id: '', status: 'ENABLED' });
+        } catch (err: any) {
+            console.error('Error saving table/seat:', err);
+            setTableFormError(err.response?.data?.detail || 'Failed to save table/seat');
+        } finally {
+            setSavingTable(false);
+        }
+    };
+
+    const handleDeleteTable = async (id: string) => {
+        try {
+            await gatewayApi.deleteTableSeat(id);
+            setTableSeats(prev => prev.filter(t => t.id !== id));
+            setDeleteTableConfirmId(null);
+        } catch (err: any) {
+            console.error('Error deleting table/seat:', err);
+            setTableError(err.response?.data?.detail || 'Failed to delete table/seat');
+        }
+    };
+
+    const handleToggleTableStatus = async (table: TableSeat) => {
+        const newStatus: GatewayStatus = table.status === 'ENABLED' ? 'DISABLED' : 'ENABLED';
+
+        try {
+            const updated = await gatewayApi.updateTableSeat(table.id, { status: newStatus });
+            setTableSeats(prev => prev.map(t => t.id === updated.id ? updated : t));
+        } catch (err: any) {
+            console.error('Error toggling status:', err);
+            setTableError(err.response?.data?.detail || 'Failed to update status');
+        }
+    };
+
+    // Helper function to get area name by ID
+    const getAreaName = (areaId: string): string => {
+        const area = internalAreas.find(a => a.id === areaId);
+        return area ? area.name : 'Unknown Area';
     };
 
     return (
@@ -698,19 +839,229 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                 )}
 
                 {activeTab === 'tables-seats' && (
-                    <div className="glass-panel border-red-500/20 p-6 md:p-8">
-                        <div className="flex items-center space-x-3 mb-4">
-                            <Utensils className="text-red-400" size={24} />
-                            <h2 className="text-xl md:text-2xl font-bold text-red-400">Tables & Seats</h2>
+                    <div className="space-y-4">
+                        {/* Header with Add Button */}
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
+                            <div className="flex-1 min-w-0">
+                                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-red-400">Tables & Seats</h2>
+                                <p className="text-slate-400 text-xs sm:text-sm mt-1">
+                                    Configure specific tables, booths, or seats within internal areas
+                                </p>
+                            </div>
+                            <button
+                                onClick={handleOpenAddTableModal}
+                                className="px-4 py-2.5 sm:py-2 bg-red-500/20 border border-red-500 text-red-400 rounded-lg font-medium hover:bg-red-500/30 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-300 flex items-center justify-center space-x-2 touch-manipulation min-h-[44px] active:scale-95"
+                            >
+                                <Plus size={18} />
+                                <span className="text-sm sm:text-base">ADD TABLE/SEAT</span>
+                            </button>
                         </div>
-                        <p className="text-slate-400 text-sm sm:text-base">
-                            Manage table assignments and seating areas for GhostPass validation.
-                        </p>
-                        <div className="mt-6 p-4 bg-slate-800/50 border border-slate-700 rounded-lg">
-                            <p className="text-slate-500 text-center italic text-sm">
-                                Table and seat management coming soon...
-                            </p>
-                        </div>
+
+                        {/* Error Message */}
+                        {tableError && (
+                            <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-3 sm:p-4 flex items-start space-x-2">
+                                <span className="text-red-400 text-sm flex-1">{tableError}</span>
+                                <button
+                                    onClick={() => setTableError('')}
+                                    className="text-red-400 hover:text-red-300 touch-manipulation"
+                                >
+                                    <ArrowLeft size={16} />
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Loading State */}
+                        {loadingTables && (
+                            <div className="flex items-center justify-center py-12">
+                                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-red-400"></div>
+                            </div>
+                        )}
+
+                        {/* No Internal Areas Warning */}
+                        {!loadingTables && internalAreas.length === 0 && (
+                            <div className="glass-panel border-amber-500/20 p-8 sm:p-12 text-center">
+                                <Building2 className="mx-auto text-amber-600 mb-4" size={48} />
+                                <p className="text-amber-400 text-base sm:text-lg mb-2">Create an Internal Area first</p>
+                                <p className="text-slate-500 text-xs sm:text-sm mb-6">
+                                    Tables and seats must be linked to an internal area. Please create at least one internal area before adding tables.
+                                </p>
+                                <button
+                                    onClick={() => setActiveTab('internal-areas')}
+                                    className="px-6 py-3 bg-amber-500/20 border border-amber-500 text-amber-400 rounded-lg font-medium hover:bg-amber-500/30 hover:shadow-lg hover:shadow-amber-500/20 transition-all duration-300 inline-flex items-center space-x-2 touch-manipulation min-h-[44px] active:scale-95"
+                                >
+                                    <Building2 size={18} />
+                                    <span>GO TO INTERNAL AREAS</span>
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Tables & Seats List */}
+                        {!loadingTables && internalAreas.length > 0 && tableSeats.length > 0 && (
+                            <>
+                                {/* Desktop Table */}
+                                <div className="hidden md:block glass-panel border-red-500/20 overflow-hidden">
+                                    <table className="w-full">
+                                        <thead>
+                                            <tr className="border-b border-red-500/20 bg-slate-800/50">
+                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Name</th>
+                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Number</th>
+                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Linked Area</th>
+                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Status</th>
+                                                <th className="text-right py-3 px-4 text-slate-300 font-semibold text-sm">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {tableSeats.map((table) => (
+                                                <tr
+                                                    key={table.id}
+                                                    className={cn(
+                                                        "border-b border-slate-800 hover:bg-red-500/5 transition-colors",
+                                                        table.status === 'DISABLED' && "opacity-50"
+                                                    )}
+                                                >
+                                                    <td className="py-3 px-4">
+                                                        <div className="flex items-center space-x-2">
+                                                            <Utensils size={16} className="text-red-400 flex-shrink-0" />
+                                                            <span className={cn(
+                                                                "font-medium text-sm",
+                                                                table.status === 'ENABLED' ? "text-white" : "text-slate-500"
+                                                            )}>{table.name}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-3 px-4">
+                                                        <span className="text-slate-300 text-sm">
+                                                            {table.number || '—'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-3 px-4">
+                                                        <div className="flex items-center space-x-2">
+                                                            <Building2 size={14} className="text-blue-400 flex-shrink-0" />
+                                                            <span className="text-slate-300 text-sm">
+                                                                {getAreaName(table.linked_area_id)}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-3 px-4">
+                                                        <button
+                                                            onClick={() => handleToggleTableStatus(table)}
+                                                            className={cn(
+                                                                "px-3 py-1 rounded-full text-xs font-medium flex items-center space-x-1 transition-all touch-manipulation",
+                                                                table.status === 'ENABLED'
+                                                                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 hover:bg-emerald-500/30"
+                                                                    : "bg-slate-700 text-slate-400 border border-slate-600 hover:bg-slate-600"
+                                                            )}
+                                                        >
+                                                            <Power size={12} />
+                                                            <span>{table.status}</span>
+                                                        </button>
+                                                    </td>
+                                                    <td className="py-3 px-4">
+                                                        <div className="flex items-center justify-end space-x-2">
+                                                            <button
+                                                                onClick={() => handleOpenEditTableModal(table)}
+                                                                className="p-2 text-blue-400 hover:bg-blue-500/10 rounded transition-colors touch-manipulation"
+                                                                title="Edit"
+                                                            >
+                                                                <Edit2 size={16} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => setDeleteTableConfirmId(table.id)}
+                                                                className="p-2 text-red-400 hover:bg-red-500/10 rounded transition-colors touch-manipulation"
+                                                                title="Delete"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Mobile Card View */}
+                                <div className="md:hidden space-y-3">
+                                    {tableSeats.map((table) => (
+                                        <div
+                                            key={table.id}
+                                            className={cn(
+                                                "glass-panel border-red-500/20 p-4",
+                                                table.status === 'DISABLED' && "opacity-50"
+                                            )}
+                                        >
+                                            <div className="flex items-start justify-between mb-3 gap-2">
+                                                <div className="flex items-center space-x-2 flex-1 min-w-0">
+                                                    <Utensils size={16} className="text-red-400 flex-shrink-0" />
+                                                    <div className="flex-1 min-w-0">
+                                                        <span className={cn(
+                                                            "font-medium text-sm break-words block",
+                                                            table.status === 'ENABLED' ? "text-white" : "text-slate-500"
+                                                        )}>{table.name}</span>
+                                                        {table.number && (
+                                                            <span className="text-slate-400 text-xs">#{table.number}</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleToggleTableStatus(table)}
+                                                    className={cn(
+                                                        "px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 transition-all flex-shrink-0 touch-manipulation min-h-[32px]",
+                                                        table.status === 'ENABLED'
+                                                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 active:bg-emerald-500/40"
+                                                            : "bg-slate-700 text-slate-400 border border-slate-600 active:bg-slate-600"
+                                                    )}
+                                                >
+                                                    <Power size={10} />
+                                                    <span>{table.status}</span>
+                                                </button>
+                                            </div>
+
+                                            <div className="mb-3 flex items-center gap-2 text-xs">
+                                                <Building2 size={14} className="text-blue-400" />
+                                                <span className="text-slate-400">
+                                                    Linked to: <span className="text-blue-400">{getAreaName(table.linked_area_id)}</span>
+                                                </span>
+                                            </div>
+
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => handleOpenEditTableModal(table)}
+                                                    className="flex-1 px-3 py-2.5 bg-blue-500/20 border border-blue-500 text-blue-400 rounded text-sm hover:bg-blue-500/30 active:bg-blue-500/40 transition-colors flex items-center justify-center space-x-1 touch-manipulation min-h-[44px]"
+                                                >
+                                                    <Edit2 size={14} />
+                                                    <span>Edit</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => setDeleteTableConfirmId(table.id)}
+                                                    className="flex-1 px-3 py-2.5 bg-red-500/20 border border-red-500 text-red-400 rounded text-sm hover:bg-red-500/30 active:bg-red-500/40 transition-colors flex items-center justify-center space-x-1 touch-manipulation min-h-[44px]"
+                                                >
+                                                    <Trash2 size={14} />
+                                                    <span>Delete</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+
+                        {/* Empty State */}
+                        {!loadingTables && internalAreas.length > 0 && tableSeats.length === 0 && (
+                            <div className="glass-panel border-red-500/20 p-8 sm:p-12 text-center">
+                                <Utensils className="mx-auto text-slate-600 mb-4" size={48} />
+                                <p className="text-slate-400 text-base sm:text-lg mb-2">No tables or seats configured</p>
+                                <p className="text-slate-500 text-xs sm:text-sm mb-6">
+                                    Add your first table or seat to start managing specific locations
+                                </p>
+                                <button
+                                    onClick={handleOpenAddTableModal}
+                                    className="px-6 py-3 bg-red-500/20 border border-red-500 text-red-400 rounded-lg font-medium hover:bg-red-500/30 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-300 inline-flex items-center space-x-2 touch-manipulation min-h-[44px] active:scale-95"
+                                >
+                                    <Plus size={18} />
+                                    <span>ADD TABLE/SEAT</span>
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
@@ -1020,6 +1371,173 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                                 </button>
                                 <button
                                     onClick={() => handleDeleteArea(deleteAreaConfirmId)}
+                                    className="flex-1 px-4 py-3 bg-red-500/20 border border-red-500 text-red-400 rounded-lg font-medium hover:bg-red-500/30 hover:shadow-lg hover:shadow-red-500/20 active:bg-red-500/40 transition-all duration-300 touch-manipulation min-h-[44px]"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Add/Edit Table/Seat Modal */}
+            {showTableModal && (
+                <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4">
+                    <div
+                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        onClick={() => !savingTable && setShowTableModal(false)}
+                    />
+                    <div className="relative bg-slate-900 border-t sm:border border-red-500/30 sm:rounded-xl shadow-2xl shadow-red-500/20 w-full sm:max-w-md max-h-[90vh] overflow-y-auto">
+                        <div className="p-4 sm:p-6">
+                            <h3 className="text-lg sm:text-xl font-bold text-red-400 mb-4">
+                                {editingTable ? 'Edit Table/Seat' : 'Add Table/Seat'}
+                            </h3>
+
+                            {tableFormError && (
+                                <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-3 mb-4">
+                                    <p className="text-red-400 text-sm">{tableFormError}</p>
+                                </div>
+                            )}
+
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                                        Table/Seat Name *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={tableForm.name}
+                                        onChange={(e) => setTableForm(prev => ({ ...prev, name: e.target.value }))}
+                                        placeholder="e.g., Table 12, Booth A, Section 204"
+                                        className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-base"
+                                        autoFocus
+                                        disabled={savingTable}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                                        Number (Optional)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={tableForm.number}
+                                        onChange={(e) => setTableForm(prev => ({ ...prev, number: e.target.value }))}
+                                        placeholder="e.g., 12, 204"
+                                        className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-base"
+                                        disabled={savingTable}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                                        Linked Area *
+                                    </label>
+                                    <select
+                                        value={tableForm.linked_area_id}
+                                        onChange={(e) => setTableForm(prev => ({ ...prev, linked_area_id: e.target.value }))}
+                                        className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-base"
+                                        disabled={savingTable}
+                                    >
+                                        <option value="">Select an area...</option>
+                                        {internalAreas.filter(a => a.status === 'ENABLED').map((area) => (
+                                            <option key={area.id} value={area.id}>
+                                                {area.name} {area.number ? `#${area.number}` : ''}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <p className="text-slate-500 text-xs mt-1">
+                                        Select which internal area this table/seat belongs to
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                                        Status
+                                    </label>
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={() => setTableForm(prev => ({ ...prev, status: 'ENABLED' }))}
+                                            disabled={savingTable}
+                                            className={cn(
+                                                "flex-1 px-4 py-3 rounded-lg font-medium transition-all flex items-center justify-center space-x-2 touch-manipulation min-h-[44px]",
+                                                tableForm.status === 'ENABLED'
+                                                    ? "bg-emerald-500/20 border-2 border-emerald-500 text-emerald-400"
+                                                    : "bg-slate-800 border-2 border-slate-600 text-slate-400 active:bg-slate-700"
+                                            )}
+                                        >
+                                            <Power size={16} />
+                                            <span>ACTIVE</span>
+                                        </button>
+                                        <button
+                                            onClick={() => setTableForm(prev => ({ ...prev, status: 'DISABLED' }))}
+                                            disabled={savingTable}
+                                            className={cn(
+                                                "flex-1 px-4 py-3 rounded-lg font-medium transition-all flex items-center justify-center space-x-2 touch-manipulation min-h-[44px]",
+                                                tableForm.status === 'DISABLED'
+                                                    ? "bg-slate-700 border-2 border-slate-500 text-slate-300"
+                                                    : "bg-slate-800 border-2 border-slate-600 text-slate-400 active:bg-slate-700"
+                                            )}
+                                        >
+                                            <Power size={16} />
+                                            <span>INACTIVE</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 mt-6">
+                                <button
+                                    onClick={() => setShowTableModal(false)}
+                                    disabled={savingTable}
+                                    className="flex-1 px-4 py-3 bg-slate-700 border border-slate-600 text-slate-300 rounded-lg font-medium hover:bg-slate-600 active:bg-slate-600 transition-colors touch-manipulation min-h-[44px] disabled:opacity-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleSaveTable}
+                                    disabled={savingTable}
+                                    className="flex-1 px-4 py-3 bg-red-500/20 border border-red-500 text-red-400 rounded-lg font-medium hover:bg-red-500/30 hover:shadow-lg hover:shadow-red-500/20 active:bg-red-500/40 transition-all duration-300 touch-manipulation min-h-[44px] disabled:opacity-50 flex items-center justify-center space-x-2"
+                                >
+                                    {savingTable && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-400"></div>}
+                                    <span>{savingTable ? 'Saving...' : (editingTable ? 'Save Changes' : 'Add Table/Seat')}</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Table/Seat Confirmation Modal */}
+            {deleteTableConfirmId && (
+                <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4">
+                    <div
+                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        onClick={() => setDeleteTableConfirmId(null)}
+                    />
+                    <div className="relative bg-slate-900 border-t sm:border border-red-500/30 sm:rounded-xl shadow-2xl shadow-red-500/20 w-full sm:max-w-md">
+                        <div className="p-4 sm:p-6">
+                            <div className="flex items-center space-x-3 mb-4">
+                                <div className="p-3 bg-red-500/20 rounded-full">
+                                    <Trash2 className="text-red-400" size={24} />
+                                </div>
+                                <h3 className="text-lg sm:text-xl font-bold text-red-400">Delete Table/Seat</h3>
+                            </div>
+
+                            <p className="text-slate-300 mb-6 text-sm sm:text-base">
+                                Are you sure you want to delete this table/seat? <strong className="text-red-400">This cannot be undone.</strong>
+                            </p>
+
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setDeleteTableConfirmId(null)}
+                                    className="flex-1 px-4 py-3 bg-slate-700 border border-slate-600 text-slate-300 rounded-lg font-medium hover:bg-slate-600 active:bg-slate-600 transition-colors touch-manipulation min-h-[44px]"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => handleDeleteTable(deleteTableConfirmId)}
                                     className="flex-1 px-4 py-3 bg-red-500/20 border border-red-500 text-red-400 rounded-lg font-medium hover:bg-red-500/30 hover:shadow-lg hover:shadow-red-500/20 active:bg-red-500/40 transition-all duration-300 touch-manipulation min-h-[44px]"
                                 >
                                     Delete

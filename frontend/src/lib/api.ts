@@ -311,5 +311,39 @@ export const gatewayApi = {
   deleteInternalArea: async (id: string) => {
     const { data } = await api.delete(`/gateway/points/${id}`);
     return data;
+  },
+
+  // Tables & Seats
+  getTableSeats: async () => {
+    const { data } = await api.get('/gateway/points?type=TABLE_SEAT');
+    return data;
+  },
+
+  createTableSeat: async (tableSeat: {
+    name: string;
+    number?: number;
+    linked_area_id: string;
+    status: 'ENABLED' | 'DISABLED'
+  }) => {
+    const { data } = await api.post('/gateway/points', {
+      ...tableSeat,
+      type: 'TABLE_SEAT'
+    });
+    return data;
+  },
+
+  updateTableSeat: async (id: string, updates: {
+    name?: string;
+    number?: number;
+    linked_area_id?: string;
+    status?: 'ENABLED' | 'DISABLED'
+  }) => {
+    const { data } = await api.put(`/gateway/points/${id}`, updates);
+    return data;
+  },
+
+  deleteTableSeat: async (id: string) => {
+    const { data } = await api.delete(`/gateway/points/${id}`);
+    return data;
   }
 };
