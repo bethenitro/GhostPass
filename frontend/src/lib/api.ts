@@ -1,8 +1,8 @@
 import axios from 'axios';
-import type { 
-  WalletBalance, 
-  Transaction, 
-  GhostPass, 
+import type {
+  WalletBalance,
+  Transaction,
+  GhostPass,
   Session,
   SessionStatusResponse,
   FundingSource,
@@ -59,12 +59,12 @@ export const authApi = {
       email,
       password,
     });
-    
+
     authToken = data.access_token;
     if (authToken) {
       localStorage.setItem('auth_token', authToken);
     }
-    
+
     return data;
   },
 
@@ -73,12 +73,12 @@ export const authApi = {
       email,
       password,
     });
-    
+
     authToken = data.access_token;
     if (authToken) {
       localStorage.setItem('auth_token', authToken);
     }
-    
+
     return data;
   },
 
@@ -95,7 +95,7 @@ export const authApi = {
 
   getCurrentUser: async () => {
     if (!authToken) return null;
-    
+
     try {
       const { data } = await api.get('/auth/me');
       return data;
@@ -105,7 +105,7 @@ export const authApi = {
   },
 
   getToken: () => authToken,
-  
+
   setToken: (token: string) => {
     authToken = token;
     localStorage.setItem('auth_token', token);
@@ -251,6 +251,65 @@ export const adminApi = {
 
   updateUserRole: async (userId: string, role: 'USER' | 'VENDOR' | 'ADMIN') => {
     const { data } = await api.post(`/admin/users/${userId}/role`, { role });
+    return data;
+  }
+};
+// Gateway API - ENTRY POINTS, INTERNAL AREAS, TABLES & SEATS
+export const gatewayApi = {
+  getEntryPoints: async () => {
+    const { data } = await api.get('/gateway/points?type=ENTRY_POINT');
+    return data;
+  },
+
+  createEntryPoint: async (entryPoint: { name: string; status: 'ENABLED' | 'DISABLED' }) => {
+    const { data } = await api.post('/gateway/points', {
+      ...entryPoint,
+      type: 'ENTRY_POINT'
+    });
+    return data;
+  },
+
+  updateEntryPoint: async (id: string, updates: { name?: string; status?: 'ENABLED' | 'DISABLED' }) => {
+    const { data } = await api.put(`/gateway/points/${id}`, updates);
+    return data;
+  },
+
+  deleteEntryPoint: async (id: string) => {
+    const { data } = await api.delete(`/gateway/points/${id}`);
+    return data;
+  },
+
+  // Internal Areas
+  getInternalAreas: async () => {
+    const { data } = await api.get('/gateway/points?type=INTERNAL_AREA');
+    return data;
+  },
+
+  createInternalArea: async (area: {
+    name: string;
+    number?: number;
+    accepts_ghostpass: boolean;
+    status: 'ENABLED' | 'DISABLED'
+  }) => {
+    const { data } = await api.post('/gateway/points', {
+      ...area,
+      type: 'INTERNAL_AREA'
+    });
+    return data;
+  },
+
+  updateInternalArea: async (id: string, updates: {
+    name?: string;
+    number?: number;
+    accepts_ghostpass?: boolean;
+    status?: 'ENABLED' | 'DISABLED'
+  }) => {
+    const { data } = await api.put(`/gateway/points/${id}`, updates);
+    return data;
+  },
+
+  deleteInternalArea: async (id: string) => {
+    const { data } = await api.delete(`/gateway/points/${id}`);
     return data;
   }
 };

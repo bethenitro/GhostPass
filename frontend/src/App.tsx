@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './components/AuthProvider';
 import LoginScreen from './components/LoginScreen';
@@ -8,6 +8,7 @@ import QRCodeView from './components/QRCodeView';
 import TrustCenter from './components/TrustCenter';
 import TransactionHistory from './components/TransactionHistory';
 import CommandCenter from './components/CommandCenter';
+import GatewayManagerPage from './components/GatewayManagerPage';
 import { ghostPassApi } from './lib/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -28,6 +29,20 @@ const AppContent: React.FC = () => {
   const [isCommandCenterOpen, setIsCommandCenterOpen] = useState(false);
   const queryClient = useQueryClient();
 
+  // Check if we're on the gateway-manager route
+  const [currentRoute, setCurrentRoute] = useState(window.location.hash);
+
+  // Listen for hash changes
+  useEffect(() => {
+    const handleHashChange = () => {
+      setCurrentRoute(window.location.hash);
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const isGatewayManagerRoute = currentRoute === '#/gateway-manager';
+
   const purchaseMutation = useMutation({
     mutationFn: (duration: number) => ghostPassApi.purchase(duration),
     onMutate: (duration: number) => {
@@ -38,13 +53,13 @@ const AppContent: React.FC = () => {
       await queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
       await queryClient.invalidateQueries({ queryKey: ['ghostpass-status'] });
       await queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      
+
       // Small delay to ensure backend processing is complete
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Force refetch of ghostpass status to ensure fresh data
       await queryClient.refetchQueries({ queryKey: ['ghostpass-status'] });
-      
+
       // Switch to QR code view after successful purchase
       setActiveTab('scan');
       setPurchasingDuration(null);
@@ -74,6 +89,16 @@ const AppContent: React.FC = () => {
   const handleCommandCenterClose = () => {
     setIsCommandCenterOpen(false);
     setIsAdminMode(false);
+  };
+
+  const handleNavigateToGatewayManager = () => {
+    // Change URL to gateway-manager route in same tab
+    window.location.hash = '#/gateway-manager';
+  };
+
+  const handleBackToMain = () => {
+    // Navigate back to main app
+    window.location.hash = '#/';
   };
 
   if (loading) {
@@ -106,10 +131,15 @@ const AppContent: React.FC = () => {
     }
   };
 
+  // Show Gateway Manager page if on gateway-manager route
+  if (isGatewayManagerRoute) {
+    return <GatewayManagerPage onBack={handleBackToMain} />;
+  }
+
   return (
     <>
-      <Layout 
-        activeTab={activeTab} 
+      <Layout
+        activeTab={activeTab}
         onTabChange={setActiveTab}
         userRole={user.role}
         isAdminMode={isAdminMode}
@@ -117,10 +147,11 @@ const AppContent: React.FC = () => {
       >
         {renderActiveTab()}
       </Layout>
-      
+
       <CommandCenter
         isOpen={isCommandCenterOpen}
         onClose={handleCommandCenterClose}
+        onNavigateToGatewayManager={handleNavigateToGatewayManager}
       />
     </>
   );

@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { X, AlertTriangle, Shield, DollarSign, Users, Database, FileText, ChevronDown, ChevronRight } from 'lucide-react';
+import { X, AlertTriangle, Shield, DollarSign, Users, Database, FileText, ChevronDown, ChevronRight, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { adminApi } from '@/lib/api';
 import AdminSetupCheck from './AdminSetupCheck';
-import type { 
-  AdminDashboard, 
-  FeeConfigUpdate, 
-  ScanFeeUpdate, 
+import type {
+  AdminDashboard,
+  FeeConfigUpdate,
+  ScanFeeUpdate,
   GhostPassPricingUpdate,
   PayoutAction,
   RetentionOverride
@@ -15,6 +15,7 @@ import type {
 interface CommandCenterProps {
   isOpen: boolean;
   onClose: () => void;
+  onNavigateToGatewayManager: () => void;
 }
 
 interface CollapsibleSectionProps {
@@ -57,7 +58,7 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
   );
 };
 
-const CommandCenter: React.FC<CommandCenterProps> = ({ isOpen, onClose }) => {
+const CommandCenter: React.FC<CommandCenterProps> = ({ isOpen, onClose, onNavigateToGatewayManager }) => {
   const [dashboard, setDashboard] = useState<AdminDashboard | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -99,7 +100,7 @@ const CommandCenter: React.FC<CommandCenterProps> = ({ isOpen, onClose }) => {
       const data = await adminApi.getDashboard();
       console.log('Dashboard data received:', data);
       setDashboard(data);
-      
+
       // Update form states with current values from backend
       if (data.current_fee_config) {
         console.log('Loading fee config from backend:', data.current_fee_config);
@@ -110,7 +111,7 @@ const CommandCenter: React.FC<CommandCenterProps> = ({ isOpen, onClose }) => {
           promoter_pct: parseFloat(String(data.current_fee_config.promoter_pct)) || 10
         });
       }
-      
+
       if (data.current_pricing) {
         console.log('Loading pricing from backend:', data.current_pricing);
         setPricing({
@@ -119,7 +120,7 @@ const CommandCenter: React.FC<CommandCenterProps> = ({ isOpen, onClose }) => {
           seven_day_cents: parseInt(String(data.current_pricing["7"])) || 5000
         });
       }
-      
+
       if (data.current_retention) {
         console.log('Loading retention from backend:', data.current_retention);
         setRetention(prev => ({
@@ -127,11 +128,11 @@ const CommandCenter: React.FC<CommandCenterProps> = ({ isOpen, onClose }) => {
           retention_days: parseInt(String(data.current_retention?.retention_days)) || 60
         }));
       }
-      
+
     } catch (err: any) {
       const errorMessage = err.response?.data?.detail || 'Failed to load dashboard';
       setError(errorMessage);
-      
+
       // If it's a setup issue, show the setup check
       if (errorMessage.includes('Admin tables not found') || errorMessage.includes('setup')) {
         setShowSetupCheck(true);
@@ -287,11 +288,11 @@ const CommandCenter: React.FC<CommandCenterProps> = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 flex">
       {/* Backdrop */}
-      <div 
+      <div
         className="absolute inset-0 bg-black/80 backdrop-blur-sm"
         onClick={onClose}
       />
-      
+
       {/* Command Center Panel - Mobile Responsive */}
       <div className="relative w-full h-full md:w-full md:max-w-6xl md:mx-auto md:my-4 md:h-auto bg-slate-900/95 backdrop-blur-xl border-0 md:border border-red-500/30 md:rounded-xl shadow-2xl shadow-red-500/20 overflow-hidden">
         {/* Header - Mobile Optimized */}
@@ -471,7 +472,7 @@ const CommandCenter: React.FC<CommandCenterProps> = ({ isOpen, onClose }) => {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="bg-slate-800/50 rounded-lg p-3 md:p-4">
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-sm text-slate-300">Live Preview (on $100 scan):</p>
@@ -794,6 +795,26 @@ const CommandCenter: React.FC<CommandCenterProps> = ({ isOpen, onClose }) => {
                 </div>
               </CollapsibleSection>
 
+              {/* Gateway Manager */}
+              <CollapsibleSection
+                title="Gateway Manager"
+                icon={<MapPin size={18} />}
+              >
+                <div className="space-y-4 mt-4">
+                  <div className="bg-blue-500/10 border border-blue-500/50 rounded-lg p-3 mb-4">
+                    <p className="text-blue-400 text-sm">ℹ️ Configure entry points, internal areas, and seating zones for GhostPass validation.</p>
+                  </div>
+
+                  <button
+                    onClick={onNavigateToGatewayManager}
+                    className="w-full md:w-auto px-6 py-3 bg-red-500/20 border border-red-500 text-red-400 rounded-lg font-medium hover:bg-red-500/30 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-300 flex items-center justify-center space-x-2"
+                  >
+                    <MapPin size={18} />
+                    <span>OPEN GATEWAY MANAGER</span>
+                  </button>
+                </div>
+              </CollapsibleSection>
+
               {/* Audit Logs */}
               <CollapsibleSection
                 title="System Audit Trail"
@@ -853,6 +874,7 @@ const CommandCenter: React.FC<CommandCenterProps> = ({ isOpen, onClose }) => {
           )}
         </div>
       </div>
+
     </div>
   );
 };

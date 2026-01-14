@@ -175,3 +175,29 @@ export interface AdminDashboard {
     retention_days: number;
   };
 }
+
+// Gateway Management Types
+export type GatewayStatus = 'ENABLED' | 'DISABLED';
+export type GatewayType = 'ENTRY_POINT' | 'INTERNAL_AREA' | 'TABLE_SEAT';
+
+export interface EntryPoint {
+  id: string;
+  venue_id: string;
+  name: string;
+  status: GatewayStatus;
+  type: 'ENTRY_POINT';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InternalArea {
+  id: string;
+  venue_id: string;
+  name: string;
+  number?: number;
+  accepts_ghostpass: boolean;
+  status: GatewayStatus;
+  type: 'INTERNAL_AREA';
+  created_at: string;
+  updated_at: string;
+}

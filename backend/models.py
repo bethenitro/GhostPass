@@ -221,3 +221,38 @@ class AdminDashboard(BaseModel):
     current_scan_fees: Optional[Dict[str, Any]] = None
     current_pricing: Optional[Dict[str, Any]] = None
     current_retention: Optional[Dict[str, Any]] = None
+
+# Gateway Models
+class GatewayStatus(str, Enum):
+    ENABLED = "ENABLED"
+    DISABLED = "DISABLED"
+
+class GatewayType(str, Enum):
+    ENTRY_POINT = "ENTRY_POINT"
+    INTERNAL_AREA = "INTERNAL_AREA"
+    TABLE_SEAT = "TABLE_SEAT"
+
+class GatewayPoint(BaseModel):
+    id: UUID
+    venue_id: str
+    name: str
+    number: Optional[int] = None
+    accepts_ghostpass: bool = True
+    status: GatewayStatus
+    type: GatewayType
+    created_at: datetime
+    updated_at: datetime
+    created_by: Optional[UUID] = None
+
+class GatewayPointCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    number: Optional[int] = Field(None, ge=0)
+    accepts_ghostpass: bool = True
+    status: GatewayStatus = GatewayStatus.ENABLED
+    type: GatewayType
+
+class GatewayPointUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    number: Optional[int] = Field(None, ge=0)
+    accepts_ghostpass: Optional[bool] = None
+    status: Optional[GatewayStatus] = None
