@@ -13,7 +13,9 @@ import type {
   PayoutAction,
   RetentionOverride,
   AuditLog,
-  AdminUser
+  AdminUser,
+  RefundResponse,
+  RefundHistoryItem
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -127,6 +129,24 @@ export const walletApi = {
 
   getTransactions: async (): Promise<Transaction[]> => {
     const { data } = await api.get('/wallet/transactions');
+    return data;
+  },
+
+  getEligibleFundingTransactions: async (): Promise<Transaction[]> => {
+    const { data } = await api.get('/wallet/refund/eligible-transactions');
+    return data;
+  },
+
+  requestRefund: async (amountCents: number, fundingTransactionId: string): Promise<RefundResponse> => {
+    const { data } = await api.post('/wallet/refund/request', {
+      amount_cents: amountCents,
+      funding_transaction_id: fundingTransactionId,
+    });
+    return data;
+  },
+
+  getRefundHistory: async (): Promise<RefundHistoryItem[]> => {
+    const { data } = await api.get('/wallet/refund/history');
     return data;
   },
 };

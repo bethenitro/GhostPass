@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, ArrowUpRight, ArrowDownLeft, X, Calendar, MapPin, Hash, DoorOpen } from 'lucide-react';
+import { Download, ArrowUpRight, ArrowDownLeft, X, Calendar, MapPin, Hash, DoorOpen, ArrowLeftRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { walletApi } from '../lib/api';
 import { type Transaction, type GatewayType } from '../types';
@@ -67,6 +67,8 @@ const TransactionHistory: React.FC = () => {
       case 'SPEND':
       case 'FEE':
         return ArrowUpRight;
+      case 'REFUND':
+        return ArrowLeftRight;
       default:
         return ArrowUpRight;
     }
@@ -79,6 +81,8 @@ const TransactionHistory: React.FC = () => {
       case 'SPEND':
       case 'FEE':
         return 'text-neon-red';
+      case 'REFUND':
+        return 'text-blue-400';
       default:
         return 'text-white';
     }
@@ -97,6 +101,8 @@ const TransactionHistory: React.FC = () => {
         return transaction.metadata?.pass_id ? 'GhostPass Purchase' : 'Purchase';
       case 'FEE':
         return 'Transaction Fee';
+      case 'REFUND':
+        return `Refund to ${transaction.gateway_id || 'Original Source'}`;
       default:
         return transaction.type;
     }
@@ -197,7 +203,7 @@ const TransactionHistory: React.FC = () => {
                   <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
                     <div className="text-right">
                       <p className={`font-mono font-bold text-sm sm:text-base ${colorClass}`}>
-                        {transaction.type === 'FUND' ? '+' : '-'}${Math.abs(transaction.amount_cents / 100).toFixed(2)}
+                        {transaction.type === 'FUND' ? '+' : transaction.type === 'REFUND' ? '' : '-'}${Math.abs(transaction.amount_cents / 100).toFixed(2)}
                       </p>
                       <p className="text-xs text-neon-green">
                         completed
@@ -342,7 +348,7 @@ const TransactionHistory: React.FC = () => {
                     <div className="flex justify-between items-center">
                       <span className="text-white/60 text-sm">Amount:</span>
                       <span className={`font-bold text-base sm:text-lg ${getTransactionColor(selectedTransaction.type)}`}>
-                        {selectedTransaction.type === 'FUND' ? '+' : '-'}${Math.abs(selectedTransaction.amount_cents / 100).toFixed(2)}
+                        {selectedTransaction.type === 'FUND' ? '+' : selectedTransaction.type === 'REFUND' ? '' : '-'}${Math.abs(selectedTransaction.amount_cents / 100).toFixed(2)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">

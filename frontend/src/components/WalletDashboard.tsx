@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, Zap } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { Clock, Zap, ArrowLeftRight } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { walletApi, ghostPassApi } from '../lib/api';
 import type { PassPurchaseOption } from '../types';
 import { cn } from '@/lib/utils';
+import RefundModal from './RefundModal';
 
 interface WalletDashboardProps {
   onPurchase: (duration: number) => void;
@@ -14,6 +15,8 @@ interface WalletDashboardProps {
 
 const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchasing = false, purchasingDuration }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: balance } = useQuery({
     queryKey: ['wallet-balance'],
@@ -91,6 +94,20 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
         >
           ${balance?.balance_dollars?.toFixed(2) || '0.00'}
         </motion.div>
+
+        {/* Refund Button */}
+        {balance && balance.balance_cents > 0 && (
+          <motion.button
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            onClick={() => setShowRefundModal(true)}
+            className="mt-8 mx-auto w-fit flex items-center justify-center gap-2 px-4 py-2 bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600 hover:border-slate-500 rounded-lg text-slate-300 hover:text-white transition-all text-sm font-medium"
+          >
+            <ArrowLeftRight className="w-4 h-4" />
+            Request Refund
+          </motion.button>
+        )}
       </motion.div>
 
       {/* Ghost Pass Status */}
@@ -110,8 +127,8 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
             </div>
             <div className={cn(
               "px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium border",
-              ghostPass?.status === 'ACTIVE' 
-                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+              ghostPass?.status === 'ACTIVE'
+                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                 : 'bg-red-500/10 text-red-400 border-red-500/20'
             )}>
               {ghostPass?.status === 'ACTIVE' ? 'ACTIVE' : 'EXPIRED'}
@@ -174,7 +191,7 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
                   </h3>
                   <p className="text-xs uppercase tracking-widest text-slate-400 font-medium">Full venue access</p>
                 </div>
-                
+
                 <div className="flex items-center space-x-4 sm:flex-col sm:space-x-0 sm:space-y-2 lg:flex-col lg:space-x-0 lg:space-y-2">
                   <div className="text-center">
                     <div className="text-xl sm:text-2xl font-bold text-cyan-400 font-mono">
@@ -184,7 +201,7 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
                       ${(option.price / option.duration).toFixed(2)}/day
                     </div>
                   </div>
-                  
+
                   <motion.button
                     whileTap={{ scale: 0.98 }}
                     disabled={isPurchasing || (balance?.balance_dollars || 0) < option.price}
@@ -193,8 +210,8 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
                       isPurchasing && purchasingDuration === option.duration
                         ? 'bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 opacity-75 cursor-not-allowed'
                         : (balance?.balance_dollars || 0) < option.price
-                        ? 'bg-slate-700/50 border border-slate-600 text-slate-500 cursor-not-allowed'
-                        : 'bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/30'
+                          ? 'bg-slate-700/50 border border-slate-600 text-slate-500 cursor-not-allowed'
+                          : 'bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/30'
                     )}
                   >
                     {isPurchasing && purchasingDuration === option.duration ? (
@@ -218,9 +235,18 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
                 </div>
               </div>
             </motion.div>
-          ))}
-        </div>
+          ))}        </div>
       </div>
+
+      {/* Refund Modal */}
+      <RefundModal
+        isOpen={showRefundModal}
+        onClose={() => setShowRefundModal(false)}
+        currentBalance={balance?.balance_cents || 0}
+        onRefundSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+        }}
+      />
     </div>
   );
 };

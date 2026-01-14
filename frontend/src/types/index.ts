@@ -35,7 +35,7 @@ export interface SessionStatusResponse {
 export interface Transaction {
   id: string;
   wallet_id: string;
-  type: 'FUND' | 'SPEND' | 'FEE';
+  type: 'FUND' | 'SPEND' | 'FEE' | 'REFUND';
   amount_cents: number;
   gateway_id?: string;
   gateway_name?: string;
@@ -46,6 +46,7 @@ export interface Transaction {
   balance_before_cents?: number;
   balance_after_cents?: number;
   vendor_name?: string;
+  refund_status?: RefundStatus;
 }
 
 export interface WalletBalance {
@@ -214,4 +215,33 @@ export interface TableSeat {
   type: 'TABLE_SEAT';
   created_at: string;
   updated_at: string;
+}
+
+// Refund Types
+export type RefundStatus = 'NONE' | 'PARTIAL' | 'FULL';
+
+export interface RefundRequest {
+  amount_cents: number;
+  funding_transaction_id: string;
+}
+
+export interface RefundResponse {
+  status: 'SUCCESS' | 'FAILED';
+  refund_id?: string;
+  original_transaction_id: string;
+  amount_refunded_cents: number;
+  processor_refund_id?: string;
+  message: string;
+  estimated_arrival?: string;
+}
+
+export interface RefundHistoryItem {
+  id: string;
+  original_transaction_id: string;
+  amount_cents: number;
+  refund_status: RefundStatus;
+  refund_reference_id?: string;
+  requested_at: string;
+  completed_at?: string;
+  provider: string;
 }

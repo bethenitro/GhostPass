@@ -39,11 +39,41 @@ class WalletBalance(BaseModel):
     balance_dollars: float
     updated_at: datetime
 
+# Refund Models
+class RefundStatus(str, Enum):
+    NONE = "NONE"
+    PARTIAL = "PARTIAL"
+    FULL = "FULL"
+
+class RefundRequest(BaseModel):
+    amount_cents: int = Field(..., gt=0, description="Amount to refund in cents")
+    funding_transaction_id: UUID = Field(..., description="ID of the original funding transaction to refund from")
+
+class RefundResponse(BaseModel):
+    status: Literal["SUCCESS", "FAILED"]
+    refund_id: Optional[str] = None
+    original_transaction_id: UUID
+    amount_refunded_cents: int
+    processor_refund_id: Optional[str] = None
+    message: str
+    estimated_arrival: Optional[str] = None  # e.g., "3-5 business days"
+
+class RefundHistoryItem(BaseModel):
+    id: UUID
+    original_transaction_id: UUID
+    amount_cents: int
+    refund_status: RefundStatus
+    refund_reference_id: Optional[str] = None
+    requested_at: datetime
+    completed_at: Optional[datetime] = None
+    provider: str  # "stripe", "paypal", "google-pay", etc.
+
 # Transaction Models
 class TransactionType(str, Enum):
     FUND = "FUND"
     SPEND = "SPEND"
     FEE = "FEE"
+    REFUND = "REFUND"
 
 class Transaction(BaseModel):
     id: UUID
@@ -59,6 +89,7 @@ class Transaction(BaseModel):
     venue_id: Optional[str] = None
     timestamp: datetime
     metadata: Optional[Dict[str, Any]] = None
+    refund_status: Optional[RefundStatus] = RefundStatus.NONE
 
 # GhostPass Models
 class PurchaseRequest(BaseModel):
