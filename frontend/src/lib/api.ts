@@ -3,7 +3,6 @@ import type {
   WalletBalance,
   Transaction,
   GhostPass,
-  Session,
   SessionStatusResponse,
   FundingSource,
   AdminDashboard,

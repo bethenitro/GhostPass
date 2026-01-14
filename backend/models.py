@@ -54,6 +54,8 @@ class Transaction(BaseModel):
     balance_after_cents: Optional[int] = None   # Balance after transaction
     vendor_name: Optional[str] = None           # Mandatory for SPEND/FEE transactions
     gateway_id: Optional[str] = None
+    gateway_name: Optional[str] = None          # Human-readable gateway name for receipts
+    gateway_type: Optional[str] = None          # Gateway type: ENTRY_POINT, INTERNAL_AREA, TABLE_SEAT
     venue_id: Optional[str] = None
     timestamp: datetime
     metadata: Optional[Dict[str, Any]] = None
@@ -109,7 +111,7 @@ class SessionStatusResponse(BaseModel):
 # Scan Models
 class ScanRequest(BaseModel):
     pass_id: UUID
-    gateway_id: str
+    gateway_id: str = Field(..., min_length=1, description="Gateway ID where scan is occurring (required)")
     venue_id: str
 
 class ScanResponse(BaseModel):

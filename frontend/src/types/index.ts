@@ -38,6 +38,8 @@ export interface Transaction {
   type: 'FUND' | 'SPEND' | 'FEE';
   amount_cents: number;
   gateway_id?: string;
+  gateway_name?: string;
+  gateway_type?: 'ENTRY_POINT' | 'INTERNAL_AREA' | 'TABLE_SEAT';
   venue_id?: string;
   timestamp: string;
   metadata?: Record<string, any>;

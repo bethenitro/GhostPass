@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, ArrowUpRight, ArrowDownLeft, X, Calendar, MapPin, Hash } from 'lucide-react';
+import { Download, ArrowUpRight, ArrowDownLeft, X, Calendar, MapPin, Hash, DoorOpen } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { walletApi } from '../lib/api';
-import type { Transaction } from '../types';
+import { type Transaction, type GatewayType } from '../types';
 
 const TransactionHistory: React.FC = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
@@ -29,7 +29,7 @@ const TransactionHistory: React.FC = () => {
       };
 
       // Create properly formatted CSV content
-      const csvHeader = 'Date,Time,Type,Description,Amount (USD),Payment Method,Venue ID,Transaction ID\n';
+      const csvHeader = 'Date,Time,Type,Description,Amount (USD),Payment Method,Location,Location Type,Venue ID,Transaction ID\n';
       const csvRows = transactions.map(t => {
         const date = escapeCSV(formatDate(t.timestamp));
         const time = escapeCSV(formatTime(t.timestamp));
@@ -37,12 +37,14 @@ const TransactionHistory: React.FC = () => {
         const description = escapeCSV(getTransactionLabel(t));
         const amount = escapeCSV((t.amount_cents / 100).toFixed(2));
         const gateway = escapeCSV(t.gateway_id);
+        const location = escapeCSV(t.gateway_name);
+        const locationType = escapeCSV(t.gateway_type ? getGatewayTypeLabel(t.gateway_type) : '');
         const venue = escapeCSV(t.venue_id);
         const id = escapeCSV(t.id);
-        
-        return [date, time, type, description, amount, gateway, venue, id].join(',');
+
+        return [date, time, type, description, amount, gateway, location, locationType, venue, id].join(',');
       }).join('\n');
-      
+
       const csvContent = csvHeader + csvRows;
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = window.URL.createObjectURL(blob);
@@ -87,7 +89,7 @@ const TransactionHistory: React.FC = () => {
     if (transaction.vendor_name) {
       return transaction.vendor_name;
     }
-    
+
     switch (transaction.type) {
       case 'FUND':
         return `Wallet Funding${transaction.gateway_id ? ` (${transaction.gateway_id})` : ''}`;
@@ -97,6 +99,20 @@ const TransactionHistory: React.FC = () => {
         return 'Transaction Fee';
       default:
         return transaction.type;
+    }
+  };
+
+  const getGatewayTypeLabel = (type?: GatewayType) => {
+    if (!type) return null;
+    switch (type) {
+      case 'ENTRY_POINT':
+        return 'Entry';
+      case 'INTERNAL_AREA':
+        return 'Area';
+      case 'TABLE_SEAT':
+        return 'Table';
+      default:
+        return null;
     }
   };
 
@@ -284,6 +300,23 @@ const TransactionHistory: React.FC = () => {
                       <div className="min-w-0">
                         <p className="text-white/60 text-xs">Vendor</p>
                         <p className="text-white text-sm">{selectedTransaction.vendor_name}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedTransaction.gateway_name && (
+                    <div className="flex items-center space-x-3">
+                      <DoorOpen size={16} className="text-white/60 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-white/60 text-xs">Location</p>
+                        <div className="flex items-center space-x-2">
+                          <p className="text-white text-sm">{selectedTransaction.gateway_name}</p>
+                          {selectedTransaction.gateway_type && (
+                            <span className="px-2 py-0.5 bg-neon-cyan/20 border border-neon-cyan/40 text-neon-cyan text-xs rounded">
+                              {getGatewayTypeLabel(selectedTransaction.gateway_type)}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   )}

@@ -45,6 +45,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
     const [formError, setFormError] = useState<string>('');
     const [saving, setSaving] = useState(false);
+    const [deletingEntryPoint, setDeletingEntryPoint] = useState(false);
 
     // Internal Areas State
     const [internalAreas, setInternalAreas] = useState<InternalArea[]>([]);
@@ -61,6 +62,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
     const [deleteAreaConfirmId, setDeleteAreaConfirmId] = useState<string | null>(null);
     const [areaFormError, setAreaFormError] = useState<string>('');
     const [savingArea, setSavingArea] = useState(false);
+    const [deletingArea, setDeletingArea] = useState(false);
 
     // Tables & Seats State
     const [tableSeats, setTableSeats] = useState<TableSeat[]>([]);
@@ -77,6 +79,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
     const [deleteTableConfirmId, setDeleteTableConfirmId] = useState<string | null>(null);
     const [tableFormError, setTableFormError] = useState<string>('');
     const [savingTable, setSavingTable] = useState(false);
+    const [deletingTable, setDeletingTable] = useState(false);
 
     // Load entry points from backend
     const loadEntryPoints = async () => {
@@ -198,12 +201,15 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
 
     const handleDeleteEntryPoint = async (id: string) => {
         try {
+            setDeletingEntryPoint(true);
             await gatewayApi.deleteEntryPoint(id);
             setEntryPoints(prev => prev.filter(ep => ep.id !== id));
             setDeleteConfirmId(null);
         } catch (err: any) {
             console.error('Error deleting entry point:', err);
             setError(err.response?.data?.detail || 'Failed to delete entry point');
+        } finally {
+            setDeletingEntryPoint(false);
         }
     };
 
@@ -276,12 +282,15 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
 
     const handleDeleteArea = async (id: string) => {
         try {
+            setDeletingArea(true);
             await gatewayApi.deleteInternalArea(id);
             setInternalAreas(prev => prev.filter(a => a.id !== id));
             setDeleteAreaConfirmId(null);
         } catch (err: any) {
             console.error('Error deleting internal area:', err);
             setAreaError(err.response?.data?.detail || 'Failed to delete internal area');
+        } finally {
+            setDeletingArea(false);
         }
     };
 
@@ -363,12 +372,15 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
 
     const handleDeleteTable = async (id: string) => {
         try {
+            setDeletingTable(true);
             await gatewayApi.deleteTableSeat(id);
             setTableSeats(prev => prev.filter(t => t.id !== id));
             setDeleteTableConfirmId(null);
         } catch (err: any) {
             console.error('Error deleting table/seat:', err);
             setTableError(err.response?.data?.detail || 'Failed to delete table/seat');
+        } finally {
+            setDeletingTable(false);
         }
     };
 
@@ -1181,15 +1193,18 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                             <div className="flex gap-3">
                                 <button
                                     onClick={() => setDeleteConfirmId(null)}
-                                    className="flex-1 px-4 py-3 bg-slate-700 border border-slate-600 text-slate-300 rounded-lg font-medium hover:bg-slate-600 active:bg-slate-600 transition-colors touch-manipulation min-h-[44px]"
+                                    disabled={deletingEntryPoint}
+                                    className="flex-1 px-4 py-3 bg-slate-700 border border-slate-600 text-slate-300 rounded-lg font-medium hover:bg-slate-600 active:bg-slate-600 transition-colors touch-manipulation min-h-[44px] disabled:opacity-50"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={() => handleDeleteEntryPoint(deleteConfirmId)}
-                                    className="flex-1 px-4 py-3 bg-red-500/20 border border-red-500 text-red-400 rounded-lg font-medium hover:bg-red-500/30 hover:shadow-lg hover:shadow-red-500/20 active:bg-red-500/40 transition-all duration-300 touch-manipulation min-h-[44px]"
+                                    disabled={deletingEntryPoint}
+                                    className="flex-1 px-4 py-3 bg-red-500/20 border border-red-500 text-red-400 rounded-lg font-medium hover:bg-red-500/30 hover:shadow-lg hover:shadow-red-500/20 active:bg-red-500/40 transition-all duration-300 touch-manipulation min-h-[44px] disabled:opacity-50 flex items-center justify-center space-x-2"
                                 >
-                                    Delete
+                                    {deletingEntryPoint && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-400"></div>}
+                                    <span>{deletingEntryPoint ? 'Deleting...' : 'Delete'}</span>
                                 </button>
                             </div>
                         </div>
@@ -1365,15 +1380,18 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                             <div className="flex gap-3">
                                 <button
                                     onClick={() => setDeleteAreaConfirmId(null)}
-                                    className="flex-1 px-4 py-3 bg-slate-700 border border-slate-600 text-slate-300 rounded-lg font-medium hover:bg-slate-600 active:bg-slate-600 transition-colors touch-manipulation min-h-[44px]"
+                                    disabled={deletingArea}
+                                    className="flex-1 px-4 py-3 bg-slate-700 border border-slate-600 text-slate-300 rounded-lg font-medium hover:bg-slate-600 active:bg-slate-600 transition-colors touch-manipulation min-h-[44px] disabled:opacity-50"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={() => handleDeleteArea(deleteAreaConfirmId)}
-                                    className="flex-1 px-4 py-3 bg-red-500/20 border border-red-500 text-red-400 rounded-lg font-medium hover:bg-red-500/30 hover:shadow-lg hover:shadow-red-500/20 active:bg-red-500/40 transition-all duration-300 touch-manipulation min-h-[44px]"
+                                    disabled={deletingArea}
+                                    className="flex-1 px-4 py-3 bg-red-500/20 border border-red-500 text-red-400 rounded-lg font-medium hover:bg-red-500/30 hover:shadow-lg hover:shadow-red-500/20 active:bg-red-500/40 transition-all duration-300 touch-manipulation min-h-[44px] disabled:opacity-50 flex items-center justify-center space-x-2"
                                 >
-                                    Delete
+                                    {deletingArea && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-400"></div>}
+                                    <span>{deletingArea ? 'Deleting...' : 'Delete'}</span>
                                 </button>
                             </div>
                         </div>
@@ -1532,15 +1550,18 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                             <div className="flex gap-3">
                                 <button
                                     onClick={() => setDeleteTableConfirmId(null)}
-                                    className="flex-1 px-4 py-3 bg-slate-700 border border-slate-600 text-slate-300 rounded-lg font-medium hover:bg-slate-600 active:bg-slate-600 transition-colors touch-manipulation min-h-[44px]"
+                                    disabled={deletingTable}
+                                    className="flex-1 px-4 py-3 bg-slate-700 border border-slate-600 text-slate-300 rounded-lg font-medium hover:bg-slate-600 active:bg-slate-600 transition-colors touch-manipulation min-h-[44px] disabled:opacity-50"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={() => handleDeleteTable(deleteTableConfirmId)}
-                                    className="flex-1 px-4 py-3 bg-red-500/20 border border-red-500 text-red-400 rounded-lg font-medium hover:bg-red-500/30 hover:shadow-lg hover:shadow-red-500/20 active:bg-red-500/40 transition-all duration-300 touch-manipulation min-h-[44px]"
+                                    disabled={deletingTable}
+                                    className="flex-1 px-4 py-3 bg-red-500/20 border border-red-500 text-red-400 rounded-lg font-medium hover:bg-red-500/30 hover:shadow-lg hover:shadow-red-500/20 active:bg-red-500/40 transition-all duration-300 touch-manipulation min-h-[44px] disabled:opacity-50 flex items-center justify-center space-x-2"
                                 >
-                                    Delete
+                                    {deletingTable && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-400"></div>}
+                                    <span>{deletingTable ? 'Deleting...' : 'Delete'}</span>
                                 </button>
                             </div>
                         </div>

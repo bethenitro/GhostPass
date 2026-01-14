@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, Zap, ArrowRight } from 'lucide-react';
+import { Zap } from 'lucide-react';
 import { sessionApi } from '../lib/api';
 import { cn } from '@/lib/utils';
 import type { Session, SessionStatusResponse } from '../types';

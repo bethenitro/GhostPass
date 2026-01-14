@@ -30,7 +30,84 @@ def validate_scan(
 ):
     """Validate GhostPass scan and process fees"""
     try:
-        # 1. Vaporize expired sessions first (RPC call with empty params)
+        # 1. Validate gateway exists and is enabled
+        gateway_response = db.table("gateway_points")\
+            .select("*")\
+            .eq("id", req.gateway_id)\
+            .single()\
+            .execute()
+        
+        if not gateway_response.data:
+            return ScanResponse(
+                status="DENIED",
+                receipt_id=req.gateway_id,
+                message="Invalid gateway location"
+            )
+        
+        gateway = gateway_response.data
+        gateway_name = gateway.get("name", "Unknown Location")
+        gateway_type = gateway.get("type", "ENTRY_POINT")
+        
+        # 2. Check if gateway is enabled
+        if gateway.get("status") != "ENABLED":
+            return ScanResponse(
+                status="DENIED",
+                receipt_id=req.gateway_id,
+                message=f"Access denied: {gateway_name} is currently disabled"
+            )
+        
+        # 3. For INTERNAL_AREA, check if it accepts GhostPass
+        if gateway_type == "INTERNAL_AREA":
+            if not gateway.get("accepts_ghostpass", True):
+                return ScanResponse(
+                    status="DENIED",
+                    receipt_id=req.gateway_id,
+                    message=f"GhostPass not accepted at {gateway_name}"
+                )
+        
+        # 4. For TABLE_SEAT, check linked area status and accepts_ghostpass
+        if gateway_type == "TABLE_SEAT":
+            linked_area_id = gateway.get("linked_area_id")
+            if not linked_area_id:
+                return ScanResponse(
+                    status="DENIED",
+                    receipt_id=req.gateway_id,
+                    message="Table configuration error: no linked area"
+                )
+            
+            # Check linked area
+            linked_area_response = db.table("gateway_points")\
+                .select("*")\
+                .eq("id", linked_area_id)\
+                .single()\
+                .execute()
+            
+            if not linked_area_response.data:
+                return ScanResponse(
+                    status="DENIED",
+                    receipt_id=req.gateway_id,
+                    message="Table configuration error: linked area not found"
+                )
+            
+            linked_area = linked_area_response.data
+            
+            # Check if linked area is enabled
+            if linked_area.get("status") != "ENABLED":
+                return ScanResponse(
+                    status="DENIED",
+                    receipt_id=req.gateway_id,
+                    message=f"Access denied: {linked_area.get('name', 'Area')} is currently closed"
+                )
+            
+            # Check if linked area accepts GhostPass
+            if not linked_area.get("accepts_ghostpass", True):
+                return ScanResponse(
+                    status="DENIED",
+                    receipt_id=req.gateway_id,
+                    message=f"GhostPass not accepted in {linked_area.get('name', 'this area')}"
+                )
+        
+        # 5. Vaporize expired sessions (RPC call with empty params)
         try:
             result = db.rpc("vaporize_expired_sessions", {}).execute()
             # The RPC function returns an integer count directly
@@ -41,7 +118,7 @@ def validate_scan(
             # Log the error but continue - vaporization is not critical for scanning
             logger.debug(f"Vaporize function call had an issue: {e}")
         
-        # 2. Check if this is a session scan (starts with ghostsession:)
+        # 6. Check if this is a session scan (starts with ghostsession:)
         is_session_scan = str(req.pass_id).startswith("ghostsession:")
         
         if is_session_scan:
@@ -207,6 +284,8 @@ def validate_scan(
                         "balance_after_cents": running_balance,  # Fees don't affect user balance
                         "vendor_name": f"{venue_name} - {split_type}",  # Include split type in vendor name
                         "gateway_id": req.gateway_id,
+                        "gateway_name": gateway_name,  # Human-readable location name
+                        "gateway_type": gateway_type,  # Gateway type for categorization
                         "venue_id": req.venue_id,
                         "metadata": {
                             "pass_id": str(req.pass_id),
