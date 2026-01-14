@@ -30,109 +30,208 @@ def validate_scan(
 ):
     """Validate GhostPass scan and process fees"""
     try:
-        # 1. Update expired passes first
-        db.rpc("update_expired_passes").execute()
+        # 1. Vaporize expired sessions first (RPC call with empty params)
+        try:
+            result = db.rpc("vaporize_expired_sessions", {}).execute()
+            # The RPC function returns an integer count directly
+            if result and hasattr(result, 'data') and result.data is not None:
+                vaporized_count = result.data
+                logger.info(f"Vaporized {vaporized_count} expired sessions")
+        except Exception as e:
+            # Log the error but continue - vaporization is not critical for scanning
+            logger.debug(f"Vaporize function call had an issue: {e}")
         
-        # 2. Fetch the pass
-        pass_response = db.table("ghost_passes")\
-            .select("*")\
-            .eq("id", str(req.pass_id))\
-            .single()\
-            .execute()
+        # 2. Check if this is a session scan (starts with ghostsession:)
+        is_session_scan = str(req.pass_id).startswith("ghostsession:")
         
-        if not pass_response.data:
-            return ScanResponse(
-                status="DENIED",
-                receipt_id=req.gateway_id,
-                message="Pass not found"
-            )
-        
-        ghost_pass = pass_response.data
-        
-        # 3. Check if pass is active and not expired
-        expires_at = datetime.fromisoformat(ghost_pass['expires_at'].replace('Z', '+00:00'))
-        current_time = datetime.now(timezone.utc)
-        
-        if ghost_pass['status'] != 'ACTIVE':
-            return ScanResponse(
-                status="DENIED",
-                receipt_id=req.gateway_id,
-                message="Pass is not active"
-            )
-        
-        if expires_at < current_time:
-            # Mark as expired
-            db.table("ghost_passes")\
-                .update({"status": "EXPIRED"})\
+        if is_session_scan:
+            # Handle session validation
+            session_id = str(req.pass_id).replace("ghostsession:", "")
+            
+            session_response = db.table("sessions")\
+                .select("*")\
+                .eq("id", session_id)\
+                .eq("status", "ACTIVE")\
+                .single()\
+                .execute()
+            
+            if not session_response.data:
+                return ScanResponse(
+                    status="DENIED",
+                    receipt_id=req.gateway_id,
+                    message="Session not found or vaporized"
+                )
+            
+            session = session_response.data
+            
+            # Check if session has vaporized
+            vaporizes_at = datetime.fromisoformat(session['vaporizes_at'].replace('Z', '+00:00'))
+            current_time = datetime.now(timezone.utc)
+            
+            if vaporizes_at < current_time:
+                # Mark as vaporized
+                db.table("sessions")\
+                    .update({"status": "VAPORIZED"})\
+                    .eq("id", session_id)\
+                    .execute()
+                
+                return ScanResponse(
+                    status="DENIED",
+                    receipt_id=req.gateway_id,
+                    message="Session has vaporized"
+                )
+            
+            # Set venue_id on first scan if not set
+            if not session.get('venue_id'):
+                db.table("sessions")\
+                    .update({"venue_id": req.venue_id})\
+                    .eq("id", session_id)\
+                    .execute()
+            
+            user_id = session['user_id']
+            
+        else:
+            # Handle traditional pass validation
+            # 2. Update expired passes first (RPC call with empty params)
+            try:
+                db.rpc("update_expired_passes", {}).execute()
+            except Exception as e:
+                logger.warning(f"Could not call update_expired_passes function: {e}")
+            
+            # 3. Fetch the pass
+            pass_response = db.table("ghost_passes")\
+                .select("*")\
                 .eq("id", str(req.pass_id))\
+                .single()\
+                .execute()
+            
+            if not pass_response.data:
+                return ScanResponse(
+                    status="DENIED",
+                    receipt_id=req.gateway_id,
+                    message="Pass not found"
+                )
+            
+            ghost_pass = pass_response.data
+            
+            # 4. Check if pass is active and not expired
+            expires_at = datetime.fromisoformat(ghost_pass['expires_at'].replace('Z', '+00:00'))
+            current_time = datetime.now(timezone.utc)
+            
+            if ghost_pass['status'] != 'ACTIVE':
+                return ScanResponse(
+                    status="DENIED",
+                    receipt_id=req.gateway_id,
+                    message="Pass is not active"
+                )
+            
+            if expires_at < current_time:
+                # Mark as expired
+                db.table("ghost_passes")\
+                    .update({"status": "EXPIRED"})\
+                    .eq("id", str(req.pass_id))\
+                    .execute()
+                
+                return ScanResponse(
+                    status="DENIED",
+                    receipt_id=req.gateway_id,
+                    message="Pass has expired"
+                )
+            
+            user_id = ghost_pass["user_id"]
+        
+        # 5. Process fees (skip for sessions - they're free)
+        if not is_session_scan:
+            # Fetch fee configuration for venue
+            fee_config_response = db.table("fee_configs")\
+                .select("*")\
+                .eq("venue_id", req.venue_id)\
+                .single()\
+                .execute()
+            
+            if not fee_config_response.data:
+                logger.warning(f"No fee config found for venue: {req.venue_id}")
+                # Use default split if no config found
+                fee_config = {
+                    "valid_pct": 70.0,
+                    "vendor_pct": 15.0,
+                    "pool_pct": 10.0,
+                    "promoter_pct": 5.0
+                }
+            else:
+                fee_config = fee_config_response.data
+            
+            # 6. Calculate and log fee splits
+            # For demo, using a base amount of $1.00 per scan
+            base_amount_cents = 100
+            
+            splits = {
+                "valid": int(base_amount_cents * fee_config["valid_pct"] / 100),
+                "vendor": int(base_amount_cents * fee_config["vendor_pct"] / 100),
+                "pool": int(base_amount_cents * fee_config["pool_pct"] / 100),
+                "promoter": int(base_amount_cents * fee_config["promoter_pct"] / 100)
+            }
+            
+            # Get user's wallet for logging
+            wallet_response = db.table("wallets")\
+                .select("id")\
+                .eq("user_id", user_id)\
+                .single()\
+                .execute()
+            
+            if wallet_response.data:
+                wallet_id = wallet_response.data["id"]
+                
+                # Get venue/vendor name (use venue_id as fallback)
+                venue_name = req.venue_id  # In production, would fetch from venues table
+                
+                # Get current wallet balance for transaction ledger
+                wallet_balance_response = db.table("wallets")\
+                    .select("balance_cents")\
+                    .eq("id", wallet_id)\
+                    .single()\
+                    .execute()
+                
+                current_balance = wallet_balance_response.data["balance_cents"] if wallet_balance_response.data else 0
+                
+                # Log fee transactions with vendor name and balance snapshots
+                fee_transactions = []
+                running_balance = current_balance
+                
+                for split_type, amount in splits.items():
+                    fee_transactions.append({
+                        "wallet_id": wallet_id,
+                        "type": "FEE",
+                        "amount_cents": amount,
+                        "balance_before_cents": running_balance,
+                        "balance_after_cents": running_balance,  # Fees don't affect user balance
+                        "vendor_name": f"{venue_name} - {split_type}",  # Include split type in vendor name
+                        "gateway_id": req.gateway_id,
+                        "venue_id": req.venue_id,
+                        "metadata": {
+                            "pass_id": str(req.pass_id),
+                            "split_type": split_type,
+                            "scan_timestamp": current_time.isoformat()
+                        }
+                    })
+                
+                # Insert all fee transactions
+                db.table("transactions").insert(fee_transactions).execute()
+        
+        # 7. For sessions, vaporize immediately after successful scan
+        if is_session_scan:
+            db.table("sessions")\
+                .update({"status": "VAPORIZED"})\
+                .eq("id", session_id)\
                 .execute()
             
             return ScanResponse(
-                status="DENIED",
+                status="APPROVED",
                 receipt_id=req.gateway_id,
-                message="Pass has expired"
+                message=f"Session validated and vaporized. No reuse possible."
             )
         
-        # 4. Fetch fee configuration for venue
-        fee_config_response = db.table("fee_configs")\
-            .select("*")\
-            .eq("venue_id", req.venue_id)\
-            .single()\
-            .execute()
-        
-        if not fee_config_response.data:
-            logger.warning(f"No fee config found for venue: {req.venue_id}")
-            # Use default split if no config found
-            fee_config = {
-                "valid_pct": 70.0,
-                "vendor_pct": 15.0,
-                "pool_pct": 10.0,
-                "promoter_pct": 5.0
-            }
-        else:
-            fee_config = fee_config_response.data
-        
-        # 5. Calculate and log fee splits
-        # For demo, using a base amount of $1.00 per scan
-        base_amount_cents = 100
-        
-        splits = {
-            "valid": int(base_amount_cents * fee_config["valid_pct"] / 100),
-            "vendor": int(base_amount_cents * fee_config["vendor_pct"] / 100),
-            "pool": int(base_amount_cents * fee_config["pool_pct"] / 100),
-            "promoter": int(base_amount_cents * fee_config["promoter_pct"] / 100)
-        }
-        
-        # Get user's wallet for logging
-        wallet_response = db.table("wallets")\
-            .select("id")\
-            .eq("user_id", ghost_pass["user_id"])\
-            .single()\
-            .execute()
-        
-        if wallet_response.data:
-            wallet_id = wallet_response.data["id"]
-            
-            # Log fee transactions for audit trail
-            fee_transactions = []
-            for split_type, amount in splits.items():
-                fee_transactions.append({
-                    "wallet_id": wallet_id,
-                    "type": "FEE",
-                    "amount_cents": amount,
-                    "gateway_id": req.gateway_id,
-                    "venue_id": req.venue_id,
-                    "metadata": {
-                        "pass_id": str(req.pass_id),
-                        "split_type": split_type,
-                        "scan_timestamp": current_time.isoformat()
-                    }
-                })
-            
-            # Insert all fee transactions
-            db.table("transactions").insert(fee_transactions).execute()
-        
-        # 6. Return approval
+        # 8. Return approval for traditional passes
         return ScanResponse(
             status="APPROVED",
             receipt_id=req.gateway_id,

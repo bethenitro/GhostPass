@@ -20,9 +20,19 @@ class SessionResponse(BaseModel):
     authenticated: bool
 
 # Wallet Models
+class FundingSourceAmount(BaseModel):
+    source: str  # No restrictions on source type
+    amount: float = Field(..., gt=0)  # Amount in dollars for this source
+
 class FundRequest(BaseModel):
-    source: Literal["zelle", "stripe"]
-    amount: float = Field(..., gt=0)  # Accept dollars, convert to cents internally
+    sources: List[FundingSourceAmount]  # Multiple funding sources with individual amounts
+    
+    def model_post_init(self, __context):
+        if not self.sources:
+            raise ValueError("At least one funding source is required")
+        total = sum(s.amount for s in self.sources)
+        if total <= 0:
+            raise ValueError("Total amount must be positive")
 
 class WalletBalance(BaseModel):
     balance_cents: int
@@ -40,6 +50,9 @@ class Transaction(BaseModel):
     wallet_id: UUID
     type: TransactionType
     amount_cents: int
+    balance_before_cents: Optional[int] = None  # Balance before transaction
+    balance_after_cents: Optional[int] = None   # Balance after transaction
+    vendor_name: Optional[str] = None           # Mandatory for SPEND/FEE transactions
     gateway_id: Optional[str] = None
     venue_id: Optional[str] = None
     timestamp: datetime
@@ -65,6 +78,33 @@ class PurchaseResponse(BaseModel):
     pass_id: UUID
     expires_at: datetime
     amount_charged_cents: int
+
+# Session Models
+class SessionType(str, Enum):
+    THIRTY_SECONDS = "30_seconds"
+    THREE_MINUTES = "3_minutes"
+    TEN_MINUTES = "10_minutes"
+
+class SessionStatus(str, Enum):
+    ACTIVE = "ACTIVE"
+    VAPORIZED = "VAPORIZED"
+
+class SessionCreateRequest(BaseModel):
+    session_type: SessionType
+
+class Session(BaseModel):
+    id: UUID
+    user_id: UUID
+    session_type: SessionType
+    status: SessionStatus
+    created_at: datetime
+    vaporizes_at: datetime
+    venue_id: Optional[str] = None  # Set when first scanned
+
+class SessionStatusResponse(BaseModel):
+    session: Optional[Session] = None
+    can_create: bool
+    message: str
 
 # Scan Models
 class ScanRequest(BaseModel):

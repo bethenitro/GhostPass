@@ -48,6 +48,18 @@ CREATE TABLE IF NOT EXISTS system_configs (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- 5.5. Create sessions table for GHOSTPASS SESSION feature
+CREATE TABLE IF NOT EXISTS sessions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    session_type TEXT NOT NULL CHECK (session_type IN ('30_seconds', '3_minutes', '10_minutes')),
+    status TEXT NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'VAPORIZED')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    vaporizes_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    venue_id TEXT,
+    qr_code TEXT UNIQUE
+);
+
 -- 6. Create payout_requests table
 CREATE TABLE IF NOT EXISTS payout_requests (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -66,6 +78,9 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_admin_user_id ON audit_logs(admin_user
 CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs(timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_payout_requests_vendor_user_id ON payout_requests(vendor_user_id);
 CREATE INDEX IF NOT EXISTS idx_payout_requests_status ON payout_requests(status);
+CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_status ON sessions(status);
+CREATE INDEX IF NOT EXISTS idx_sessions_vaporizes_at ON sessions(vaporizes_at);
 
 -- 7. Create get_total_balance function
 CREATE OR REPLACE FUNCTION get_total_balance() RETURNS INTEGER AS $$
@@ -77,12 +92,27 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- 8. Insert default system configurations
+-- 8. Create vaporize_expired_sessions function
+CREATE OR REPLACE FUNCTION vaporize_expired_sessions() RETURNS INTEGER AS $$
+DECLARE
+    v_vaporized_count INTEGER;
+BEGIN
+    UPDATE sessions 
+    SET status = 'VAPORIZED' 
+    WHERE status = 'ACTIVE' 
+    AND vaporizes_at < NOW();
+    
+    GET DIAGNOSTICS v_vaporized_count = ROW_COUNT;
+    RETURN v_vaporized_count;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 9. Insert default system configurations
 INSERT INTO system_configs (config_key, config_value) VALUES
 ('ghostpass_pricing', '{"1": 1000, "3": 2000, "7": 5000}'),
 ('scan_fees', '{"default": 10}'),
 ('data_retention', '{"retention_days": 60}')
 ON CONFLICT (config_key) DO NOTHING;
 
--- 9. Show completion message
+-- 10. Show completion message
 SELECT 'GhostPass Admin Schema Setup Complete! ✅' as status;

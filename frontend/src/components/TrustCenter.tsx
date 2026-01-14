@@ -1,12 +1,19 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { CreditCard, Smartphone, Zap, ArrowRight, Wallet, DollarSign, Bitcoin } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { CreditCard, Smartphone, Zap, ArrowRight, Wallet, DollarSign, Bitcoin, Check, X, ArrowLeft } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { walletApi } from '../lib/api';
 
+interface SourceAmount {
+  sourceId: string;
+  sourceName: string;
+  sourceType: string;
+  amount: string;
+}
+
 const TrustCenter: React.FC = () => {
-  const [selectedSource, setSelectedSource] = useState<string>('');
-  const [amount, setAmount] = useState<string>('');
+  const [selectedSources, setSelectedSources] = useState<Map<string, SourceAmount>>(new Map());
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const queryClient = useQueryClient();
@@ -19,25 +26,75 @@ const TrustCenter: React.FC = () => {
     { id: 'paypal', name: 'PayPal', type: 'paypal', enabled: true },
     { id: 'venmo', name: 'Venmo', type: 'venmo', enabled: true },
     { id: 'cash-app', name: 'Cash App', type: 'cash-app', enabled: true },
+    { id: 'zelle', name: 'Zelle', type: 'zelle', enabled: true },
     { id: 'coinbase', name: 'Coinbase', type: 'coinbase', enabled: true },
   ];
 
   const fundMutation = useMutation({
-    mutationFn: ({ amount, source }: { amount: number; source: string }) =>
-      walletApi.fund(amount, source),
+    mutationFn: (sources: Array<{ source: string; amount: number }>) =>
+      walletApi.fund(sources),
     onMutate: () => setIsProcessing(true),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
-      setAmount('');
-      setSelectedSource('');
+      setSelectedSources(new Map());
+      setShowConfirmation(false);
       setIsProcessing(false);
     },
     onError: () => setIsProcessing(false),
   });
 
-  const handleFund = () => {
-    if (!selectedSource || !amount || parseFloat(amount) <= 0) return;
-    fundMutation.mutate({ amount: parseFloat(amount), source: selectedSource });
+  const toggleSource = (source: typeof fundingSources[0]) => {
+    const newSources = new Map(selectedSources);
+    if (newSources.has(source.id)) {
+      newSources.delete(source.id);
+    } else {
+      newSources.set(source.id, {
+        sourceId: source.id,
+        sourceName: source.name,
+        sourceType: source.type,
+        amount: ''
+      });
+    }
+    setSelectedSources(newSources);
+  };
+
+  const updateSourceAmount = (sourceId: string, amount: string) => {
+    const newSources = new Map(selectedSources);
+    const source = newSources.get(sourceId);
+    if (source) {
+      source.amount = amount;
+      newSources.set(sourceId, source);
+      setSelectedSources(newSources);
+    }
+  };
+
+  const getTotalAmount = () => {
+    return Array.from(selectedSources.values()).reduce((sum, source) => {
+      const amount = parseFloat(source.amount) || 0;
+      return sum + amount;
+    }, 0);
+  };
+
+  const isValidForConfirmation = () => {
+    if (selectedSources.size === 0) return false;
+    const total = getTotalAmount();
+    if (total <= 0) return false;
+    // Check that all selected sources have valid amounts
+    return Array.from(selectedSources.values()).every(s => parseFloat(s.amount) > 0);
+  };
+
+  const handleShowConfirmation = () => {
+    if (isValidForConfirmation()) {
+      setShowConfirmation(true);
+    }
+  };
+
+  const handleConfirmFund = () => {
+    const sources = Array.from(selectedSources.values()).map(s => ({
+      source: s.sourceType,
+      amount: parseFloat(s.amount)
+    }));
+    fundMutation.mutate(sources);
   };
 
   const getSourceIcon = (type: string) => {
@@ -74,130 +131,257 @@ const TrustCenter: React.FC = () => {
         <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent mx-auto mt-3 sm:mt-4"></div>
       </div>
 
-      {/* Funding Form */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-xl p-4 sm:p-6 space-y-4 sm:space-y-6"
-      >
-        {/* Funding Source Selection */}
-        <div className="space-y-2 sm:space-y-3">
-          <label className="block text-white font-medium text-sm sm:text-base">Select Funding Source</label>
-          <div className="grid gap-2 sm:gap-3 grid-cols-3 sm:grid-cols-4 lg:grid-cols-7">
-            {fundingSources?.map((source) => {
-              const Icon = getSourceIcon(source.type);
-              return (
-                <button
-                  key={source.id}
-                  onClick={() => setSelectedSource(source.type)}
-                  disabled={!source.enabled}
-                  className={`p-2 sm:p-3 lg:p-4 rounded-lg border transition-all duration-300 flex flex-col items-center space-y-1 sm:space-y-2 text-center min-h-[60px] sm:min-h-[80px] lg:min-h-[90px] ${
-                    selectedSource === source.type
-                      ? 'border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-lg'
-                      : source.enabled
-                      ? 'border-slate-600 bg-slate-800/50 text-white hover:border-slate-500 hover:bg-slate-700/50'
-                      : 'border-slate-700 bg-slate-800/30 text-slate-500 cursor-not-allowed'
+      <AnimatePresence mode="wait">
+        {!showConfirmation ? (
+          <motion.div
+            key="selection"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-4 sm:space-y-6"
+          >
+            {/* Funding Form */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-xl p-4 sm:p-6 space-y-4 sm:space-y-6"
+            >
+              {/* Funding Source Selection */}
+              <div className="space-y-2 sm:space-y-3">
+                <label className="block text-white font-medium text-sm sm:text-base">
+                  Select Funding Sources (Multiple Allowed)
+                </label>
+                <div className="grid gap-2 sm:gap-3 grid-cols-3 sm:grid-cols-4 lg:grid-cols-7">
+                  {fundingSources?.map((source) => {
+                    const Icon = getSourceIcon(source.type);
+                    const isSelected = selectedSources.has(source.id);
+                    return (
+                      <button
+                        key={source.id}
+                        onClick={() => toggleSource(source)}
+                        disabled={!source.enabled}
+                        className={`p-2 sm:p-3 lg:p-4 rounded-lg border transition-all duration-300 flex flex-col items-center space-y-1 sm:space-y-2 text-center min-h-[60px] sm:min-h-[80px] lg:min-h-[90px] relative ${
+                          isSelected
+                            ? 'border-cyan-400 bg-cyan-500/20 text-cyan-400 shadow-lg'
+                            : source.enabled
+                            ? 'border-slate-600 bg-slate-800/50 text-white hover:border-slate-500 hover:bg-slate-700/50'
+                            : 'border-slate-700 bg-slate-800/30 text-slate-500 cursor-not-allowed'
+                        }`}
+                        style={
+                          isSelected
+                            ? { filter: 'drop-shadow(0 0 10px rgba(6, 182, 212, 0.3))' }
+                            : {}
+                        }
+                      >
+                        {isSelected && (
+                          <div className="absolute -top-1 -right-1 w-5 h-5 bg-cyan-400 rounded-full flex items-center justify-center">
+                            <Check size={12} className="text-slate-900" />
+                          </div>
+                        )}
+                        <Icon size={16} className="sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
+                        <span className="font-medium text-xs sm:text-sm leading-tight">{source.name}</span>
+                        {!source.enabled && (
+                          <span className="text-xs text-slate-500 bg-slate-700/50 px-1 py-0.5 sm:px-2 sm:py-1 rounded text-[10px] sm:text-xs">
+                            Soon
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Amount Inputs for Selected Sources */}
+              {selectedSources.size > 0 && (
+                <div className="space-y-3 sm:space-y-4">
+                  <label className="block text-white font-medium text-sm sm:text-base">
+                    Enter Amount for Each Source
+                  </label>
+                  <div className="space-y-2 sm:space-y-3">
+                    {Array.from(selectedSources.values()).map((source) => (
+                      <div key={source.sourceId} className="flex items-center gap-2 sm:gap-3">
+                        <div className="flex-shrink-0 w-20 sm:w-24 text-slate-300 text-xs sm:text-sm font-medium truncate">
+                          {source.sourceName}
+                        </div>
+                        <div className="relative flex-1">
+                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cyan-400 font-mono text-sm sm:text-base">
+                            $
+                          </span>
+                          <input
+                            type="number"
+                            value={source.amount}
+                            onChange={(e) => updateSourceAmount(source.sourceId, e.target.value)}
+                            placeholder="0.00"
+                            className="w-full pl-6 sm:pl-7 pr-3 py-2 sm:py-2.5 text-sm sm:text-base bg-slate-800/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all duration-200 font-mono"
+                            min="0.01"
+                            step="0.01"
+                          />
+                        </div>
+                        <button
+                          onClick={() => toggleSource(fundingSources.find(s => s.id === source.sourceId)!)}
+                          className="flex-shrink-0 p-2 text-slate-400 hover:text-red-400 transition-colors"
+                        >
+                          <X size={18} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Total Amount Display */}
+              {selectedSources.size > 0 && (
+                <div className="bg-slate-900/50 border border-slate-600 rounded-lg p-3 sm:p-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-300 font-medium text-sm sm:text-base">Total Amount:</span>
+                    <span className="text-cyan-400 font-bold text-lg sm:text-xl font-mono">
+                      ${getTotalAmount().toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="text-xs sm:text-sm text-slate-400 mt-1">
+                    From {selectedSources.size} source{selectedSources.size !== 1 ? 's' : ''}
+                  </div>
+                </div>
+              )}
+
+              {/* Continue Button */}
+              <motion.button
+                onClick={handleShowConfirmation}
+                disabled={!isValidForConfirmation()}
+                className={`w-full py-3 sm:py-4 rounded-lg font-bold text-base sm:text-lg transition-all duration-300 flex items-center justify-center space-x-2 min-h-[48px] ${
+                  !isValidForConfirmation()
+                    ? 'bg-slate-700/50 text-slate-500 cursor-not-allowed border border-slate-600'
+                    : 'bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/30 hover:border-cyan-400'
+                }`}
+                whileTap={{ scale: 0.98 }}
+                style={
+                  !isValidForConfirmation()
+                    ? {}
+                    : { filter: 'drop-shadow(0 0 10px rgba(6, 182, 212, 0.3))' }
+                }
+              >
+                <span>CONTINUE TO CONFIRMATION</span>
+                <ArrowRight size={18} className="sm:w-5 sm:h-5" />
+              </motion.button>
+
+              {/* Security Notice */}
+              <div className="bg-cyan-500/5 border border-cyan-500/20 rounded-lg sm:rounded-xl p-3 sm:p-4">
+                <div className="flex items-start space-x-2 sm:space-x-3">
+                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-cyan-400 rounded-full mt-1.5 sm:mt-2 flex-shrink-0"></div>
+                  <div className="text-xs sm:text-sm text-slate-300">
+                    <p className="font-medium text-cyan-400 mb-0.5 sm:mb-1">No Limits</p>
+                    <p className="sm:hidden">Enter any amount. Multiple sources supported.</p>
+                    <p className="hidden sm:block">Enter any amount you need. You can combine multiple funding sources with different amounts for each.</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="confirmation"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            className="space-y-4 sm:space-y-6"
+          >
+            {/* Confirmation Screen */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-xl p-4 sm:p-6 space-y-4 sm:space-y-6"
+            >
+              <div className="text-center">
+                <h2 className="text-lg sm:text-xl font-bold text-white mb-2">Confirm Transfer</h2>
+                <p className="text-slate-400 text-sm">Review your funding details</p>
+              </div>
+
+              {/* Source Breakdown */}
+              <div className="space-y-2 sm:space-y-3">
+                <label className="block text-white font-medium text-sm sm:text-base">Funding Breakdown</label>
+                <div className="bg-slate-900/50 border border-slate-600 rounded-lg p-3 sm:p-4 space-y-2">
+                  {Array.from(selectedSources.values()).map((source) => {
+                    const Icon = getSourceIcon(source.sourceType);
+                    return (
+                      <div key={source.sourceId} className="flex justify-between items-center py-2 border-b border-slate-700 last:border-0">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <Icon size={16} className="text-cyan-400 sm:w-5 sm:h-5" />
+                          <span className="text-slate-300 text-sm sm:text-base">{source.sourceName}</span>
+                        </div>
+                        <span className="text-white font-mono font-medium text-sm sm:text-base">
+                          ${parseFloat(source.amount).toFixed(2)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Total */}
+              <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4 sm:p-5">
+                <div className="flex justify-between items-center">
+                  <span className="text-white font-bold text-base sm:text-lg">Total Transfer:</span>
+                  <span className="text-cyan-400 font-bold text-xl sm:text-2xl font-mono">
+                    ${getTotalAmount().toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                <motion.button
+                  onClick={() => setShowConfirmation(false)}
+                  disabled={isProcessing}
+                  className="py-3 sm:py-4 rounded-lg font-bold text-sm sm:text-base border border-slate-600 bg-slate-700/50 text-slate-300 hover:bg-slate-600/50 hover:text-white transition-all duration-300 flex items-center justify-center space-x-2"
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <ArrowLeft size={16} className="sm:w-5 sm:h-5" />
+                  <span>BACK</span>
+                </motion.button>
+
+                <motion.button
+                  onClick={handleConfirmFund}
+                  disabled={isProcessing}
+                  className={`py-3 sm:py-4 rounded-lg font-bold text-sm sm:text-base transition-all duration-300 flex items-center justify-center space-x-2 ${
+                    isProcessing
+                      ? 'bg-slate-700/50 text-slate-500 cursor-not-allowed border border-slate-600'
+                      : 'bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/30 hover:border-cyan-400'
                   }`}
+                  whileTap={{ scale: 0.98 }}
                   style={
-                    selectedSource === source.type
-                      ? { filter: 'drop-shadow(0 0 10px rgba(6, 182, 212, 0.3))' }
-                      : {}
+                    isProcessing
+                      ? {}
+                      : { filter: 'drop-shadow(0 0 10px rgba(6, 182, 212, 0.3))' }
                   }
                 >
-                  <Icon size={16} className="sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
-                  <span className="font-medium text-xs sm:text-sm leading-tight">{source.name}</span>
-                  {!source.enabled && (
-                    <span className="text-xs text-slate-500 bg-slate-700/50 px-1 py-0.5 sm:px-2 sm:py-1 rounded text-[10px] sm:text-xs">
-                      Soon
-                    </span>
+                  {isProcessing ? (
+                    <>
+                      <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+                      <span>PROCESSING</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check size={16} className="sm:w-5 sm:h-5" />
+                      <span>CONFIRM</span>
+                    </>
                   )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+                </motion.button>
+              </div>
 
-        {/* Amount Input and Presets */}
-        <div className="grid gap-3 sm:gap-4 lg:grid-cols-2 lg:items-end">
-          {/* Amount Input */}
-          <div className="space-y-2 sm:space-y-3">
-            <label className="block text-white font-medium text-sm sm:text-base">Amount</label>
-            <div className="relative">
-              <span className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-cyan-400 font-mono text-base sm:text-lg">
-                $
-              </span>
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="0.00"
-                className="w-full pl-7 sm:pl-8 pr-4 py-2.5 sm:py-3 text-base sm:text-lg bg-slate-800/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all duration-200 font-mono min-h-[44px] sm:min-h-[48px]"
-                min="1"
-                step="0.01"
-              />
-            </div>
-          </div>
-          
-          {/* Preset Amounts */}
-          <div className="space-y-2 sm:space-y-3">
-            <label className="block text-white font-medium text-sm sm:text-base lg:opacity-0">Quick Select</label>
-            <div className="grid grid-cols-4 gap-2">
-              {[25, 50, 100, 200].map((preset) => (
-                <button
-                  key={preset}
-                  onClick={() => setAmount(preset.toString())}
-                  className="text-xs sm:text-sm py-2 sm:py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-slate-300 hover:bg-slate-600/50 hover:text-white transition-all duration-200 min-h-[36px] sm:min-h-[40px]"
-                >
-                  ${preset}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Fund Button */}
-        <motion.button
-          onClick={handleFund}
-          disabled={!selectedSource || !amount || parseFloat(amount) <= 0 || isProcessing}
-          className={`w-full py-3 sm:py-4 rounded-lg font-bold text-base sm:text-lg transition-all duration-300 flex items-center justify-center space-x-2 min-h-[48px] ${
-            !selectedSource || !amount || parseFloat(amount) <= 0 || isProcessing
-              ? 'bg-slate-700/50 text-slate-500 cursor-not-allowed border border-slate-600'
-              : 'bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/30 hover:border-cyan-400'
-          }`}
-          whileTap={{ scale: 0.98 }}
-          style={
-            !selectedSource || !amount || parseFloat(amount) <= 0 || isProcessing
-              ? {}
-              : { filter: 'drop-shadow(0 0 10px rgba(6, 182, 212, 0.3))' }
-          }
-        >
-          {isProcessing ? (
-            <>
-              <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
-              <span className="sm:hidden">PROCESSING</span>
-              <span className="hidden sm:inline">PROCESSING...</span>
-            </>
-          ) : (
-            <>
-              <span className="sm:hidden">TRANSFER</span>
-              <span className="hidden sm:inline">INITIATE TRANSFER</span>
-              <ArrowRight size={18} className="sm:w-5 sm:h-5" />
-            </>
-          )}
-        </motion.button>
-
-        {/* Security Notice */}
-        <div className="bg-cyan-500/5 border border-cyan-500/20 rounded-lg sm:rounded-xl p-3 sm:p-4">
-          <div className="flex items-start space-x-2 sm:space-x-3">
-            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-cyan-400 rounded-full mt-1.5 sm:mt-2 flex-shrink-0"></div>
-            <div className="text-xs sm:text-sm text-slate-300">
-              <p className="font-medium text-cyan-400 mb-0.5 sm:mb-1">Secure Transfer</p>
-              <p className="sm:hidden">Encrypted processing. Funds appear within 1-3 minutes.</p>
-              <p className="hidden sm:block">All transactions are encrypted and processed through secure channels. Funds typically appear within 1-3 minutes.</p>
-            </div>
-          </div>
-        </div>
-      </motion.div>
+              {/* Warning */}
+              <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-3 sm:p-4">
+                <div className="flex items-start space-x-2 sm:space-x-3">
+                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-amber-400 rounded-full mt-1.5 sm:mt-2 flex-shrink-0"></div>
+                  <div className="text-xs sm:text-sm text-slate-300">
+                    <p className="font-medium text-amber-400 mb-0.5 sm:mb-1">Confirm Before Proceeding</p>
+                    <p>This action will initiate transfers from all selected sources. Please verify the amounts are correct.</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Recent Funding Activity */}
       {fundMutation.isSuccess && (

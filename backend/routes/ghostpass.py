@@ -52,6 +52,7 @@ def purchase_pass(
         
         # Atomic purchase via database function
         # This checks balance, deducts amount, creates pass, and logs transaction
+        pass_id = None
         try:
             logger.info("Making RPC call to purchase_pass")
             
@@ -65,77 +66,79 @@ def purchase_pass(
             
             result = db.rpc("purchase_pass", rpc_params).execute()
             
-            logger.info(f"RPC call successful")
-            logger.info(f"RPC result type: {type(result)}")
-            logger.info(f"RPC result: {result}")
-            
-            # Check if result has data attribute
-            if hasattr(result, 'data'):
-                logger.info(f"RPC result.data type: {type(result.data)}")
-                logger.info(f"RPC result.data value: {result.data}")
-                
-                if result.data:
-                    pass_id = result.data
-                    logger.info(f"Pass created with ID: {pass_id}")
-                else:
-                    raise Exception("No pass ID returned from purchase_pass function")
+            # The function now returns a table with one row containing pass_id
+            if hasattr(result, 'data') and result.data and len(result.data) > 0:
+                # Extract pass_id from first row of result
+                pass_id = str(result.data[0]['pass_id'])
+                logger.info(f"RPC call successful - Pass created with ID: {pass_id}")
             else:
-                raise Exception("RPC result has no data attribute")
+                raise Exception("No pass ID returned from purchase_pass function")
             
-        except AttributeError as ae:
-            logger.error(f"AttributeError in RPC call: {ae}")
-            logger.error(f"This might be a Supabase client issue - trying manual approach")
-            
-            # Manual transaction approach as fallback
-            try:
-                from datetime import datetime, timedelta
-                import uuid
-                
-                # Generate pass ID
-                pass_id = str(uuid.uuid4())
-                expires_at = datetime.utcnow() + timedelta(days=req.duration)
-                
-                # Deduct from wallet
-                wallet_update = db.table("wallets")\
-                    .update({"balance_cents": wallet["balance_cents"] - price_cents})\
-                    .eq("id", wallet["id"])\
-                    .execute()
-                
-                if not wallet_update.data:
-                    raise Exception("Failed to update wallet balance")
-                
-                # Create ghost pass
-                pass_insert = db.table("ghost_passes")\
-                    .insert({
-                        "id": pass_id,
-                        "user_id": str(user.id),
-                        "status": "ACTIVE",
-                        "expires_at": expires_at.isoformat()
-                    })\
-                    .execute()
-                
-                if not pass_insert.data:
-                    raise Exception("Failed to create ghost pass")
-                
-                # Log transaction
-                transaction_insert = db.table("transactions")\
-                    .insert({
-                        "wallet_id": wallet["id"],
-                        "type": "SPEND",
-                        "amount_cents": -price_cents,
-                        "metadata": {"pass_id": pass_id, "duration_days": req.duration}
-                    })\
-                    .execute()
-                
-                logger.info(f"Manual transaction completed - Pass ID: {pass_id}")
-                
-            except Exception as manual_error:
-                logger.error(f"Manual transaction also failed: {manual_error}")
-                raise HTTPException(status_code=500, detail="Purchase failed. Please try again.")
         except Exception as e:
-            logger.error(f"RPC call failed: {e}")
-            logger.error(f"RPC error type: {type(e)}")
-            raise HTTPException(status_code=500, detail=f"Purchase failed during RPC call: {str(e)}")
+            error_str = str(e)
+            logger.error(f"RPC call failed: {error_str}")
+            logger.error(f"Trying manual approach as fallback")
+            pass_id = None
+            
+            # Manual transaction approach as fallback (only if pass_id wasn't extracted)
+            if pass_id is None:
+                logger.error(f"Trying manual approach as fallback")
+                try:
+                    from datetime import datetime, timedelta
+                    import uuid
+                    
+                    # Generate pass ID
+                    pass_id = str(uuid.uuid4())
+                    expires_at = datetime.utcnow() + timedelta(days=req.duration)
+                    
+                    # Deduct from wallet
+                    wallet_update = db.table("wallets")\
+                        .update({"balance_cents": wallet["balance_cents"] - price_cents})\
+                        .eq("id", wallet["id"])\
+                        .execute()
+                    
+                    if not wallet_update.data:
+                        raise Exception("Failed to update wallet balance")
+                    
+                    # Create ghost pass
+                    pass_insert = db.table("ghost_passes")\
+                        .insert({
+                            "id": pass_id,
+                            "user_id": str(user.id),
+                            "status": "ACTIVE",
+                            "expires_at": expires_at.isoformat()
+                        })\
+                        .execute()
+                    
+                    if not pass_insert.data:
+                        raise Exception("Failed to create ghost pass")
+                    
+                    # Log transaction with balance tracking
+                    current_balance = wallet["balance_cents"]
+                    new_balance = current_balance - price_cents
+                    
+                    transaction_insert = db.table("transactions")\
+                        .insert({
+                            "wallet_id": wallet["id"],
+                            "type": "SPEND",
+                            "amount_cents": -price_cents,
+                            "balance_before_cents": current_balance,
+                            "balance_after_cents": new_balance,
+                            "vendor_name": "GhostPass System",
+                            "metadata": {
+                                "pass_id": pass_id,
+                                "duration_days": req.duration,
+                                "expires_at": expires_at.isoformat()
+                            }
+                        })\
+                        .execute()
+                    
+                    logger.info(f"Manual transaction completed - Pass ID: {pass_id}")
+                    
+                except Exception as manual_error:
+                    logger.error(f"Manual transaction also failed: {manual_error}")
+                    raise HTTPException(status_code=500, detail="Purchase failed. Please try again.")
+
         
         # Fetch the created pass to get expiration
         try:

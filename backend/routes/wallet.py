@@ -50,40 +50,54 @@ def fund_wallet(
     user=Depends(get_current_user), 
     db: Client = Depends(get_db)
 ):
-    """Fund wallet via Zelle/Stripe - Mock bank callback"""
-    logger.info(f"Fund request received successfully: source={req.source}, amount={req.amount}, user_id={user.id}")
+    """Fund wallet via multiple sources - No amount limits"""
+    # Calculate total amount from all sources
+    total_amount = sum(s.amount for s in req.sources)
+    total_amount_cents = int(total_amount * 100)
     
-    # Convert dollars to cents
-    amount_cents = int(req.amount * 100)
+    logger.info(f"Fund request received: {len(req.sources)} sources, total=${total_amount}, user_id={user.id}")
     
-    if amount_cents <= 0:
-        raise HTTPException(status_code=400, detail="Amount must be positive")
+    if total_amount_cents <= 0:
+        raise HTTPException(status_code=400, detail="Total amount must be positive")
     
-    # Mock bank/payment gateway success
-    # In production, this would be a webhook callback
+    # Mock bank/payment gateway success for all sources
+    # In production, this would be webhook callbacks from each gateway
     bank_success = True  # Mock success for demo
     
     if not bank_success:
         raise HTTPException(status_code=400, detail="Payment gateway declined transaction")
     
     try:
-        logger.info(f"Calling fund_wallet RPC with user_id={user.id}, amount={amount_cents}, gateway_id={req.source}")
+        transaction_ids = []
         
-        # Atomic funding via database function
-        result = db.rpc("fund_wallet", {
-            "p_user_id": str(user.id),
-            "p_amount": amount_cents,
-            "p_gateway_id": req.source
-        }).execute()
+        # Process each funding source separately
+        for source_item in req.sources:
+            amount_cents = int(source_item.amount * 100)
+            
+            logger.info(f"Processing source: {source_item.source}, amount=${source_item.amount}")
+            
+            # Atomic funding via database function
+            result = db.rpc("fund_wallet", {
+                "p_user_id": str(user.id),
+                "p_amount": amount_cents,
+                "p_gateway_id": source_item.source
+            }).execute()
+            
+            transaction_ids.append({
+                "source": source_item.source,
+                "amount_cents": amount_cents,
+                "amount_dollars": source_item.amount,
+                "transaction_id": result.data
+            })
         
-        logger.info(f"Fund wallet RPC result: {result}")
+        logger.info(f"All funding sources processed successfully. Total: ${total_amount}")
         
         return {
             "status": "funded",
-            "amount_cents": amount_cents,
-            "amount_dollars": req.amount,
-            "source": req.source,
-            "transaction_id": result.data
+            "total_amount_cents": total_amount_cents,
+            "total_amount_dollars": total_amount,
+            "sources_processed": len(req.sources),
+            "transactions": transaction_ids
         }
     except Exception as e:
         logger.error(f"Funding error: {e}")

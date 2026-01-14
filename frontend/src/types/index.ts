@@ -15,6 +15,23 @@ export interface GhostPass {
   qr_code?: string;
 }
 
+export interface Session {
+  id: string;
+  user_id: string;
+  session_type: '30_seconds' | '3_minutes' | '10_minutes';
+  status: 'ACTIVE' | 'VAPORIZED';
+  created_at: string;
+  vaporizes_at: string;
+  venue_id?: string;
+  qr_code?: string;
+}
+
+export interface SessionStatusResponse {
+  session: Session | null;
+  can_create: boolean;
+  message: string;
+}
+
 export interface Transaction {
   id: string;
   wallet_id: string;
@@ -24,6 +41,9 @@ export interface Transaction {
   venue_id?: string;
   timestamp: string;
   metadata?: Record<string, any>;
+  balance_before_cents?: number;
+  balance_after_cents?: number;
+  vendor_name?: string;
 }
 
 export interface WalletBalance {

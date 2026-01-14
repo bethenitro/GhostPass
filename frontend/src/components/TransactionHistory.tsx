@@ -83,6 +83,11 @@ const TransactionHistory: React.FC = () => {
   };
 
   const getTransactionLabel = (transaction: Transaction) => {
+    // Use vendor_name if available, otherwise fall back to old logic
+    if (transaction.vendor_name) {
+      return transaction.vendor_name;
+    }
+    
     switch (transaction.type) {
       case 'FUND':
         return `Wallet Funding${transaction.gateway_id ? ` (${transaction.gateway_id})` : ''}`;
@@ -269,6 +274,33 @@ const TransactionHistory: React.FC = () => {
                       <div className="min-w-0">
                         <p className="text-white/60 text-xs">Venue ID</p>
                         <p className="text-white text-sm break-all">{selectedTransaction.venue_id}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedTransaction.vendor_name && (
+                    <div className="flex items-center space-x-3">
+                      <MapPin size={16} className="text-white/60 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-white/60 text-xs">Vendor</p>
+                        <p className="text-white text-sm">{selectedTransaction.vendor_name}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedTransaction.balance_before_cents !== null && selectedTransaction.balance_before_cents !== undefined && (
+                    <div className="space-y-2 border-t border-white/20 pt-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/60 text-xs">Balance Before</span>
+                        <span className="text-white text-sm font-mono">
+                          ${(selectedTransaction.balance_before_cents / 100).toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/60 text-xs">Balance After</span>
+                        <span className="text-neon-green text-sm font-mono font-bold">
+                          ${(selectedTransaction.balance_after_cents! / 100).toFixed(2)}
+                        </span>
                       </div>
                     </div>
                   )}

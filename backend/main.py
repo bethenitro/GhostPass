@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from routes import auth, wallet, ghostpass, scan, vendor, admin
+from routes import auth, wallet, ghostpass, scan, vendor, admin, session
 import logging
 
 # Configure logging
@@ -38,6 +38,7 @@ app.include_router(auth.router)
 app.include_router(wallet.router)
 app.include_router(ghostpass.router)
 app.include_router(scan.router)
+app.include_router(session.router)
 app.include_router(vendor.router)
 app.include_router(admin.router)
 

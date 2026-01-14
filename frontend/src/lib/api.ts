@@ -3,6 +3,8 @@ import type {
   WalletBalance, 
   Transaction, 
   GhostPass, 
+  Session,
+  SessionStatusResponse,
   FundingSource,
   AdminDashboard,
   FeeConfigUpdate,
@@ -117,10 +119,9 @@ export const walletApi = {
     return data;
   },
 
-  fund: async (amount: number, source: string): Promise<any> => {
+  fund: async (sources: Array<{ source: string; amount: number }>): Promise<any> => {
     const { data } = await api.post('/wallet/fund', {
-      amount,
-      source,
+      sources,
     });
     return data;
   },
@@ -161,7 +162,26 @@ export const ghostPassApi = {
   },
 };
 
-export default api;
+// Session API - GHOSTPASS SESSION FEATURE
+export const sessionApi = {
+  create: async (sessionType: '30_seconds' | '3_minutes' | '10_minutes'): Promise<SessionStatusResponse> => {
+    const { data } = await api.post('/session/create', {
+      session_type: sessionType,
+    });
+    return data;
+  },
+
+  getStatus: async (): Promise<SessionStatusResponse> => {
+    const { data } = await api.get('/session/status');
+    return data;
+  },
+
+  vaporize: async (): Promise<any> => {
+    const { data } = await api.delete('/session/vaporize');
+    return data;
+  },
+};
+
 // Admin API - REQUIRES ADMIN ROLE
 export const adminApi = {
   getHealth: async () => {
