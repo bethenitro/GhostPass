@@ -297,7 +297,7 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
               <div className="flex items-center space-x-3">
                 <AlertTriangle className="text-red-400" size={24} />
                 <div>
-                  <h1 className="text-xl font-bold text-red-400">⚠ COMMAND CENTER</h1>
+                  <h1 className="text-xl font-bold text-red-400">COMMAND CENTER</h1>
                   <div className="flex items-center space-x-2">
                     <div className="px-2 py-1 bg-red-500/20 border border-red-500/50 rounded text-xs font-medium text-red-300">
                       AUDIT LOGGED
@@ -351,8 +351,9 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                     <div>
                       <p className="text-sm text-slate-400">Total Scans</p>
                       <p className="text-xl font-bold text-cyan-400">
-                        {dashboard.stats.total_transactions || 0}
+                        {dashboard.stats.total_scans ?? 0}
                       </p>
+                      <p className="text-xs text-slate-500 mt-1">QR code scans</p>
                     </div>
                   </div>
                 </div>
@@ -360,10 +361,11 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                   <div className="flex items-center space-x-3">
                     <DollarSign className="text-emerald-400" size={20} />
                     <div>
-                      <p className="text-sm text-slate-400">Total Revenue</p>
+                      <p className="text-sm text-slate-400">Revenue (30 days)</p>
                       <p className="text-xl font-bold text-emerald-400">
-                        ${((dashboard.stats.revenue_month_cents || 0) / 100).toFixed(2)}
+                        ${((dashboard.stats.revenue_month_cents ?? 0) / 100).toFixed(2)}
                       </p>
+                      <p className="text-xs text-slate-500 mt-1">Last 30 days</p>
                     </div>
                   </div>
                 </div>
@@ -372,7 +374,8 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                     <Users className="text-blue-400" size={20} />
                     <div>
                       <p className="text-sm text-slate-400">Active Passes</p>
-                      <p className="text-xl font-bold text-blue-400">{dashboard.stats.active_passes}</p>
+                      <p className="text-xl font-bold text-blue-400">{dashboard.stats.active_passes ?? 0}</p>
+                      <p className="text-xs text-slate-500 mt-1">Not yet expired</p>
                     </div>
                   </div>
                 </div>
@@ -382,8 +385,9 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                     <div>
                       <p className="text-sm text-slate-400">Expired Passes</p>
                       <p className="text-xl font-bold text-orange-400">
-                        {dashboard.stats.expired_passes || 0}
+                        {dashboard.stats.expired_passes ?? 0}
                       </p>
+                      <p className="text-xs text-slate-500 mt-1">Past expiry date</p>
                     </div>
                   </div>
                 </div>

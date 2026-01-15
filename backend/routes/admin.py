@@ -124,10 +124,17 @@ async def get_admin_dashboard(
             logger.warning(f"Error calculating total balance: {e}")
             total_balance = 0
         
-        # Get pass statistics
+        # Get pass statistics based on expires_at timestamp (real-time expiration check)
         try:
-            active_passes = db.table("ghost_passes").select("id", count="exact").eq("status", "ACTIVE").execute()
-            expired_passes = db.table("ghost_passes").select("id", count="exact").eq("status", "EXPIRED").execute()
+            now_iso = datetime.utcnow().isoformat()
+            
+            # Active passes: expires_at is in the future (still valid)
+            active_passes = db.table("ghost_passes").select("id", count="exact").gte("expires_at", now_iso).execute()
+            
+            # Expired passes: expires_at is in the past (no longer valid)
+            expired_passes = db.table("ghost_passes").select("id", count="exact").lt("expires_at", now_iso).execute()
+            
+            logger.info(f"Pass statistics: {active_passes.count or 0} active, {expired_passes.count or 0} expired (based on expires_at timestamp)")
         except Exception as e:
             logger.warning(f"ghost_passes table access error: {e}")
             active_passes = type('obj', (object,), {'count': 0})()
@@ -142,6 +149,13 @@ async def get_admin_dashboard(
         
         # Get transaction count
         transactions_count = db.table("transactions").select("id", count="exact").execute()
+        
+        # Get total scans from entry point audit logs
+        try:
+            total_scans = db.table("entry_point_audit_logs").select("id", count="exact").eq("action_type", "SCAN").execute()
+        except Exception as e:
+            logger.warning(f"entry_point_audit_logs table access error: {e}")
+            total_scans = type('obj', (object,), {'count': 0})()
         
         # Get revenue statistics (last 24h, 7d, 30d)
         now = datetime.utcnow()
@@ -165,6 +179,7 @@ async def get_admin_dashboard(
             expired_passes=expired_passes.count or 0,
             pending_payouts=pending_payouts.count or 0,
             total_transactions=transactions_count.count or 0,
+            total_scans=total_scans.count or 0,
             revenue_today_cents=revenue_today_cents,
             revenue_week_cents=revenue_week_cents,
             revenue_month_cents=revenue_month_cents

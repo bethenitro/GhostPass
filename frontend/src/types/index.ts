@@ -166,6 +166,7 @@ export interface SystemStats {
   expired_passes: number;
   pending_payouts: number;
   total_transactions: number;
+  total_scans: number;
   revenue_today_cents: number;
   revenue_week_cents: number;
   revenue_month_cents: number;

@@ -245,6 +245,7 @@ class SystemStats(BaseModel):
     expired_passes: int
     pending_payouts: int
     total_transactions: int
+    total_scans: int  # Total QR code scans
     revenue_today_cents: int
     revenue_week_cents: int
     revenue_month_cents: int

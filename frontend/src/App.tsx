@@ -27,6 +27,7 @@ const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'wallet' | 'scan' | 'trust' | 'history'>('wallet');
   const [purchasingDuration, setPurchasingDuration] = useState<number | null>(null);
   const [isAdminMode, setIsAdminMode] = useState(false);
+  const [previousRoute, setPreviousRoute] = useState<string>('');
   const queryClient = useQueryClient();
 
   // Check if we're on special routes
@@ -35,11 +36,13 @@ const AppContent: React.FC = () => {
   // Listen for hash changes
   useEffect(() => {
     const handleHashChange = () => {
-      setCurrentRoute(window.location.hash);
+      const newRoute = window.location.hash;
+      setPreviousRoute(currentRoute);
+      setCurrentRoute(newRoute);
     };
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
+  }, [currentRoute]);
 
   // Listen for audit trail navigation event
   useEffect(() => {
@@ -105,6 +108,15 @@ const AppContent: React.FC = () => {
     setIsAdminMode(false);
   };
 
+  const handleBackFromGatewayManager = () => {
+    // If we came from command center, go back there, otherwise go to main
+    if (previousRoute === '#/command-center') {
+      window.location.hash = '#/command-center';
+    } else {
+      handleBackToMain();
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
@@ -137,7 +149,7 @@ const AppContent: React.FC = () => {
 
   // Show Gateway Manager page if on gateway-manager route
   if (isGatewayManagerRoute) {
-    return <GatewayManagerPage onBack={handleBackToMain} />;
+    return <GatewayManagerPage onBack={handleBackFromGatewayManager} />;
   }
 
   // Show Audit Trail page if on audit-trail route
