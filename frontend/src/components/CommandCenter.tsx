@@ -3,6 +3,7 @@ import { X, AlertTriangle, Shield, DollarSign, Users, Database, FileText, Chevro
 import { cn } from '@/lib/utils';
 import { adminApi } from '@/lib/api';
 import AdminSetupCheck from './AdminSetupCheck';
+import BankVisualPlaceholders from './BankVisualPlaceholders';
 import type {
   AdminDashboard,
   FeeConfigUpdate,
@@ -560,7 +561,7 @@ const CommandCenter: React.FC<CommandCenterProps> = ({ isOpen, onClose, onNaviga
                       <input
                         type="range"
                         min="1"
-                        max="50"
+                        max="2000"
                         value={scanFee.fee_cents}
                         onChange={(e) => setScanFee(prev => ({ ...prev, fee_cents: parseInt(e.target.value) }))}
                         className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider-red"
@@ -710,9 +711,15 @@ const CommandCenter: React.FC<CommandCenterProps> = ({ isOpen, onClose, onNaviga
                 title="Vendor Payout Dashboard"
                 icon={<DollarSign size={18} />}
               >
-                <div className="space-y-4 mt-4">
-                  {dashboard.pending_payouts.length > 0 ? (
-                    <>
+                <div className="space-y-6 mt-4">
+                  {/* Bank Visual Placeholders Demo */}
+                  <BankVisualPlaceholders />
+
+                  {/* Existing Payout Management */}
+                  {dashboard.pending_payouts.length > 0 && (
+                    <div className="border-t border-slate-700 pt-6">
+                      <h3 className="text-slate-300 font-medium mb-4">Pending Payout Requests</h3>
+                      
                       {/* Mobile-friendly payout list */}
                       <div className="space-y-3 md:hidden">
                         {dashboard.pending_payouts.map((payout) => (
@@ -801,9 +808,7 @@ const CommandCenter: React.FC<CommandCenterProps> = ({ isOpen, onClose, onNaviga
                         )}
                         <span>{updating === 'process-all' ? 'PROCESSING...' : 'PROCESS ALL'}</span>
                       </button>
-                    </>
-                  ) : (
-                    <p className="text-slate-400 py-4">No pending payouts</p>
+                    </div>
                   )}
                 </div>
               </CollapsibleSection>
@@ -879,10 +884,41 @@ const CommandCenter: React.FC<CommandCenterProps> = ({ isOpen, onClose, onNaviga
                 </div>
               </CollapsibleSection>
 
-              {/* Audit Logs */}
+              {/* Entry Point Audit Trail */}
               <CollapsibleSection
-                title="System Audit Trail"
+                title="Entry Point Audit Trail"
                 icon={<FileText size={18} />}
+                defaultOpen={false}
+              >
+                <div className="space-y-4 mt-4">
+                  <p className="text-slate-300 text-sm">
+                    Track all QR code scans, entry point edits, and employee actions across your venue.
+                  </p>
+                  <div className="bg-slate-800/50 rounded-lg p-4">
+                    <div className="text-center">
+                      <p className="text-slate-400 mb-3">
+                        View detailed audit trail with filtering and search capabilities
+                      </p>
+                      <button
+                        onClick={() => {
+                          // This will be handled by the parent component to show audit trail
+                          onClose();
+                          // Navigate to audit trail view
+                          window.dispatchEvent(new CustomEvent('navigate-to-audit-trail'));
+                        }}
+                        className="px-6 py-3 bg-blue-500/20 border border-blue-500 text-blue-400 rounded-lg font-medium hover:bg-blue-500/30 hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300"
+                      >
+                        Open Audit Trail
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </CollapsibleSection>
+
+              {/* System Audit Logs */}
+              <CollapsibleSection
+                title="System Audit Logs"
+                icon={<Database size={18} />}
               >
                 <div className="space-y-4 mt-4">
                   {dashboard.recent_audit_logs.length > 0 ? (

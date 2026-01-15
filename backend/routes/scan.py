@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Header
 from supabase import Client
 from database import get_db
 from models import ScanRequest, ScanResponse
+from utils import parse_supabase_timestamp
 from datetime import datetime, timezone
 import logging
 import uuid
@@ -142,7 +143,7 @@ def validate_scan(
             session = session_response.data
             
             # Check if session has vaporized
-            vaporizes_at = datetime.fromisoformat(session['vaporizes_at'].replace('Z', '+00:00'))
+            vaporizes_at = parse_supabase_timestamp(session['vaporizes_at'])
             current_time = datetime.now(timezone.utc)
             
             if vaporizes_at < current_time:
@@ -192,7 +193,7 @@ def validate_scan(
             ghost_pass = pass_response.data
             
             # 4. Check if pass is active and not expired
-            expires_at = datetime.fromisoformat(ghost_pass['expires_at'].replace('Z', '+00:00'))
+            expires_at = parse_supabase_timestamp(ghost_pass['expires_at'])
             current_time = datetime.now(timezone.utc)
             
             if ghost_pass['status'] != 'ACTIVE':
@@ -317,6 +318,27 @@ def validate_scan(
             except Exception as e:
                 logger.warning(f"Failed to record session scan metric: {e}")
             
+            # Log session scan audit trail
+            try:
+                db.rpc(
+                    "log_scan_audit",
+                    {
+                        "p_entry_point_id": req.gateway_id,
+                        "p_scanner_token": scanner_token,
+                        "p_metadata": {
+                            "session_id": session_id,
+                            "venue_id": req.venue_id,
+                            "scan_timestamp": current_time.isoformat(),
+                            "is_session": True,
+                            "gateway_name": gateway_name,
+                            "gateway_type": gateway_type,
+                            "scan_result": "APPROVED"
+                        }
+                    }
+                ).execute()
+            except Exception as e:
+                logger.warning(f"Failed to log session scan audit: {e}")
+            
             db.table("sessions")\
                 .update({"status": "VAPORIZED"})\
                 .eq("id", session_id)\
@@ -346,7 +368,28 @@ def validate_scan(
         except Exception as e:
             logger.warning(f"Failed to record scan metric: {e}")
         
-        # 9. Return approval for traditional passes
+        # 9. Log scan audit trail
+        try:
+            db.rpc(
+                "log_scan_audit",
+                {
+                    "p_entry_point_id": req.gateway_id,
+                    "p_scanner_token": scanner_token,
+                    "p_metadata": {
+                        "pass_id": str(req.pass_id),
+                        "venue_id": req.venue_id,
+                        "scan_timestamp": current_time.isoformat(),
+                        "is_session": is_session_scan,
+                        "gateway_name": gateway_name,
+                        "gateway_type": gateway_type,
+                        "scan_result": "APPROVED"
+                    }
+                }
+            ).execute()
+        except Exception as e:
+            logger.warning(f"Failed to log scan audit: {e}")
+        
+        # 10. Return approval for traditional passes
         return ScanResponse(
             status="APPROVED",
             receipt_id=req.gateway_id,

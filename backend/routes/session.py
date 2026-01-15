@@ -3,6 +3,7 @@ from supabase import Client
 from database import get_db
 from routes.auth import get_current_user
 from models import SessionCreateRequest, SessionStatusResponse, Session, SessionType
+from utils import parse_supabase_timestamp
 from typing import Optional
 import logging
 import uuid
@@ -37,7 +38,7 @@ def create_session(
 
         if active_session_response.data:
             active_session = active_session_response.data[0]
-            vaporizes_at = datetime.fromisoformat(active_session['vaporizes_at'].replace('Z', '+00:00'))
+            vaporizes_at = parse_supabase_timestamp(active_session['vaporizes_at'])
             if vaporizes_at > datetime.now(vaporizes_at.tzinfo):
                 return SessionStatusResponse(
                     session=Session(**active_session),
@@ -118,7 +119,7 @@ def get_session_status(
 
         if session_response.data:
             session = session_response.data[0]
-            vaporizes_at = datetime.fromisoformat(session['vaporizes_at'].replace('Z', '+00:00'))
+            vaporizes_at = parse_supabase_timestamp(session['vaporizes_at'])
 
             if vaporizes_at > datetime.now(vaporizes_at.tzinfo):
                 return SessionStatusResponse(

@@ -7,8 +7,9 @@ import WalletDashboard from './components/WalletDashboard';
 import QRCodeView from './components/QRCodeView';
 import TrustCenter from './components/TrustCenter';
 import TransactionHistory from './components/TransactionHistory';
-import CommandCenter from './components/CommandCenter';
+import CommandCenterPage from './components/CommandCenterPage';
 import GatewayManagerPage from './components/GatewayManagerPage';
+import AuditTrail from './components/AuditTrail';
 import { ghostPassApi } from './lib/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -26,10 +27,9 @@ const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'wallet' | 'scan' | 'trust' | 'history'>('wallet');
   const [purchasingDuration, setPurchasingDuration] = useState<number | null>(null);
   const [isAdminMode, setIsAdminMode] = useState(false);
-  const [isCommandCenterOpen, setIsCommandCenterOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  // Check if we're on the gateway-manager route
+  // Check if we're on special routes
   const [currentRoute, setCurrentRoute] = useState(window.location.hash);
 
   // Listen for hash changes
@@ -41,7 +41,18 @@ const AppContent: React.FC = () => {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
+  // Listen for audit trail navigation event
+  useEffect(() => {
+    const handleAuditTrailNavigation = () => {
+      window.location.hash = '#/audit-trail';
+    };
+    window.addEventListener('navigate-to-audit-trail', handleAuditTrailNavigation);
+    return () => window.removeEventListener('navigate-to-audit-trail', handleAuditTrailNavigation);
+  }, []);
+
   const isGatewayManagerRoute = currentRoute === '#/gateway-manager';
+  const isAuditTrailRoute = currentRoute === '#/audit-trail';
+  const isCommandCenterRoute = currentRoute === '#/command-center';
 
   const purchaseMutation = useMutation({
     mutationFn: (duration: number) => ghostPassApi.purchase(duration),
@@ -80,25 +91,18 @@ const AppContent: React.FC = () => {
   const handleAdminModeToggle = () => {
     setIsAdminMode(!isAdminMode);
     if (!isAdminMode) {
-      setIsCommandCenterOpen(true);
-    } else {
-      setIsCommandCenterOpen(false);
+      // Navigate to command center page instead of opening modal
+      window.location.hash = '#/command-center';
     }
   };
 
-  const handleCommandCenterClose = () => {
-    setIsCommandCenterOpen(false);
-    setIsAdminMode(false);
-  };
-
   const handleNavigateToGatewayManager = () => {
-    // Change URL to gateway-manager route in same tab
     window.location.hash = '#/gateway-manager';
   };
 
   const handleBackToMain = () => {
-    // Navigate back to main app
     window.location.hash = '#/';
+    setIsAdminMode(false);
   };
 
   if (loading) {
@@ -136,24 +140,26 @@ const AppContent: React.FC = () => {
     return <GatewayManagerPage onBack={handleBackToMain} />;
   }
 
-  return (
-    <>
-      <Layout
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        userRole={user.role}
-        isAdminMode={isAdminMode}
-        onAdminModeToggle={handleAdminModeToggle}
-      >
-        {renderActiveTab()}
-      </Layout>
+  // Show Audit Trail page if on audit-trail route
+  if (isAuditTrailRoute) {
+    return <AuditTrail onBack={handleBackToMain} />;
+  }
 
-      <CommandCenter
-        isOpen={isCommandCenterOpen}
-        onClose={handleCommandCenterClose}
-        onNavigateToGatewayManager={handleNavigateToGatewayManager}
-      />
-    </>
+  // Show Command Center page if on command-center route
+  if (isCommandCenterRoute) {
+    return <CommandCenterPage onBack={handleBackToMain} onNavigateToGatewayManager={handleNavigateToGatewayManager} />;
+  }
+
+  return (
+    <Layout
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      userRole={user.role}
+      isAdminMode={isAdminMode}
+      onAdminModeToggle={handleAdminModeToggle}
+    >
+      {renderActiveTab()}
+    </Layout>
   );
 };
 

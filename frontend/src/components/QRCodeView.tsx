@@ -1,71 +1,34 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import QRCodeLib from 'react-qr-code';
 import { Shield, AlertTriangle, Clock, Trash2 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { sessionApi } from '../lib/api';
 import { cn } from '@/lib/utils';
 import SessionSelector from './SessionSelector';
-import type { Session } from '../types';
+import { useSession } from '../hooks/useSession';
 
 const QRCode = (QRCodeLib as any).default || QRCodeLib;
 
 const QRCodeView: React.FC = () => {
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [activeSession, setActiveSession] = useState<Session | null>(null);
   const [isVaporizing, setIsVaporizing] = useState(false);
   const [showVaporizeConfirm, setShowVaporizeConfirm] = useState(false);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
 
-  const { data: sessionStatus, refetch: refetchSession } = useQuery({
-    queryKey: ['session-status'],
-    queryFn: sessionApi.getStatus,
-    refetchInterval: 1000,
-  });
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    refetchSession();
-  }, [refetchSession]);
-
-  useEffect(() => {
-    if (sessionStatus?.session) {
-      setActiveSession(sessionStatus.session);
-    } else {
-      setActiveSession(null);
-    }
-  }, [sessionStatus]);
-
-  const getTimeRemaining = (expiresAt: string) => {
-    const now = currentTime.getTime();
-    const expiry = new Date(expiresAt).getTime();
-    const diff = expiry - now;
-    if (diff <= 0) return null;
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-    return { hours, minutes, seconds, total: diff };
-  };
-
-  const sessionTimeRemaining = activeSession?.vaporizes_at ? getTimeRemaining(activeSession.vaporizes_at) : null;
-  const isSessionExpired = activeSession?.status !== 'ACTIVE' || !sessionTimeRemaining;
-  const isSessionExpiringSoon = sessionTimeRemaining && sessionTimeRemaining.total < 30000;
+  const { 
+    activeSession, 
+    sessionTimeRemaining, 
+    isSessionExpired, 
+    isSessionExpiringSoon,
+    refetchSession,
+    vaporizeSession
+  } = useSession();
 
   const handleInstantVaporize = async () => {
     if (!activeSession) return;
     
     setIsVaporizing(true);
     try {
-      await sessionApi.vaporize();
-      setActiveSession(null);
+      await vaporizeSession();
       setShowVaporizeConfirm(false);
-      refetchSession();
     } catch (error) {
       console.error('Failed to vaporize session:', error);
     } finally {
@@ -85,7 +48,6 @@ const QRCodeView: React.FC = () => {
         )}
         <SessionSelector onSessionCreated={(session) => { 
           setIsCreatingSession(true);
-          setActiveSession(session); 
           refetchSession();
           setTimeout(() => setIsCreatingSession(false), 500);
         }} />

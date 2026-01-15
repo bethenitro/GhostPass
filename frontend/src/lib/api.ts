@@ -423,3 +423,74 @@ export const gatewayApi = {
     return data;
   }
 };
+
+// Audit API - ENTRY POINT AUDIT TRAIL
+export const auditApi = {
+  // Get audit logs with filtering
+  getEntryPointAuditLogs: async (params?: {
+    entry_point_id?: string;
+    employee_name?: string;
+    action_type?: 'SCAN' | 'CREATE' | 'EDIT' | 'DEACTIVATE' | 'ACTIVATE' | 'DELETE';
+    start_date?: string;
+    end_date?: string;
+    source_location?: string;
+    limit?: number;
+    offset?: number;
+  }) => {
+    const { data } = await api.get('/audit/entry-point', { params });
+    return data;
+  },
+
+  // Log manual audit action
+  logEntryPointAction: async (auditData: {
+    action_type: 'SCAN' | 'CREATE' | 'EDIT' | 'DEACTIVATE' | 'ACTIVATE' | 'DELETE';
+    entry_point_id: string;
+    source_location: string;
+    old_values?: Record<string, any>;
+    new_values?: Record<string, any>;
+    metadata?: Record<string, any>;
+  }) => {
+    const { data } = await api.post('/audit/entry-point', auditData);
+    return data;
+  },
+
+  // Get audit summary statistics
+  getAuditSummary: async (days: number = 30) => {
+    const { data } = await api.get('/audit/entry-point/summary', {
+      params: { days }
+    });
+    return data;
+  },
+
+  // Get complete history for specific entry point
+  getEntryPointHistory: async (entryPointId: string, limit: number = 50) => {
+    const { data } = await api.get(`/audit/entry-point/${entryPointId}/history`, {
+      params: { limit }
+    });
+    return data;
+  },
+
+  // Get activity for specific employee
+  getEmployeeActivity: async (employeeName: string, days: number = 7, limit: number = 100) => {
+    const { data } = await api.get(`/audit/entry-point/employee/${encodeURIComponent(employeeName)}/activity`, {
+      params: { days, limit }
+    });
+    return data;
+  },
+
+  // Get recent scan activity
+  getRecentScans: async (hours: number = 24, limit: number = 50) => {
+    const { data } = await api.get('/audit/entry-point/recent-scans', {
+      params: { hours, limit }
+    });
+    return data;
+  },
+
+  // Clean up old audit logs (admin only)
+  cleanupOldLogs: async (daysToKeep: number = 90) => {
+    const { data } = await api.delete('/audit/entry-point/cleanup', {
+      params: { days_to_keep: daysToKeep }
+    });
+    return data;
+  }
+};

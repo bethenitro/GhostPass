@@ -212,6 +212,54 @@ async def update_gateway_point(
                     db, str(current_user.id), "UPDATE_GATEWAY_POINT", "gateway_point",
                     point_id, old_point, result.data[0]
                 )
+                
+                # Also log detailed entry point audit for tracking changes
+                from models import EntryPointActionType
+                
+                # Determine action type based on status change
+                action_type = EntryPointActionType.EDIT
+                if point.status is not None:
+                    if old_point["status"] == "ENABLED" and point.status.value == "DISABLED":
+                        action_type = EntryPointActionType.DEACTIVATE
+                    elif old_point["status"] == "DISABLED" and point.status.value == "ENABLED":
+                        action_type = EntryPointActionType.ACTIVATE
+                
+                # Create detailed change tracking
+                changes = {}
+                if point.name is not None and point.name != old_point["name"]:
+                    changes["name"] = {"old": old_point["name"], "new": point.name}
+                if point.employee_name is not None and point.employee_name != old_point["employee_name"]:
+                    changes["employee_name"] = {"old": old_point["employee_name"], "new": point.employee_name}
+                if point.employee_id is not None and point.employee_id != old_point["employee_id"]:
+                    changes["employee_id"] = {"old": old_point["employee_id"], "new": point.employee_id}
+                if point.status is not None and point.status.value != old_point["status"]:
+                    changes["status"] = {"old": old_point["status"], "new": point.status.value}
+                
+                # Log the detailed audit entry using direct database insert
+                try:
+                    # Get admin user info
+                    user_data = db.table("users").select("email").eq("id", current_user.id).execute()
+                    admin_email = user_data.data[0].get("email") if user_data.data else None
+                    
+                    audit_log = {
+                        "action_type": action_type.value,
+                        "entry_point_id": point_id,
+                        "entry_point_type": result.data[0]["type"],
+                        "entry_point_name": result.data[0]["name"],
+                        "employee_name": result.data[0]["employee_name"],
+                        "employee_id": result.data[0]["employee_id"],
+                        "admin_user_id": str(current_user.id),
+                        "admin_email": admin_email,
+                        "source_location": "Command Center",
+                        "old_values": old_point,
+                        "new_values": result.data[0],
+                        "metadata": {"changes": changes, "admin_action": True}
+                    }
+                    
+                    db.table("entry_point_audit_logs").insert(audit_log).execute()
+                except Exception as audit_error:
+                    logger.warning(f"Failed to log detailed entry point audit: {audit_error}")
+                    
         except Exception as log_error:
             logger.warning(f"Failed to log admin action: {log_error}")
         

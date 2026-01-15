@@ -2,6 +2,7 @@ import React from 'react';
 import { Wallet, Scan, Shield, History } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import AdminModeToggle from './AdminModeToggle';
+import SessionPill from './SessionPill';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -29,6 +30,9 @@ const Layout: React.FC<LayoutProps> = ({
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-slate-950 text-white">
+      {/* Session Pill - Shows when session is active */}
+      <SessionPill />
+
       {/* Mobile Top Navigation */}
       <nav className="md:hidden fixed top-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-b border-slate-700 z-50">
         <div className="flex items-center justify-between p-4">

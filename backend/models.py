@@ -312,6 +312,48 @@ class MetricType(str, Enum):
     TRANSACTION = "TRANSACTION"
     SALE = "SALE"
 
+# Entry Point Audit Models
+class EntryPointActionType(str, Enum):
+    SCAN = "SCAN"
+    CREATE = "CREATE"
+    EDIT = "EDIT"
+    DEACTIVATE = "DEACTIVATE"
+    ACTIVATE = "ACTIVATE"
+    DELETE = "DELETE"
+
+class EntryPointAuditLog(BaseModel):
+    id: UUID
+    action_type: EntryPointActionType
+    entry_point_id: UUID
+    entry_point_type: GatewayType
+    entry_point_name: str
+    employee_name: str
+    employee_id: str
+    admin_user_id: Optional[UUID] = None  # For admin actions
+    admin_email: Optional[str] = None
+    scanner_token: Optional[str] = None  # For scan actions
+    source_location: str  # PCGM, Command Center, Scan UI
+    old_values: Optional[Dict[str, Any]] = None  # For edit actions
+    new_values: Optional[Dict[str, Any]] = None  # For edit actions
+    metadata: Optional[Dict[str, Any]] = None
+    created_at: datetime
+
+class EntryPointAuditCreate(BaseModel):
+    action_type: EntryPointActionType
+    entry_point_id: UUID
+    source_location: str
+    old_values: Optional[Dict[str, Any]] = None
+    new_values: Optional[Dict[str, Any]] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+class EntryPointAuditFilter(BaseModel):
+    entry_point_id: Optional[UUID] = None
+    employee_name: Optional[str] = None
+    action_type: Optional[EntryPointActionType] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    source_location: Optional[str] = None
+
 class GatewayMetric(BaseModel):
     id: UUID
     gateway_point_id: UUID
