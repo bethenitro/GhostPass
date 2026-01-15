@@ -3,9 +3,9 @@ import { motion } from 'framer-motion';
 import { Clock, Zap, ArrowLeftRight } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { walletApi, ghostPassApi } from '../lib/api';
-import type { PassPurchaseOption } from '../types';
 import { cn } from '@/lib/utils';
 import RefundModal from './RefundModal';
+import { DurationWheelSelector } from './DurationWheelSelector';
 
 interface WalletDashboardProps {
   onPurchase: (duration: number) => void;
@@ -16,6 +16,8 @@ interface WalletDashboardProps {
 const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchasing = false, purchasingDuration }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showRefundModal, setShowRefundModal] = useState(false);
+  const [selectedDuration, setSelectedDuration] = useState(1);
+  const [selectedPrice, setSelectedPrice] = useState(10);
   const queryClient = useQueryClient();
 
   const { data: balance } = useQuery({
@@ -42,11 +44,16 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
     refetch();
   }, [refetch]);
 
-  const purchaseOptions: PassPurchaseOption[] = [
-    { duration: 1, price: 10, label: '1 Day' },
-    { duration: 3, price: 20, label: '3 Days' },
-    { duration: 7, price: 50, label: '7 Days' },
-  ];
+  const handleDurationSelect = (days: number, price: number) => {
+    setSelectedDuration(days);
+    setSelectedPrice(price);
+  };
+
+  const handlePurchase = () => {
+    if (!isPurchasing && (balance?.balance_dollars || 0) >= selectedPrice) {
+      onPurchase(selectedDuration);
+    }
+  };
 
   const getTimeRemaining = (expiresAt: string) => {
     const now = currentTime.getTime();
@@ -168,75 +175,46 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
         </div>
       </motion.div>
 
-      {/* Purchase Options - Holographic Tickets */}
-      <div className="space-y-4">
+      {/* Purchase Options - Wheel Selector */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="space-y-4"
+      >
         <h2 className="text-xl sm:text-2xl font-semibold text-white text-center">Purchase Ghost Pass</h2>
-        <div className="grid gap-3 sm:gap-4 lg:grid-cols-3">
-          {purchaseOptions.map((option, index) => (
-            <motion.div
-              key={option.duration}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 + index * 0.1 }}
-              className={cn(
-                "bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-xl p-4 sm:p-6 cursor-pointer transition-all duration-300 hover:bg-cyan-500/10 hover:border-cyan-500/50",
-                isPurchasing && purchasingDuration === option.duration && "bg-cyan-500/20 border-cyan-400"
-              )}
-              onClick={() => !isPurchasing && onPurchase(option.duration)}
-            >
-              <div className="flex items-center justify-between sm:flex-col sm:items-center sm:text-center sm:space-y-4 lg:flex-col lg:items-center lg:text-center lg:space-y-4">
-                <div className="flex-1 sm:flex-none lg:flex-none">
-                  <h3 className="text-base sm:text-lg font-semibold text-white mb-1">
-                    {option.label}
-                  </h3>
-                  <p className="text-xs uppercase tracking-widest text-slate-400 font-medium">Full venue access</p>
-                </div>
+        
+        <DurationWheelSelector
+          onSelect={handleDurationSelect}
+          disabled={isPurchasing}
+        />
 
-                <div className="flex items-center space-x-4 sm:flex-col sm:space-x-0 sm:space-y-2 lg:flex-col lg:space-x-0 lg:space-y-2">
-                  <div className="text-center">
-                    <div className="text-xl sm:text-2xl font-bold text-cyan-400 font-mono">
-                      ${option.price}
-                    </div>
-                    <div className="text-slate-400 text-sm font-mono">
-                      ${(option.price / option.duration).toFixed(2)}/day
-                    </div>
-                  </div>
-
-                  <motion.button
-                    whileTap={{ scale: 0.98 }}
-                    disabled={isPurchasing || (balance?.balance_dollars || 0) < option.price}
-                    className={cn(
-                      "py-2 px-4 sm:w-full sm:py-3 lg:w-full lg:py-3 rounded-lg font-semibold transition-all duration-300 text-sm sm:text-base min-h-[44px]",
-                      isPurchasing && purchasingDuration === option.duration
-                        ? 'bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 opacity-75 cursor-not-allowed'
-                        : (balance?.balance_dollars || 0) < option.price
-                          ? 'bg-slate-700/50 border border-slate-600 text-slate-500 cursor-not-allowed'
-                          : 'bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/30'
-                    )}
-                  >
-                    {isPurchasing && purchasingDuration === option.duration ? (
-                      <div className="flex items-center justify-center space-x-2">
-                        <div className="w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
-                        <span className="hidden sm:inline">PROCESSING...</span>
-                        <span className="sm:hidden">...</span>
-                      </div>
-                    ) : (balance?.balance_dollars || 0) < option.price ? (
-                      <>
-                        <span className="hidden sm:inline lg:inline">INSUFFICIENT BALANCE</span>
-                        <span className="sm:hidden lg:hidden">LOW BALANCE</span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="hidden sm:inline lg:inline">PURCHASE PASS</span>
-                        <span className="sm:hidden lg:hidden">BUY</span>
-                      </>
-                    )}
-                  </motion.button>
-                </div>
-              </div>
-            </motion.div>
-          ))}        </div>
-      </div>
+        {/* Purchase Button */}
+        <motion.button
+          whileTap={{ scale: 0.98 }}
+          onClick={handlePurchase}
+          disabled={isPurchasing || (balance?.balance_dollars || 0) < selectedPrice}
+          className={cn(
+            "w-full py-4 rounded-lg font-semibold transition-all duration-300 text-base",
+            isPurchasing
+              ? 'bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 opacity-75 cursor-not-allowed'
+              : (balance?.balance_dollars || 0) < selectedPrice
+                ? 'bg-slate-700/50 border border-slate-600 text-slate-500 cursor-not-allowed'
+                : 'bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/30 hover:shadow-lg hover:shadow-cyan-500/20'
+          )}
+        >
+          {isPurchasing ? (
+            <div className="flex items-center justify-center space-x-2">
+              <div className="w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+              <span>PROCESSING PURCHASE...</span>
+            </div>
+          ) : (balance?.balance_dollars || 0) < selectedPrice ? (
+            'INSUFFICIENT BALANCE'
+          ) : (
+            `PURCHASE ${selectedDuration} ${selectedDuration === 1 ? 'DAY' : 'DAYS'} PASS - $${selectedPrice}`
+          )}
+        </motion.button>
+      </motion.div>
 
       {/* Refund Modal */}
       <RefundModal
