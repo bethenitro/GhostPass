@@ -9,12 +9,44 @@ import logging
 router = APIRouter(prefix="/ghostpass", tags=["GhostPass"])
 logger = logging.getLogger(__name__)
 
-# Pricing in cents: 1 Day ($10), 3 Days ($20), 7 Days ($50)
-PRICES = {
+# Default pricing in cents (used as fallback)
+DEFAULT_PRICES = {
     1: 1000,   # $10.00
-    3: 2000,   # $20.00  
-    7: 5000    # $50.00
+    3: 2000,   # $20.00
+    5: 3500,   # $35.00
+    7: 5000,   # $50.00
+    10: 6500,  # $65.00
+    14: 8500,  # $85.00
+    30: 10000  # $100.00
 }
+
+def get_pricing(db: Client) -> dict:
+    """Get current pricing from system_configs or return defaults"""
+    try:
+        config = db.table("system_configs").select("config_value").eq("config_key", "ghostpass_pricing").execute()
+        if config.data and config.data[0].get("config_value"):
+            pricing = config.data[0]["config_value"]
+            # Convert string keys to int keys and ensure all tiers exist
+            return {
+                int(k): int(v) for k, v in pricing.items()
+            }
+    except Exception as e:
+        logger.warning(f"Failed to fetch pricing config: {e}")
+    
+    return DEFAULT_PRICES
+
+@router.get("/pricing")
+def get_ghostpass_pricing(db: Client = Depends(get_db)):
+    """Get current GhostPass pricing (public endpoint)"""
+    try:
+        pricing = get_pricing(db)
+        return {
+            "pricing": pricing,
+            "currency": "USD"
+        }
+    except Exception as e:
+        logger.error(f"Pricing fetch error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch pricing")
 
 @router.post("/purchase", response_model=PurchaseResponse)
 def purchase_pass(
@@ -23,8 +55,11 @@ def purchase_pass(
     db: Client = Depends(get_db)
 ):
     """Purchase a GhostPass with specified duration"""
+    # Get current pricing
+    PRICES = get_pricing(db)
+    
     if req.duration not in PRICES:
-        raise HTTPException(status_code=400, detail="Invalid duration. Must be 1, 3, or 7 days")
+        raise HTTPException(status_code=400, detail=f"Invalid duration. Must be one of: {list(PRICES.keys())}")
     
     price_cents = PRICES[req.duration]
     

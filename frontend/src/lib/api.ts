@@ -172,6 +172,11 @@ export const ghostPassApi = {
     return data;
   },
 
+  getPricing: async () => {
+    const { data } = await api.get('/ghostpass/pricing');
+    return data;
+  },
+
   getFundingSources: async (): Promise<FundingSource[]> => {
     // Mock funding sources for now
     return [

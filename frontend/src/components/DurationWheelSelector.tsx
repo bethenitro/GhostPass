@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ghostPassApi } from '@/lib/api';
 
 interface DurationOption {
   days: number;
@@ -13,7 +14,8 @@ interface DurationWheelSelectorProps {
   disabled?: boolean;
 }
 
-const durationOptions: DurationOption[] = [
+// Default options (used as fallback if API fails)
+const defaultDurationOptions: DurationOption[] = [
   { days: 1, price: 10 },
   { days: 3, price: 20 },
   { days: 5, price: 35 },
@@ -24,15 +26,15 @@ const durationOptions: DurationOption[] = [
 ];
 
 // Calculate price for any day value using linear interpolation
-const calculatePrice = (days: number): number => {
+const calculatePrice = (days: number, options: DurationOption[]): number => {
   // Find the two options that bracket this day value
-  let lowerOption = durationOptions[0];
-  let upperOption = durationOptions[durationOptions.length - 1];
+  let lowerOption = options[0];
+  let upperOption = options[options.length - 1];
   
-  for (let i = 0; i < durationOptions.length - 1; i++) {
-    if (days >= durationOptions[i].days && days <= durationOptions[i + 1].days) {
-      lowerOption = durationOptions[i];
-      upperOption = durationOptions[i + 1];
+  for (let i = 0; i < options.length - 1; i++) {
+    if (days >= options[i].days && days <= options[i + 1].days) {
+      lowerOption = options[i];
+      upperOption = options[i + 1];
       break;
     }
   }
@@ -49,6 +51,8 @@ export const DurationWheelSelector: React.FC<DurationWheelSelectorProps> = ({
 }) => {
   const [selectedDays, setSelectedDays] = useState(5); // Start at 5 days
   const [isDragging, setIsDragging] = useState(false);
+  const [durationOptions, setDurationOptions] = useState<DurationOption[]>(defaultDurationOptions);
+  const [loading, setLoading] = useState(true);
   const scrollbarRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef(0);
   const touchStartTime = useRef(0);
@@ -56,11 +60,40 @@ export const DurationWheelSelector: React.FC<DurationWheelSelectorProps> = ({
   const minDays = 1;
   const maxDays = 30;
 
+  // Fetch pricing from API on mount
   useEffect(() => {
-    // Notify parent of initial selection
-    const price = calculatePrice(selectedDays);
-    onSelect(selectedDays, price);
+    const fetchPricing = async () => {
+      try {
+        const response = await ghostPassApi.getPricing();
+        if (response.pricing) {
+          // Convert pricing object to DurationOption array
+          const options: DurationOption[] = Object.entries(response.pricing)
+            .map(([days, cents]) => ({
+              days: parseInt(days),
+              price: (cents as number) / 100 // Convert cents to dollars
+            }))
+            .sort((a, b) => a.days - b.days);
+          
+          setDurationOptions(options);
+        }
+      } catch (error) {
+        console.error('Failed to fetch pricing, using defaults:', error);
+        // Keep default options
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPricing();
   }, []);
+
+  useEffect(() => {
+    // Notify parent of initial selection after pricing is loaded
+    if (!loading) {
+      const price = calculatePrice(selectedDays, durationOptions);
+      onSelect(selectedDays, price);
+    }
+  }, [loading, durationOptions]);
 
   const handleDaysChange = (days: number) => {
     if (disabled) return;
@@ -68,7 +101,7 @@ export const DurationWheelSelector: React.FC<DurationWheelSelectorProps> = ({
     const clampedDays = Math.max(minDays, Math.min(days, maxDays));
     setSelectedDays(clampedDays);
     
-    const price = calculatePrice(clampedDays);
+    const price = calculatePrice(clampedDays, durationOptions);
     onSelect(clampedDays, price);
   };
 
@@ -138,9 +171,9 @@ export const DurationWheelSelector: React.FC<DurationWheelSelectorProps> = ({
     }
   }, [isDragging, selectedDays]);
 
-  const selectedPrice = calculatePrice(selectedDays);
+  const selectedPrice = calculatePrice(selectedDays, durationOptions);
   const savings = selectedDays > 1 
-    ? ((10 * selectedDays - selectedPrice) / (10 * selectedDays) * 100).toFixed(0)
+    ? ((durationOptions[0].price * selectedDays - selectedPrice) / (durationOptions[0].price * selectedDays) * 100).toFixed(0)
     : '0';
   const hasSavings = parseInt(savings) > 0;
 
@@ -163,14 +196,22 @@ export const DurationWheelSelector: React.FC<DurationWheelSelectorProps> = ({
   const closestPresetIndex = getClosestPresetIndex();
   const scrollPercentage = (selectedDays - minDays) / (maxDays - minDays);
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Wheel Container with Scrollbar */}
-      <div className="relative flex gap-4">
+      <div className="relative flex gap-3">
         {/* Main Wheel Display */}
         <div
           className={cn(
-            "flex-1 relative h-[280px] overflow-hidden rounded-2xl border-2 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900",
+            "flex-1 relative h-[200px] overflow-hidden rounded-xl border-2 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900",
             disabled ? "border-slate-700 opacity-50" : "border-cyan-500/30"
           )}
           onWheel={handleWheel}
@@ -181,12 +222,12 @@ export const DurationWheelSelector: React.FC<DurationWheelSelectorProps> = ({
           <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-purple-500/5 pointer-events-none" />
           
           {/* Center Selection Highlight - Behind content */}
-          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[120px] pointer-events-none z-0">
+          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[90px] pointer-events-none z-0">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-500/5 to-transparent" />
             {/* Top line - above content */}
-            <div className="absolute inset-x-8 top-2 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />
+            <div className="absolute inset-x-6 top-2 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />
             {/* Bottom line - below content */}
-            <div className="absolute inset-x-8 bottom-2 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />
+            <div className="absolute inset-x-6 bottom-2 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />
           </div>
 
           {/* Options Display */}
@@ -202,11 +243,11 @@ export const DurationWheelSelector: React.FC<DurationWheelSelectorProps> = ({
               {/* Previous Item (Above) */}
               {closestPresetIndex > 0 && (
                 <motion.div
-                  initial={{ y: 20, opacity: 0 }}
+                  initial={{ y: 15, opacity: 0 }}
                   animate={{ y: 0, opacity: 0.3 }}
-                  className="absolute top-[50px] text-center"
+                  className="absolute top-[35px] text-center"
                 >
-                  <div className="text-sm text-slate-600 font-mono">
+                  <div className="text-xs text-slate-600 font-mono">
                     {durationOptions[closestPresetIndex - 1].days}d
                   </div>
                 </motion.div>
@@ -220,11 +261,11 @@ export const DurationWheelSelector: React.FC<DurationWheelSelectorProps> = ({
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 className="relative z-10"
               >
-                <div className="text-center px-4">
-                  <div className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-cyan-300 to-cyan-400 font-mono leading-none">
+                <div className="text-center px-3">
+                  <div className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-cyan-300 to-cyan-400 font-mono leading-none">
                     {selectedDays}
                   </div>
-                  <div className="text-xl text-cyan-400 font-semibold mt-1">
+                  <div className="text-base text-cyan-400 font-semibold mt-1">
                     Days
                   </div>
                 </div>
@@ -233,11 +274,11 @@ export const DurationWheelSelector: React.FC<DurationWheelSelectorProps> = ({
               {/* Next Item (Below) */}
               {closestPresetIndex < durationOptions.length - 1 && (
                 <motion.div
-                  initial={{ y: -20, opacity: 0 }}
+                  initial={{ y: -15, opacity: 0 }}
                   animate={{ y: 0, opacity: 0.3 }}
-                  className="absolute bottom-[50px] text-center"
+                  className="absolute bottom-[35px] text-center"
                 >
-                  <div className="text-sm text-slate-600 font-mono">
+                  <div className="text-xs text-slate-600 font-mono">
                     {durationOptions[closestPresetIndex + 1].days}d
                   </div>
                 </motion.div>
@@ -246,16 +287,16 @@ export const DurationWheelSelector: React.FC<DurationWheelSelectorProps> = ({
           </AnimatePresence>
 
           {/* Gradient Overlays for Depth */}
-          <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-slate-900 to-transparent pointer-events-none z-20" />
-          <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-900 to-transparent pointer-events-none z-20" />
+          <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-slate-900 to-transparent pointer-events-none z-20" />
+          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-900 to-transparent pointer-events-none z-20" />
         </div>
 
         {/* Vertical Scrollbar */}
-        <div className="relative w-12 h-[280px] flex items-center justify-center">
+        <div className="relative w-10 h-[200px] flex items-center justify-center">
           <div
             ref={scrollbarRef}
             className={cn(
-              "relative w-4 h-full bg-slate-800/50 rounded-full border border-slate-700 cursor-pointer",
+              "relative w-3 h-full bg-slate-800/50 rounded-full border border-slate-700 cursor-pointer",
               disabled && "opacity-50 cursor-not-allowed"
             )}
             onMouseDown={handleScrollbarMouseDown}
@@ -263,15 +304,15 @@ export const DurationWheelSelector: React.FC<DurationWheelSelectorProps> = ({
             {/* Scrollbar Thumb - Perfectly centered and constrained */}
             <motion.div
               className={cn(
-                "absolute w-3 h-10 rounded-full border-2 transition-colors pointer-events-none",
+                "absolute w-2.5 h-8 rounded-full border-2 transition-colors pointer-events-none",
                 isDragging
                   ? "bg-cyan-400 border-cyan-300 shadow-lg shadow-cyan-500/50"
                   : "bg-cyan-500/50 border-cyan-400 shadow-md shadow-cyan-500/30"
               )}
               style={{
-                top: `calc(${scrollPercentage * 100}% - ${scrollPercentage * 40}px)`,
-                left: '2px',
-                right: '2px',
+                top: `calc(${scrollPercentage * 100}% - ${scrollPercentage * 32}px)`,
+                left: '1px',
+                right: '1px',
                 marginLeft: 'auto',
                 marginRight: 'auto'
               }}
@@ -296,38 +337,38 @@ export const DurationWheelSelector: React.FC<DurationWheelSelectorProps> = ({
       </div>
 
       {/* Summary Card */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-cyan-500/30 rounded-xl p-6 backdrop-blur-sm">
+      <div className="relative overflow-hidden bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-cyan-500/30 rounded-xl p-4 backdrop-blur-sm">
         {/* Animated Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(6,182,212,0.3),transparent_50%)]" />
         </div>
 
         <div className="relative z-10">
-          <div className="flex items-start justify-between mb-4">
+          <div className="flex items-start justify-between mb-3">
             <div>
-              <div className="text-xs uppercase tracking-wider text-slate-400 mb-1">Selected Plan</div>
-              <div className="text-2xl font-bold text-white">
+              <div className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Selected Plan</div>
+              <div className="text-xl font-bold text-white">
                 {selectedDays} {selectedDays === 1 ? 'Day' : 'Days'} Pass
               </div>
             </div>
             <div className="text-right">
-              <div className="text-xs uppercase tracking-wider text-slate-400 mb-1">Total</div>
-              <div className="text-2xl font-bold text-cyan-400 font-mono">
+              <div className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Total</div>
+              <div className="text-xl font-bold text-cyan-400 font-mono">
                 ${selectedPrice}
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-700">
+          <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-700">
             <div>
-              <div className="text-xs text-slate-500 mb-1">Daily Rate</div>
-              <div className="text-lg font-semibold text-cyan-300 font-mono">
+              <div className="text-[10px] text-slate-500 mb-1">Daily Rate</div>
+              <div className="text-base font-semibold text-cyan-300 font-mono">
                 ${(selectedPrice / selectedDays).toFixed(2)}
               </div>
             </div>
             <div>
-              <div className="text-xs text-slate-500 mb-1">Duration</div>
-              <div className="text-lg font-semibold text-white">
+              <div className="text-[10px] text-slate-500 mb-1">Duration</div>
+              <div className="text-base font-semibold text-white">
                 {selectedDays * 24} hours
               </div>
             </div>
@@ -339,11 +380,11 @@ export const DurationWheelSelector: React.FC<DurationWheelSelectorProps> = ({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg"
+                className="mt-3 p-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-lg"
               >
                 <div className="flex items-center gap-2">
-                  <Sparkles className="text-emerald-400" size={16} />
-                  <span className="text-emerald-400 text-sm font-semibold">
+                  <Sparkles className="text-emerald-400" size={14} />
+                  <span className="text-emerald-400 text-xs font-semibold">
                     You save {savings}% compared to daily rate
                   </span>
                 </div>

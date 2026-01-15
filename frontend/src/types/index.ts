@@ -106,7 +106,21 @@ export interface ScanFeeUpdate {
 export interface GhostPassPricingUpdate {
   one_day_cents: number;
   three_day_cents: number;
+  five_day_cents: number;
   seven_day_cents: number;
+  ten_day_cents: number;
+  fourteen_day_cents: number;
+  thirty_day_cents: number;
+}
+
+export interface GhostPassPricing {
+  "1": number;
+  "3": number;
+  "5": number;
+  "7": number;
+  "10": number;
+  "14": number;
+  "30": number;
 }
 
 export interface PayoutRequest {
@@ -172,7 +186,11 @@ export interface AdminDashboard {
   current_pricing?: {
     "1": number;
     "3": number;
+    "5": number;
     "7": number;
+    "10": number;
+    "14": number;
+    "30": number;
   };
   current_retention?: {
     retention_days: number;

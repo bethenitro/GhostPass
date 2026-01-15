@@ -83,7 +83,11 @@ const CommandCenter: React.FC<CommandCenterProps> = ({ isOpen, onClose, onNaviga
   const [pricing, setPricing] = useState<GhostPassPricingUpdate>({
     one_day_cents: 1000,
     three_day_cents: 2000,
-    seven_day_cents: 5000
+    five_day_cents: 3500,
+    seven_day_cents: 5000,
+    ten_day_cents: 6500,
+    fourteen_day_cents: 8500,
+    thirty_day_cents: 10000
   });
 
   // Retention Override State
@@ -117,7 +121,11 @@ const CommandCenter: React.FC<CommandCenterProps> = ({ isOpen, onClose, onNaviga
         setPricing({
           one_day_cents: parseInt(String(data.current_pricing["1"])) || 1000,
           three_day_cents: parseInt(String(data.current_pricing["3"])) || 2000,
-          seven_day_cents: parseInt(String(data.current_pricing["7"])) || 5000
+          five_day_cents: parseInt(String(data.current_pricing["5"])) || 3500,
+          seven_day_cents: parseInt(String(data.current_pricing["7"])) || 5000,
+          ten_day_cents: parseInt(String(data.current_pricing["10"])) || 6500,
+          fourteen_day_cents: parseInt(String(data.current_pricing["14"])) || 8500,
+          thirty_day_cents: parseInt(String(data.current_pricing["30"])) || 10000
         });
       }
 
@@ -583,7 +591,7 @@ const CommandCenter: React.FC<CommandCenterProps> = ({ isOpen, onClose, onNaviga
                     <p className="text-yellow-400 text-sm">⚠ Changes affect NEW purchases only. Existing passes unchanged.</p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-slate-300 mb-2">
                         1 Day Pass (${(pricing.one_day_cents / 100).toFixed(2)})
@@ -591,7 +599,7 @@ const CommandCenter: React.FC<CommandCenterProps> = ({ isOpen, onClose, onNaviga
                       <input
                         type="number"
                         min="100"
-                        max="5000"
+                        max="10000"
                         step="100"
                         value={pricing.one_day_cents}
                         onChange={(e) => setPricing(prev => ({ ...prev, one_day_cents: parseInt(e.target.value) || 1000 }))}
@@ -605,10 +613,24 @@ const CommandCenter: React.FC<CommandCenterProps> = ({ isOpen, onClose, onNaviga
                       <input
                         type="number"
                         min="100"
-                        max="5000"
+                        max="10000"
                         step="100"
                         value={pricing.three_day_cents}
                         onChange={(e) => setPricing(prev => ({ ...prev, three_day_cents: parseInt(e.target.value) || 2000 }))}
+                        className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                        5 Day Pass (${(pricing.five_day_cents / 100).toFixed(2)})
+                      </label>
+                      <input
+                        type="number"
+                        min="100"
+                        max="10000"
+                        step="100"
+                        value={pricing.five_day_cents}
+                        onChange={(e) => setPricing(prev => ({ ...prev, five_day_cents: parseInt(e.target.value) || 3500 }))}
                         className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-sm"
                       />
                     </div>
@@ -623,6 +645,48 @@ const CommandCenter: React.FC<CommandCenterProps> = ({ isOpen, onClose, onNaviga
                         step="100"
                         value={pricing.seven_day_cents}
                         onChange={(e) => setPricing(prev => ({ ...prev, seven_day_cents: parseInt(e.target.value) || 5000 }))}
+                        className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                        10 Day Pass (${(pricing.ten_day_cents / 100).toFixed(2)})
+                      </label>
+                      <input
+                        type="number"
+                        min="100"
+                        max="10000"
+                        step="100"
+                        value={pricing.ten_day_cents}
+                        onChange={(e) => setPricing(prev => ({ ...prev, ten_day_cents: parseInt(e.target.value) || 6500 }))}
+                        className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                        14 Day Pass (${(pricing.fourteen_day_cents / 100).toFixed(2)})
+                      </label>
+                      <input
+                        type="number"
+                        min="100"
+                        max="10000"
+                        step="100"
+                        value={pricing.fourteen_day_cents}
+                        onChange={(e) => setPricing(prev => ({ ...prev, fourteen_day_cents: parseInt(e.target.value) || 8500 }))}
+                        className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                        30 Day Pass (${(pricing.thirty_day_cents / 100).toFixed(2)})
+                      </label>
+                      <input
+                        type="number"
+                        min="100"
+                        max="15000"
+                        step="100"
+                        value={pricing.thirty_day_cents}
+                        onChange={(e) => setPricing(prev => ({ ...prev, thirty_day_cents: parseInt(e.target.value) || 10000 }))}
                         className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-sm"
                       />
                     </div>

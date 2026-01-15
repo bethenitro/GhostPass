@@ -433,7 +433,11 @@ async def update_ghostpass_pricing(
         new_pricing = {
             "1": pricing.one_day_cents,
             "3": pricing.three_day_cents,
-            "7": pricing.seven_day_cents
+            "5": pricing.five_day_cents,
+            "7": pricing.seven_day_cents,
+            "10": pricing.ten_day_cents,
+            "14": pricing.fourteen_day_cents,
+            "30": pricing.thirty_day_cents
         }
         
         # Save updated pricing

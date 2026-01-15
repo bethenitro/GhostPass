@@ -194,7 +194,11 @@ class ScanFeeUpdate(BaseModel):
 class GhostPassPricingUpdate(BaseModel):
     one_day_cents: int = Field(..., ge=0)
     three_day_cents: int = Field(..., ge=0)
+    five_day_cents: int = Field(..., ge=0)
     seven_day_cents: int = Field(..., ge=0)
+    ten_day_cents: int = Field(..., ge=0)
+    fourteen_day_cents: int = Field(..., ge=0)
+    thirty_day_cents: int = Field(..., ge=0)
 
 class PayoutStatus(str, Enum):
     PENDING = "PENDING"
