@@ -46,7 +46,7 @@ const QRCodeView: React.FC = () => {
             <p className="text-slate-400 text-sm mt-1">Create a new session to continue</p>
           </motion.div>
         )}
-        <SessionSelector onSessionCreated={(session) => { 
+        <SessionSelector onSessionCreated={(_session) => { 
           setIsCreatingSession(true);
           refetchSession();
           setTimeout(() => setIsCreatingSession(false), 500);

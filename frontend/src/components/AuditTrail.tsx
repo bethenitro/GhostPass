@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Filter, ArrowLeft, Search, Calendar, User, Activity, Eye } from 'lucide-react';
+import { FileText, Filter, ArrowLeft, Search, Activity, Eye } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { auditApi } from '../lib/api';
 import type { 
@@ -16,6 +16,7 @@ interface AuditTrailProps {
 }
 
 export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }) => {
+  const rootClass = `min-h-screen bg-slate-950 ${className}`.trim();
   const [auditLogs, setAuditLogs] = useState<EntryPointAuditLog[]>([]);
   const [summaryStats, setSummaryStats] = useState<AuditSummaryStats | null>(null);
   const [recentScans, setRecentScans] = useState<RecentScansResponse | null>(null);
@@ -110,7 +111,7 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
 
   if (loading && auditLogs.length === 0) {
     return (
-      <div className="min-h-screen bg-slate-950">
+      <div className={rootClass}>
         {/* Header */}
         <div className="border-b border-red-500/30 bg-gradient-to-r from-red-500/10 to-transparent sticky top-0 z-10 backdrop-blur-xl">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 md:py-6">
@@ -148,7 +149,7 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-950">
+      <div className={rootClass}>
         {/* Header */}
         <div className="border-b border-red-500/30 bg-gradient-to-r from-red-500/10 to-transparent sticky top-0 z-10 backdrop-blur-xl">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 md:py-6">
@@ -194,7 +195,7 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
   }
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className={rootClass}>
       {/* Header */}
       <div className="border-b border-red-500/30 bg-gradient-to-r from-red-500/10 to-transparent sticky top-0 z-10 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 md:py-6">

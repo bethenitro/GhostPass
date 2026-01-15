@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Building2, Utensils, Plus, Edit2, Trash2, Power, ArrowLeft, DollarSign } from 'lucide-react';
+import { MapPin, Building2, Armchair, Plus, Edit2, Trash2, Power, ArrowLeft, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { gatewayApi } from '@/lib/api';
 import type { EntryPoint, InternalArea, TableSeat, GatewayStatus } from '@/types';
@@ -167,7 +167,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
     const tabs = [
         { id: 'entry-points' as TabType, label: 'Entry Points', icon: MapPin },
         { id: 'internal-areas' as TabType, label: 'Internal Areas', icon: Building2 },
-        { id: 'tables-seats' as TabType, label: 'Tables & Seats', icon: Utensils },
+        { id: 'tables-seats' as TabType, label: 'Tables & Seats', icon: Armchair },
         { id: 'financial' as TabType, label: 'Financial', icon: DollarSign },
     ];
 
@@ -1094,7 +1094,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                                                 >
                                                     <td className="py-3 px-4">
                                                         <div className="flex items-center space-x-2">
-                                                            <Utensils size={16} className="text-red-400 flex-shrink-0" />
+                                                            <Armchair size={16} className="text-red-400 flex-shrink-0" />
                                                             <span className={cn(
                                                                 "font-medium text-sm",
                                                                 table.status === 'ENABLED' ? "text-white" : "text-slate-500"
@@ -1170,7 +1170,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                                         >
                                             <div className="flex items-start justify-between mb-3 gap-2">
                                                 <div className="flex items-center space-x-2 flex-1 min-w-0">
-                                                    <Utensils size={16} className="text-red-400 flex-shrink-0" />
+                                                    <Armchair size={16} className="text-red-400 flex-shrink-0" />
                                                     <div className="flex-1 min-w-0">
                                                         <span className={cn(
                                                             "font-medium text-sm break-words block",
@@ -1227,7 +1227,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                         {/* Empty State */}
                         {!loadingTables && internalAreas.length > 0 && tableSeats.length === 0 && (
                             <div className="glass-panel border-red-500/20 p-8 sm:p-12 text-center">
-                                <Utensils className="mx-auto text-slate-600 mb-4" size={48} />
+                                <Armchair className="mx-auto text-slate-600 mb-4" size={48} />
                                 <p className="text-slate-400 text-base sm:text-lg mb-2">No tables or seats configured</p>
                                 <p className="text-slate-500 text-xs sm:text-sm mb-6">
                                     Add your first table or seat to start managing specific locations

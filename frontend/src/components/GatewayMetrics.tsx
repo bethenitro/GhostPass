@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Activity, TrendingUp, Clock, DollarSign } from 'lucide-react';
 import { gatewayApi } from '@/lib/api';
 import type { GatewayRealtimeMetrics } from '@/types';
-import { cn } from '@/lib/utils';
+// 'cn' not used in this component
 
 interface GatewayMetricsProps {
   gatewayPointId: string;

@@ -154,7 +154,7 @@ const AppContent: React.FC = () => {
 
   // Show Audit Trail page if on audit-trail route
   if (isAuditTrailRoute) {
-    return <AuditTrail onBack={handleBackToMain} />;
+    return <AuditTrail onBack={() => window.location.hash = '#/command-center'} />;
   }
 
   // Show Command Center page if on command-center route

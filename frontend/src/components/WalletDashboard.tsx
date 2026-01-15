@@ -13,7 +13,7 @@ interface WalletDashboardProps {
   purchasingDuration?: number;
 }
 
-const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchasing = false, purchasingDuration }) => {
+const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchasing = false, purchasingDuration: _purchasingDuration }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [selectedDuration, setSelectedDuration] = useState(1);
