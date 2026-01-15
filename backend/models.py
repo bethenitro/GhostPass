@@ -273,6 +273,9 @@ class GatewayPoint(BaseModel):
     accepts_ghostpass: bool = True
     status: GatewayStatus
     type: GatewayType
+    employee_name: str
+    employee_id: str
+    visual_identifier: Optional[str] = None
     linked_area_id: Optional[UUID] = None  # For TABLE_SEAT: references INTERNAL_AREA
     created_at: datetime
     updated_at: datetime
@@ -284,6 +287,9 @@ class GatewayPointCreate(BaseModel):
     accepts_ghostpass: bool = True
     status: GatewayStatus = GatewayStatus.ENABLED
     type: GatewayType
+    employee_name: str = Field(..., min_length=1, max_length=100)
+    employee_id: str = Field(..., min_length=1, max_length=50, pattern=r'^[a-zA-Z0-9]+$')
+    visual_identifier: Optional[str] = Field(None, max_length=500)
     linked_area_id: Optional[UUID] = None  # Required for TABLE_SEAT type
 
 class GatewayPointUpdate(BaseModel):
@@ -291,4 +297,64 @@ class GatewayPointUpdate(BaseModel):
     number: Optional[int] = Field(None, ge=0)
     accepts_ghostpass: Optional[bool] = None
     status: Optional[GatewayStatus] = None
+    employee_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    employee_id: Optional[str] = Field(None, min_length=1, max_length=50, pattern=r'^[a-zA-Z0-9]+$')
+    visual_identifier: Optional[str] = Field(None, max_length=500)
     linked_area_id: Optional[UUID] = None
+
+# Gateway Metrics Models
+class MetricType(str, Enum):
+    QR_SCAN = "QR_SCAN"
+    TRANSACTION = "TRANSACTION"
+    SALE = "SALE"
+
+class GatewayMetric(BaseModel):
+    id: UUID
+    gateway_point_id: UUID
+    metric_type: MetricType
+    metric_value: float = 1.0
+    amount_cents: int = 0
+    timestamp: datetime
+    metadata: Optional[Dict[str, Any]] = None
+
+class GatewayMetricCreate(BaseModel):
+    gateway_point_id: UUID
+    metric_type: MetricType
+    amount_cents: int = 0
+    metadata: Optional[Dict[str, Any]] = None
+
+class GatewayRealtimeMetrics(BaseModel):
+    gateway_point_id: UUID
+    gateway_name: str
+    gateway_type: str
+    gateway_status: str
+    
+    # QR Scan metrics (for ENTRY_POINT)
+    total_qr_scans: int = 0
+    last_qr_scan: Optional[datetime] = None
+    qr_scans_last_hour: int = 0
+    qr_scans_today: int = 0
+    
+    # Transaction metrics (for TABLE_SEAT and INTERNAL_AREA)
+    total_transactions: int = 0
+    last_transaction: Optional[datetime] = None
+    transactions_last_hour: int = 0
+    transactions_today: int = 0
+    
+    # Sales value metrics
+    total_sales_cents: int = 0
+    sales_last_hour_cents: int = 0
+    sales_today_cents: int = 0
+    
+    # Computed fields
+    @property
+    def total_sales_dollars(self) -> float:
+        return self.total_sales_cents / 100.0
+    
+    @property
+    def sales_last_hour_dollars(self) -> float:
+        return self.sales_last_hour_cents / 100.0
+    
+    @property
+    def sales_today_dollars(self) -> float:
+        return self.sales_today_cents / 100.0

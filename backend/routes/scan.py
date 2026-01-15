@@ -299,6 +299,24 @@ def validate_scan(
         
         # 7. For sessions, vaporize immediately after successful scan
         if is_session_scan:
+            # Record scan metric before vaporizing
+            try:
+                db.rpc(
+                    "record_gateway_metric",
+                    {
+                        "p_gateway_point_id": req.gateway_id,
+                        "p_metric_type": "QR_SCAN",
+                        "p_amount_cents": 0,
+                        "p_metadata": {
+                            "session_id": session_id,
+                            "scan_timestamp": current_time.isoformat(),
+                            "is_session": True
+                        }
+                    }
+                ).execute()
+            except Exception as e:
+                logger.warning(f"Failed to record session scan metric: {e}")
+            
             db.table("sessions")\
                 .update({"status": "VAPORIZED"})\
                 .eq("id", session_id)\
@@ -310,7 +328,25 @@ def validate_scan(
                 message=f"Session validated and vaporized. No reuse possible."
             )
         
-        # 8. Return approval for traditional passes
+        # 8. Record QR scan metric for entry points
+        try:
+            db.rpc(
+                "record_gateway_metric",
+                {
+                    "p_gateway_point_id": req.gateway_id,
+                    "p_metric_type": "QR_SCAN",
+                    "p_amount_cents": 0,
+                    "p_metadata": {
+                        "pass_id": str(req.pass_id),
+                        "scan_timestamp": current_time.isoformat(),
+                        "is_session": is_session_scan
+                    }
+                }
+            ).execute()
+        except Exception as e:
+            logger.warning(f"Failed to record scan metric: {e}")
+        
+        # 9. Return approval for traditional passes
         return ScanResponse(
             status="APPROVED",
             receipt_id=req.gateway_id,

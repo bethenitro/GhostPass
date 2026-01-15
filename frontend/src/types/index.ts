@@ -182,6 +182,7 @@ export interface AdminDashboard {
 // Gateway Management Types
 export type GatewayStatus = 'ENABLED' | 'DISABLED';
 export type GatewayType = 'ENTRY_POINT' | 'INTERNAL_AREA' | 'TABLE_SEAT';
+export type EntryPointType = 'Internal' | 'External' | 'TableSeat' | 'Concession';
 
 export interface EntryPoint {
   id: string;
@@ -189,6 +190,10 @@ export interface EntryPoint {
   name: string;
   status: GatewayStatus;
   type: 'ENTRY_POINT';
+  employee_name: string;
+  employee_id: string;
+  entry_point_type?: EntryPointType;
+  visual_identifier?: string;
   created_at: string;
   updated_at: string;
 }
@@ -201,6 +206,9 @@ export interface InternalArea {
   accepts_ghostpass: boolean;
   status: GatewayStatus;
   type: 'INTERNAL_AREA';
+  employee_name: string;
+  employee_id: string;
+  visual_identifier?: string;
   created_at: string;
   updated_at: string;
 }
@@ -213,8 +221,41 @@ export interface TableSeat {
   linked_area_id: string;
   status: GatewayStatus;
   type: 'TABLE_SEAT';
+  employee_name: string;
+  employee_id: string;
+  visual_identifier?: string;
   created_at: string;
   updated_at: string;
+}
+
+// Gateway Metrics Types
+export interface GatewayRealtimeMetrics {
+  gateway_point_id: string;
+  gateway_name: string;
+  gateway_type: 'ENTRY_POINT' | 'INTERNAL_AREA' | 'TABLE_SEAT';
+  gateway_status: GatewayStatus;
+  
+  // QR Scan metrics (for ENTRY_POINT)
+  total_qr_scans: number;
+  last_qr_scan?: string;
+  qr_scans_last_hour: number;
+  qr_scans_today: number;
+  
+  // Transaction metrics (for TABLE_SEAT and INTERNAL_AREA)
+  total_transactions: number;
+  last_transaction?: string;
+  transactions_last_hour: number;
+  transactions_today: number;
+  
+  // Sales value metrics
+  total_sales_cents: number;
+  sales_last_hour_cents: number;
+  sales_today_cents: number;
+  
+  // Computed fields
+  total_sales_dollars?: number;
+  sales_last_hour_dollars?: number;
+  sales_today_dollars?: number;
 }
 
 // Refund Types

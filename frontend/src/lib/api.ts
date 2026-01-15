@@ -280,7 +280,13 @@ export const gatewayApi = {
     return data;
   },
 
-  createEntryPoint: async (entryPoint: { name: string; status: 'ENABLED' | 'DISABLED' }) => {
+  createEntryPoint: async (entryPoint: { 
+    name: string; 
+    status: 'ENABLED' | 'DISABLED';
+    employee_name: string;
+    employee_id: string;
+    visual_identifier?: string;
+  }) => {
     const { data } = await api.post('/gateway/points', {
       ...entryPoint,
       type: 'ENTRY_POINT'
@@ -288,7 +294,13 @@ export const gatewayApi = {
     return data;
   },
 
-  updateEntryPoint: async (id: string, updates: { name?: string; status?: 'ENABLED' | 'DISABLED' }) => {
+  updateEntryPoint: async (id: string, updates: { 
+    name?: string; 
+    status?: 'ENABLED' | 'DISABLED';
+    employee_name?: string;
+    employee_id?: string;
+    visual_identifier?: string;
+  }) => {
     const { data } = await api.put(`/gateway/points/${id}`, updates);
     return data;
   },
@@ -308,7 +320,10 @@ export const gatewayApi = {
     name: string;
     number?: number;
     accepts_ghostpass: boolean;
-    status: 'ENABLED' | 'DISABLED'
+    status: 'ENABLED' | 'DISABLED';
+    employee_name: string;
+    employee_id: string;
+    visual_identifier?: string;
   }) => {
     const { data } = await api.post('/gateway/points', {
       ...area,
@@ -321,7 +336,10 @@ export const gatewayApi = {
     name?: string;
     number?: number;
     accepts_ghostpass?: boolean;
-    status?: 'ENABLED' | 'DISABLED'
+    status?: 'ENABLED' | 'DISABLED';
+    employee_name?: string;
+    employee_id?: string;
+    visual_identifier?: string;
   }) => {
     const { data } = await api.put(`/gateway/points/${id}`, updates);
     return data;
@@ -342,7 +360,10 @@ export const gatewayApi = {
     name: string;
     number?: number;
     linked_area_id: string;
-    status: 'ENABLED' | 'DISABLED'
+    status: 'ENABLED' | 'DISABLED';
+    employee_name: string;
+    employee_id: string;
+    visual_identifier?: string;
   }) => {
     const { data } = await api.post('/gateway/points', {
       ...tableSeat,
@@ -355,7 +376,10 @@ export const gatewayApi = {
     name?: string;
     number?: number;
     linked_area_id?: string;
-    status?: 'ENABLED' | 'DISABLED'
+    status?: 'ENABLED' | 'DISABLED';
+    employee_name?: string;
+    employee_id?: string;
+    visual_identifier?: string;
   }) => {
     const { data } = await api.put(`/gateway/points/${id}`, updates);
     return data;
@@ -363,6 +387,28 @@ export const gatewayApi = {
 
   deleteTableSeat: async (id: string) => {
     const { data } = await api.delete(`/gateway/points/${id}`);
+    return data;
+  },
+
+  // Metrics
+  getMetrics: async (pointId: string) => {
+    const { data } = await api.get(`/gateway/metrics/${pointId}`);
+    return data;
+  },
+
+  getAllMetrics: async (type?: 'ENTRY_POINT' | 'INTERNAL_AREA' | 'TABLE_SEAT') => {
+    const params = type ? { type } : {};
+    const { data } = await api.get('/gateway/metrics', { params });
+    return data;
+  },
+
+  recordMetric: async (metric: {
+    gateway_point_id: string;
+    metric_type: 'QR_SCAN' | 'TRANSACTION' | 'SALE';
+    amount_cents?: number;
+    metadata?: Record<string, any>;
+  }) => {
+    const { data } = await api.post('/gateway/metrics/record', metric);
     return data;
   }
 };

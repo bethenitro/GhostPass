@@ -3,6 +3,7 @@ import { MapPin, Building2, Utensils, Plus, Edit2, Trash2, Power, ArrowLeft } fr
 import { cn } from '@/lib/utils';
 import { gatewayApi } from '@/lib/api';
 import type { EntryPoint, InternalArea, TableSeat, GatewayStatus } from '@/types';
+import { GatewayMetrics, GatewayMetricsCompact } from './GatewayMetrics';
 
 interface GatewayManagerPageProps {
     onBack: () => void;
@@ -13,6 +14,9 @@ type TabType = 'entry-points' | 'internal-areas' | 'tables-seats';
 interface EntryPointFormData {
     name: string;
     status: GatewayStatus;
+    employee_name: string;
+    employee_id: string;
+    visual_identifier: string;
 }
 
 interface InternalAreaFormData {
@@ -20,6 +24,9 @@ interface InternalAreaFormData {
     number: string;
     accepts_ghostpass: boolean;
     status: GatewayStatus;
+    employee_name: string;
+    employee_id: string;
+    visual_identifier: string;
 }
 
 interface TableSeatFormData {
@@ -27,6 +34,9 @@ interface TableSeatFormData {
     number: string;
     linked_area_id: string;
     status: GatewayStatus;
+    employee_name: string;
+    employee_id: string;
+    visual_identifier: string;
 }
 
 const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
@@ -40,7 +50,10 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
     const [editingEntryPoint, setEditingEntryPoint] = useState<EntryPoint | null>(null);
     const [entryPointForm, setEntryPointForm] = useState<EntryPointFormData>({
         name: '',
-        status: 'ENABLED'
+        status: 'ENABLED',
+        employee_name: '',
+        employee_id: '',
+        visual_identifier: ''
     });
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
     const [formError, setFormError] = useState<string>('');
@@ -57,7 +70,10 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
         name: '',
         number: '',
         accepts_ghostpass: true,
-        status: 'ENABLED'
+        status: 'ENABLED',
+        employee_name: '',
+        employee_id: '',
+        visual_identifier: ''
     });
     const [deleteAreaConfirmId, setDeleteAreaConfirmId] = useState<string | null>(null);
     const [areaFormError, setAreaFormError] = useState<string>('');
@@ -74,7 +90,10 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
         name: '',
         number: '',
         linked_area_id: '',
-        status: 'ENABLED'
+        status: 'ENABLED',
+        employee_name: '',
+        employee_id: '',
+        visual_identifier: ''
     });
     const [deleteTableConfirmId, setDeleteTableConfirmId] = useState<string | null>(null);
     const [tableFormError, setTableFormError] = useState<string>('');
@@ -153,14 +172,26 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
     // Entry Point CRUD Operations
     const handleOpenAddModal = () => {
         setEditingEntryPoint(null);
-        setEntryPointForm({ name: '', status: 'ENABLED' });
+        setEntryPointForm({ 
+            name: '', 
+            status: 'ENABLED',
+            employee_name: '',
+            employee_id: '',
+            visual_identifier: ''
+        });
         setFormError('');
         setShowEntryPointModal(true);
     };
 
     const handleOpenEditModal = (entryPoint: EntryPoint) => {
         setEditingEntryPoint(entryPoint);
-        setEntryPointForm({ name: entryPoint.name, status: entryPoint.status });
+        setEntryPointForm({ 
+            name: entryPoint.name, 
+            status: entryPoint.status,
+            employee_name: entryPoint.employee_name,
+            employee_id: entryPoint.employee_id,
+            visual_identifier: entryPoint.visual_identifier || ''
+        });
         setFormError('');
         setShowEntryPointModal(true);
     };
@@ -168,6 +199,22 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
     const handleSaveEntryPoint = async () => {
         if (!entryPointForm.name.trim()) {
             setFormError('Entry point name is required');
+            return;
+        }
+        
+        if (!entryPointForm.employee_name.trim()) {
+            setFormError('Employee name is required');
+            return;
+        }
+        
+        if (!entryPointForm.employee_id.trim()) {
+            setFormError('Employee ID is required');
+            return;
+        }
+        
+        // Validate employee_id is alphanumeric
+        if (!/^[a-zA-Z0-9]+$/.test(entryPointForm.employee_id)) {
+            setFormError('Employee ID must be alphanumeric');
             return;
         }
 
@@ -178,19 +225,31 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
             if (editingEntryPoint) {
                 const updated = await gatewayApi.updateEntryPoint(editingEntryPoint.id, {
                     name: entryPointForm.name,
-                    status: entryPointForm.status
+                    status: entryPointForm.status,
+                    employee_name: entryPointForm.employee_name,
+                    employee_id: entryPointForm.employee_id,
+                    visual_identifier: entryPointForm.visual_identifier || undefined
                 });
                 setEntryPoints(prev => prev.map(ep => ep.id === updated.id ? updated : ep));
             } else {
                 const newPoint = await gatewayApi.createEntryPoint({
                     name: entryPointForm.name,
-                    status: entryPointForm.status
+                    status: entryPointForm.status,
+                    employee_name: entryPointForm.employee_name,
+                    employee_id: entryPointForm.employee_id,
+                    visual_identifier: entryPointForm.visual_identifier || undefined
                 });
                 setEntryPoints(prev => [newPoint, ...prev]);
             }
 
             setShowEntryPointModal(false);
-            setEntryPointForm({ name: '', status: 'ENABLED' });
+            setEntryPointForm({ 
+                name: '', 
+                status: 'ENABLED',
+                employee_name: '',
+                employee_id: '',
+                visual_identifier: ''
+            });
         } catch (err: any) {
             console.error('Error saving entry point:', err);
             setFormError(err.response?.data?.detail || 'Failed to save entry point');
@@ -228,7 +287,15 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
     // Internal Area CRUD Operations
     const handleOpenAddAreaModal = () => {
         setEditingArea(null);
-        setAreaForm({ name: '', number: '', accepts_ghostpass: true, status: 'ENABLED' });
+        setAreaForm({ 
+            name: '', 
+            number: '', 
+            accepts_ghostpass: true, 
+            status: 'ENABLED',
+            employee_name: '',
+            employee_id: '',
+            visual_identifier: ''
+        });
         setAreaFormError('');
         setShowAreaModal(true);
     };
@@ -239,7 +306,10 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
             name: area.name,
             number: area.number?.toString() || '',
             accepts_ghostpass: area.accepts_ghostpass,
-            status: area.status
+            status: area.status,
+            employee_name: area.employee_name,
+            employee_id: area.employee_id,
+            visual_identifier: area.visual_identifier || ''
         });
         setAreaFormError('');
         setShowAreaModal(true);
@@ -248,6 +318,22 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
     const handleSaveArea = async () => {
         if (!areaForm.name.trim()) {
             setAreaFormError('Area name is required');
+            return;
+        }
+        
+        if (!areaForm.employee_name.trim()) {
+            setAreaFormError('Employee name is required');
+            return;
+        }
+        
+        if (!areaForm.employee_id.trim()) {
+            setAreaFormError('Employee ID is required');
+            return;
+        }
+        
+        // Validate employee_id is alphanumeric
+        if (!/^[a-zA-Z0-9]+$/.test(areaForm.employee_id)) {
+            setAreaFormError('Employee ID must be alphanumeric');
             return;
         }
 
@@ -259,7 +345,10 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                 name: areaForm.name,
                 number: areaForm.number ? parseInt(areaForm.number) : undefined,
                 accepts_ghostpass: areaForm.accepts_ghostpass,
-                status: areaForm.status
+                status: areaForm.status,
+                employee_name: areaForm.employee_name,
+                employee_id: areaForm.employee_id,
+                visual_identifier: areaForm.visual_identifier || undefined
             };
 
             if (editingArea) {
@@ -271,7 +360,15 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
             }
 
             setShowAreaModal(false);
-            setAreaForm({ name: '', number: '', accepts_ghostpass: true, status: 'ENABLED' });
+            setAreaForm({ 
+                name: '', 
+                number: '', 
+                accepts_ghostpass: true, 
+                status: 'ENABLED',
+                employee_name: '',
+                employee_id: '',
+                visual_identifier: ''
+            });
         } catch (err: any) {
             console.error('Error saving internal area:', err);
             setAreaFormError(err.response?.data?.detail || 'Failed to save internal area');
@@ -313,7 +410,15 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
             return;
         }
         setEditingTable(null);
-        setTableForm({ name: '', number: '', linked_area_id: '', status: 'ENABLED' });
+        setTableForm({ 
+            name: '', 
+            number: '', 
+            linked_area_id: '', 
+            status: 'ENABLED',
+            employee_name: '',
+            employee_id: '',
+            visual_identifier: ''
+        });
         setTableFormError('');
         setShowTableModal(true);
     };
@@ -324,7 +429,10 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
             name: table.name,
             number: table.number?.toString() || '',
             linked_area_id: table.linked_area_id,
-            status: table.status
+            status: table.status,
+            employee_name: table.employee_name,
+            employee_id: table.employee_id,
+            visual_identifier: table.visual_identifier || ''
         });
         setTableFormError('');
         setShowTableModal(true);
@@ -340,6 +448,22 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
             setTableFormError('Please select a linked area');
             return;
         }
+        
+        if (!tableForm.employee_name.trim()) {
+            setTableFormError('Employee name is required');
+            return;
+        }
+        
+        if (!tableForm.employee_id.trim()) {
+            setTableFormError('Employee ID is required');
+            return;
+        }
+        
+        // Validate employee_id is alphanumeric
+        if (!/^[a-zA-Z0-9]+$/.test(tableForm.employee_id)) {
+            setTableFormError('Employee ID must be alphanumeric');
+            return;
+        }
 
         try {
             setSavingTable(true);
@@ -349,7 +473,10 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                 name: tableForm.name,
                 number: tableForm.number ? parseInt(tableForm.number) : undefined,
                 linked_area_id: tableForm.linked_area_id,
-                status: tableForm.status
+                status: tableForm.status,
+                employee_name: tableForm.employee_name,
+                employee_id: tableForm.employee_id,
+                visual_identifier: tableForm.visual_identifier || undefined
             };
 
             if (editingTable) {
@@ -361,7 +488,15 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
             }
 
             setShowTableModal(false);
-            setTableForm({ name: '', number: '', linked_area_id: '', status: 'ENABLED' });
+            setTableForm({ 
+                name: '', 
+                number: '', 
+                linked_area_id: '', 
+                status: 'ENABLED',
+                employee_name: '',
+                employee_id: '',
+                visual_identifier: ''
+            });
         } catch (err: any) {
             console.error('Error saving table/seat:', err);
             setTableFormError(err.response?.data?.detail || 'Failed to save table/seat');
@@ -502,6 +637,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                                         <thead>
                                             <tr className="border-b border-red-500/20 bg-slate-800/50">
                                                 <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Name</th>
+                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Live Metrics</th>
                                                 <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Status</th>
                                                 <th className="text-right py-3 px-4 text-slate-300 font-semibold text-sm">Actions</th>
                                             </tr>
@@ -523,6 +659,12 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                                                                 entryPoint.status === 'ENABLED' ? "text-white" : "text-slate-500"
                                                             )}>{entryPoint.name}</span>
                                                         </div>
+                                                    </td>
+                                                    <td className="py-3 px-4">
+                                                        <GatewayMetricsCompact 
+                                                            gatewayPointId={entryPoint.id}
+                                                            gatewayType="ENTRY_POINT"
+                                                        />
                                                     </td>
                                                     <td className="py-3 px-4">
                                                         <button
@@ -593,6 +735,15 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                                                     <span>{entryPoint.status}</span>
                                                 </button>
                                             </div>
+                                            
+                                            {/* Metrics Section */}
+                                            <div className="mb-3 p-3 bg-slate-800/50 rounded-lg border border-slate-700">
+                                                <GatewayMetrics 
+                                                    gatewayPointId={entryPoint.id}
+                                                    gatewayType="ENTRY_POINT"
+                                                />
+                                            </div>
+                                            
                                             <div className="flex gap-2">
                                                 <button
                                                     onClick={() => handleOpenEditModal(entryPoint)}
@@ -684,6 +835,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                                             <tr className="border-b border-red-500/20 bg-slate-800/50">
                                                 <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Name</th>
                                                 <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Number</th>
+                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Live Metrics</th>
                                                 <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">GhostPass Accepted</th>
                                                 <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Status</th>
                                                 <th className="text-right py-3 px-4 text-slate-300 font-semibold text-sm">Actions</th>
@@ -711,6 +863,12 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                                                         <span className="text-slate-300 text-sm">
                                                             {area.number || '—'}
                                                         </span>
+                                                    </td>
+                                                    <td className="py-3 px-4">
+                                                        <GatewayMetricsCompact 
+                                                            gatewayPointId={area.id}
+                                                            gatewayType="INTERNAL_AREA"
+                                                        />
                                                     </td>
                                                     <td className="py-3 px-4">
                                                         <span className={cn(
@@ -917,6 +1075,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                                             <tr className="border-b border-red-500/20 bg-slate-800/50">
                                                 <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Name</th>
                                                 <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Number</th>
+                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Live Metrics</th>
                                                 <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Linked Area</th>
                                                 <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Status</th>
                                                 <th className="text-right py-3 px-4 text-slate-300 font-semibold text-sm">Actions</th>
@@ -944,6 +1103,12 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                                                         <span className="text-slate-300 text-sm">
                                                             {table.number || '—'}
                                                         </span>
+                                                    </td>
+                                                    <td className="py-3 px-4">
+                                                        <GatewayMetricsCompact 
+                                                            gatewayPointId={table.id}
+                                                            gatewayType="TABLE_SEAT"
+                                                        />
                                                     </td>
                                                     <td className="py-3 px-4">
                                                         <div className="flex items-center space-x-2">
@@ -1115,6 +1280,50 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
 
                                 <div>
                                     <label className="block text-sm font-medium text-slate-300 mb-2">
+                                        Employee Name *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={entryPointForm.employee_name}
+                                        onChange={(e) => setEntryPointForm(prev => ({ ...prev, employee_name: e.target.value }))}
+                                        placeholder="e.g., John Smith"
+                                        className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-base"
+                                        disabled={saving}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                                        Employee ID *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={entryPointForm.employee_id}
+                                        onChange={(e) => setEntryPointForm(prev => ({ ...prev, employee_id: e.target.value }))}
+                                        placeholder="e.g., EMP123 (alphanumeric only)"
+                                        className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-base"
+                                        disabled={saving}
+                                    />
+                                    <p className="text-slate-400 text-xs mt-1">Alphanumeric characters only</p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                                        Visual Identifier (Optional)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={entryPointForm.visual_identifier}
+                                        onChange={(e) => setEntryPointForm(prev => ({ ...prev, visual_identifier: e.target.value }))}
+                                        placeholder="Icon emoji or image URL"
+                                        className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-base"
+                                        disabled={saving}
+                                    />
+                                    <p className="text-slate-400 text-xs mt-1">e.g., 🚪 or image URL for visual identification</p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">
                                         Status
                                     </label>
                                     <div className="flex gap-3">
@@ -1259,6 +1468,50 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                                         className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-base"
                                         disabled={savingArea}
                                     />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                                        Employee Name *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={areaForm.employee_name}
+                                        onChange={(e) => setAreaForm(prev => ({ ...prev, employee_name: e.target.value }))}
+                                        placeholder="e.g., Jane Doe"
+                                        className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-base"
+                                        disabled={savingArea}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                                        Employee ID *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={areaForm.employee_id}
+                                        onChange={(e) => setAreaForm(prev => ({ ...prev, employee_id: e.target.value }))}
+                                        placeholder="e.g., EMP456 (alphanumeric only)"
+                                        className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-base"
+                                        disabled={savingArea}
+                                    />
+                                    <p className="text-slate-400 text-xs mt-1">Alphanumeric characters only</p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                                        Visual Identifier (Optional)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={areaForm.visual_identifier}
+                                        onChange={(e) => setAreaForm(prev => ({ ...prev, visual_identifier: e.target.value }))}
+                                        placeholder="Icon emoji or image URL"
+                                        className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-base"
+                                        disabled={savingArea}
+                                    />
+                                    <p className="text-slate-400 text-xs mt-1">e.g., 🍺 or image URL for visual identification</p>
                                 </div>
 
                                 <div>
@@ -1446,6 +1699,50 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                                         className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-base"
                                         disabled={savingTable}
                                     />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                                        Employee Name *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={tableForm.employee_name}
+                                        onChange={(e) => setTableForm(prev => ({ ...prev, employee_name: e.target.value }))}
+                                        placeholder="e.g., Mike Johnson"
+                                        className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-base"
+                                        disabled={savingTable}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                                        Employee ID *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={tableForm.employee_id}
+                                        onChange={(e) => setTableForm(prev => ({ ...prev, employee_id: e.target.value }))}
+                                        placeholder="e.g., EMP789 (alphanumeric only)"
+                                        className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-base"
+                                        disabled={savingTable}
+                                    />
+                                    <p className="text-slate-400 text-xs mt-1">Alphanumeric characters only</p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                                        Visual Identifier (Optional)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={tableForm.visual_identifier}
+                                        onChange={(e) => setTableForm(prev => ({ ...prev, visual_identifier: e.target.value }))}
+                                        placeholder="Icon emoji or image URL"
+                                        className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-base"
+                                        disabled={savingTable}
+                                    />
+                                    <p className="text-slate-400 text-xs mt-1">e.g., 🪑 or image URL for visual identification</p>
                                 </div>
 
                                 <div>
