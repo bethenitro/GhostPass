@@ -410,5 +410,11 @@ export const gatewayApi = {
   }) => {
     const { data } = await api.post('/gateway/metrics/record', metric);
     return data;
+  },
+
+  // Financial Distribution (Read-Only)
+  getFinancialDistribution: async () => {
+    const { data } = await api.get('/gateway/financial-distribution');
+    return data;
   }
 };

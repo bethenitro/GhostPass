@@ -406,3 +406,88 @@ async def get_all_gateway_metrics(
     except Exception as e:
         logger.error(f"Error fetching all gateway metrics: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch gateway metrics")
+
+
+# ============================================================================
+# FINANCIAL DISTRIBUTION ENDPOINTS (READ-ONLY)
+# ============================================================================
+
+@router.get("/financial-distribution")
+async def get_financial_distribution(
+    current_user=Depends(get_current_user),
+    db: Client = Depends(get_db)
+):
+    """Get financial distribution summary for QR revenue (read-only visibility)"""
+    try:
+        # TODO: Get actual venue_id from user context
+        venue_id = "venue_001"
+        
+        # Get all FEE transactions for this venue
+        transactions = db.table("transactions")\
+            .select("*")\
+            .eq("type", "FEE")\
+            .eq("venue_id", venue_id)\
+            .execute()
+        
+        if not transactions.data:
+            return {
+                "gross_collected_cents": 0,
+                "scan_fee_total_cents": 0,
+                "vendor_net_cents": 0,
+                "total_scans": 0,
+                "status": "NO_ACTIVITY",
+                "breakdown": {
+                    "valid_pct_cents": 0,
+                    "vendor_pct_cents": 0,
+                    "pool_pct_cents": 0,
+                    "promoter_pct_cents": 0
+                }
+            }
+        
+        # Calculate totals
+        total_scans = len(set(tx.get("metadata", {}).get("pass_id") for tx in transactions.data if tx.get("metadata")))
+        
+        # Group by split type
+        breakdown = {
+            "valid_pct_cents": 0,
+            "vendor_pct_cents": 0,
+            "pool_pct_cents": 0,
+            "promoter_pct_cents": 0
+        }
+        
+        for tx in transactions.data:
+            vendor_name = tx.get("vendor_name", "")
+            amount = tx.get("amount_cents", 0)
+            
+            if "valid" in vendor_name.lower():
+                breakdown["valid_pct_cents"] += amount
+            elif "vendor" in vendor_name.lower():
+                breakdown["vendor_pct_cents"] += amount
+            elif "pool" in vendor_name.lower():
+                breakdown["pool_pct_cents"] += amount
+            elif "promoter" in vendor_name.lower():
+                breakdown["promoter_pct_cents"] += amount
+        
+        # Calculate totals
+        gross_collected = sum(breakdown.values())
+        scan_fee_total = gross_collected  # All fees collected from scans
+        vendor_net = breakdown["vendor_pct_cents"]  # Vendor's portion
+        
+        # Determine status (simplified - in production would check payout records)
+        status = "PENDING" if vendor_net > 0 else "NO_ACTIVITY"
+        
+        return {
+            "gross_collected_cents": gross_collected,
+            "scan_fee_total_cents": scan_fee_total,
+            "vendor_net_cents": vendor_net,
+            "total_scans": total_scans,
+            "status": status,
+            "breakdown": breakdown,
+            "gross_collected_dollars": gross_collected / 100.0,
+            "scan_fee_total_dollars": scan_fee_total / 100.0,
+            "vendor_net_dollars": vendor_net / 100.0
+        }
+        
+    except Exception as e:
+        logger.error(f"Error fetching financial distribution: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch financial distribution")

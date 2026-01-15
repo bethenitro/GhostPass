@@ -228,6 +228,24 @@ export interface TableSeat {
   updated_at: string;
 }
 
+// Financial Distribution Types
+export interface FinancialDistribution {
+  gross_collected_cents: number;
+  scan_fee_total_cents: number;
+  vendor_net_cents: number;
+  total_scans: number;
+  status: 'PENDING' | 'SETTLED' | 'NO_ACTIVITY';
+  breakdown: {
+    valid_pct_cents: number;
+    vendor_pct_cents: number;
+    pool_pct_cents: number;
+    promoter_pct_cents: number;
+  };
+  gross_collected_dollars?: number;
+  scan_fee_total_dollars?: number;
+  vendor_net_dollars?: number;
+}
+
 // Gateway Metrics Types
 export interface GatewayRealtimeMetrics {
   gateway_point_id: string;

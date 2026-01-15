@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import QRCodeLib from 'react-qr-code';
-import { Shield, AlertTriangle, Clock } from 'lucide-react';
+import { Shield, AlertTriangle, Clock, Trash2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { sessionApi } from '../lib/api';
 import { cn } from '@/lib/utils';
@@ -13,6 +13,9 @@ const QRCode = (QRCodeLib as any).default || QRCodeLib;
 const QRCodeView: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeSession, setActiveSession] = useState<Session | null>(null);
+  const [isVaporizing, setIsVaporizing] = useState(false);
+  const [showVaporizeConfirm, setShowVaporizeConfirm] = useState(false);
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
 
   const { data: sessionStatus, refetch: refetchSession } = useQuery({
     queryKey: ['session-status'],
@@ -54,17 +57,38 @@ const QRCodeView: React.FC = () => {
   const isSessionExpired = activeSession?.status !== 'ACTIVE' || !sessionTimeRemaining;
   const isSessionExpiringSoon = sessionTimeRemaining && sessionTimeRemaining.total < 30000;
 
+  const handleInstantVaporize = async () => {
+    if (!activeSession) return;
+    
+    setIsVaporizing(true);
+    try {
+      await sessionApi.vaporize();
+      setActiveSession(null);
+      setShowVaporizeConfirm(false);
+      refetchSession();
+    } catch (error) {
+      console.error('Failed to vaporize session:', error);
+    } finally {
+      setIsVaporizing(false);
+    }
+  };
+
   if (!activeSession || isSessionExpired) {
     return (
       <div className="max-w-md mx-auto">
-        {isSessionExpired && activeSession && (
+        {isSessionExpired && activeSession && !isCreatingSession && (
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="mb-6 bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-center">
             <AlertTriangle className="text-red-400 mx-auto mb-2" size={32} />
             <p className="text-red-400 font-semibold">Session Vaporized</p>
             <p className="text-slate-400 text-sm mt-1">Create a new session to continue</p>
           </motion.div>
         )}
-        <SessionSelector onSessionCreated={(session) => { setActiveSession(session); refetchSession(); }} onCancel={() => {}} />
+        <SessionSelector onSessionCreated={(session) => { 
+          setIsCreatingSession(true);
+          setActiveSession(session); 
+          refetchSession();
+          setTimeout(() => setIsCreatingSession(false), 500);
+        }} />
       </div>
     );
   }
@@ -141,6 +165,92 @@ const QRCodeView: React.FC = () => {
               </div>
             </div>
           </div>
+        </motion.div>
+      )}
+
+      {/* Instant Vaporization Button */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
+        <button
+          onClick={() => setShowVaporizeConfirm(true)}
+          disabled={isVaporizing}
+          className="w-full py-3 px-4 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg font-semibold hover:bg-red-500/20 transition-all duration-300 flex items-center justify-center space-x-2 group"
+          title="Immediately ends the active Ghost Pass session and invalidates the QR code"
+        >
+          <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+          <span>INSTANT VAPORIZATION</span>
+        </button>
+        <p className="text-slate-500 text-xs text-center mt-2">
+          Immediately ends the active session and invalidates the QR code
+        </p>
+      </motion.div>
+
+      {/* Vaporize Confirmation Modal */}
+      {showVaporizeConfirm && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          onClick={() => !isVaporizing && setShowVaporizeConfirm(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-slate-900 border border-red-500/30 rounded-xl shadow-2xl shadow-red-500/20 w-full max-w-md p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="p-3 bg-red-500/20 rounded-full">
+                <Trash2 className="text-red-400" size={24} />
+              </div>
+              <h3 className="text-xl font-bold text-red-400">Instant Vaporization</h3>
+            </div>
+
+            <p className="text-slate-300 mb-6">
+              Are you sure you want to immediately vaporize this session? This will:
+            </p>
+
+            <ul className="space-y-2 mb-6 text-sm text-slate-400">
+              <li className="flex items-start space-x-2">
+                <span className="text-red-400 mt-0.5">•</span>
+                <span>Immediately end the active Ghost Pass session</span>
+              </li>
+              <li className="flex items-start space-x-2">
+                <span className="text-red-400 mt-0.5">•</span>
+                <span>Invalidate the QR code instantly</span>
+              </li>
+              <li className="flex items-start space-x-2">
+                <span className="text-red-400 mt-0.5">•</span>
+                <span>Cannot be undone or recovered</span>
+              </li>
+            </ul>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowVaporizeConfirm(false)}
+                disabled={isVaporizing}
+                className="flex-1 px-4 py-3 bg-slate-700 border border-slate-600 text-slate-300 rounded-lg font-medium hover:bg-slate-600 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleInstantVaporize}
+                disabled={isVaporizing}
+                className="flex-1 px-4 py-3 bg-red-500/20 border border-red-500 text-red-400 rounded-lg font-medium hover:bg-red-500/30 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-300 disabled:opacity-50 flex items-center justify-center space-x-2"
+              >
+                {isVaporizing ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-400"></div>
+                    <span>Vaporizing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={16} />
+                    <span>Vaporize Now</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </motion.div>
         </motion.div>
       )}
     </div>

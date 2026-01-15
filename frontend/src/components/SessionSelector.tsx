@@ -7,10 +7,9 @@ import type { Session, SessionStatusResponse } from '../types';
 
 interface SessionSelectorProps {
   onSessionCreated: (session: Session) => void;
-  onCancel: () => void;
 }
 
-const SessionSelector: React.FC<SessionSelectorProps> = ({ onSessionCreated, onCancel }) => {
+const SessionSelector: React.FC<SessionSelectorProps> = ({ onSessionCreated }) => {
   const [isCreating, setIsCreating] = useState(false);
   const [selectedType, setSelectedType] = useState<'30_seconds' | '3_minutes' | '10_minutes' | null>(null);
 
@@ -111,25 +110,18 @@ const SessionSelector: React.FC<SessionSelectorProps> = ({ onSessionCreated, onC
         </div>
       </motion.div>
 
-      {/* Action Buttons */}
+      {/* Action Button */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        className="flex space-x-4"
       >
-        <button
-          onClick={onCancel}
-          className="flex-1 py-3 px-4 bg-slate-700/50 border border-slate-600 text-slate-300 rounded-lg font-semibold hover:bg-slate-700/70 transition-colors"
-        >
-          Cancel
-        </button>
         <motion.button
           whileTap={{ scale: 0.98 }}
           onClick={handleCreateSession}
           disabled={!selectedType || isCreating}
           className={cn(
-            "flex-1 py-3 px-4 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center space-x-2",
+            "w-full py-3 px-4 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center space-x-2",
             selectedType && !isCreating
               ? "bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/30"
               : "bg-slate-700/50 border border-slate-600 text-slate-500 cursor-not-allowed"

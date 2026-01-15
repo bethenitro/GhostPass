@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Building2, Utensils, Plus, Edit2, Trash2, Power, ArrowLeft } from 'lucide-react';
+import { MapPin, Building2, Utensils, Plus, Edit2, Trash2, Power, ArrowLeft, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { gatewayApi } from '@/lib/api';
 import type { EntryPoint, InternalArea, TableSeat, GatewayStatus } from '@/types';
 import { GatewayMetrics, GatewayMetricsCompact } from './GatewayMetrics';
+import { FinancialDistribution } from './FinancialDistribution';
 
 interface GatewayManagerPageProps {
     onBack: () => void;
 }
 
-type TabType = 'entry-points' | 'internal-areas' | 'tables-seats';
+type TabType = 'entry-points' | 'internal-areas' | 'tables-seats' | 'financial';
 
 interface EntryPointFormData {
     name: string;
@@ -167,6 +168,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
         { id: 'entry-points' as TabType, label: 'Entry Points', icon: MapPin },
         { id: 'internal-areas' as TabType, label: 'Internal Areas', icon: Building2 },
         { id: 'tables-seats' as TabType, label: 'Tables & Seats', icon: Utensils },
+        { id: 'financial' as TabType, label: 'Financial', icon: DollarSign },
     ];
 
     // Entry Point CRUD Operations
@@ -1239,6 +1241,12 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                                 </button>
                             </div>
                         )}
+                    </div>
+                )}
+
+                {activeTab === 'financial' && (
+                    <div className="space-y-4">
+                        <FinancialDistribution />
                     </div>
                 )}
             </div>
