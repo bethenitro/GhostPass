@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './components/AuthProvider';
 import LoginScreen from './components/LoginScreen';
+import DashboardSelector from './components/DashboardSelector';
+import SensoryCargoMonitor from './components/SensoryCargoMonitor';
 import Layout from './components/Layout';
 import WalletDashboard from './components/WalletDashboard';
 import QRCodeView from './components/QRCodeView';
@@ -28,6 +30,7 @@ const AppContent: React.FC = () => {
   const [purchasingDuration, setPurchasingDuration] = useState<number | null>(null);
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [previousRoute, setPreviousRoute] = useState<string>('');
+  const [selectedDashboard, setSelectedDashboard] = useState<'selector' | 'ghostpass' | 'sensory-monitor'>('selector');
   const queryClient = useQueryClient();
 
   // Check if we're on special routes
@@ -56,6 +59,7 @@ const AppContent: React.FC = () => {
   const isGatewayManagerRoute = currentRoute === '#/gateway-manager';
   const isAuditTrailRoute = currentRoute === '#/audit-trail';
   const isCommandCenterRoute = currentRoute === '#/command-center';
+  const isSensoryMonitorRoute = currentRoute === '#/sensory-monitor';
 
   const purchaseMutation = useMutation({
     mutationFn: (duration: number) => ghostPassApi.purchase(duration),
@@ -108,6 +112,11 @@ const AppContent: React.FC = () => {
     setIsAdminMode(false);
   };
 
+  const handleBackToSelector = () => {
+    setSelectedDashboard('selector');
+    window.location.hash = '#/';
+  };
+
   const handleBackFromGatewayManager = () => {
     // If we came from command center, go back there, otherwise go to main
     if (previousRoute === '#/command-center') {
@@ -132,6 +141,44 @@ const AppContent: React.FC = () => {
     return <LoginScreen />;
   }
 
+  // Show Gateway Manager page if on gateway-manager route
+  if (isGatewayManagerRoute) {
+    return <GatewayManagerPage onBack={handleBackFromGatewayManager} />;
+  }
+
+  // Show Audit Trail page if on audit-trail route
+  if (isAuditTrailRoute) {
+    return <AuditTrail onBack={() => window.location.hash = '#/command-center'} />;
+  }
+
+  // Show Command Center page if on command-center route
+  if (isCommandCenterRoute) {
+    return <CommandCenterPage 
+      onBack={handleBackToMain} 
+      onNavigateToGatewayManager={handleNavigateToGatewayManager}
+    />;
+  }
+
+  // Show Sensory Monitor page if on sensory-monitor route
+  if (isSensoryMonitorRoute) {
+    return <SensoryCargoMonitor onBack={handleBackToMain} />;
+  }
+
+  // Show Dashboard Selector first
+  if (selectedDashboard === 'selector') {
+    return (
+      <DashboardSelector
+        onSelectGhostPass={() => setSelectedDashboard('ghostpass')}
+        onSelectSensoryMonitor={() => setSelectedDashboard('sensory-monitor')}
+      />
+    );
+  }
+
+  // Show Sensory Cargo Monitor
+  if (selectedDashboard === 'sensory-monitor') {
+    return <SensoryCargoMonitor onBack={handleBackToSelector} />;
+  }
+
   const renderActiveTab = () => {
     switch (activeTab) {
       case 'wallet':
@@ -146,21 +193,6 @@ const AppContent: React.FC = () => {
         return <WalletDashboard onPurchase={handlePurchase} isPurchasing={purchaseMutation.isPending} purchasingDuration={purchasingDuration ?? undefined} />;
     }
   };
-
-  // Show Gateway Manager page if on gateway-manager route
-  if (isGatewayManagerRoute) {
-    return <GatewayManagerPage onBack={handleBackFromGatewayManager} />;
-  }
-
-  // Show Audit Trail page if on audit-trail route
-  if (isAuditTrailRoute) {
-    return <AuditTrail onBack={() => window.location.hash = '#/command-center'} />;
-  }
-
-  // Show Command Center page if on command-center route
-  if (isCommandCenterRoute) {
-    return <CommandCenterPage onBack={handleBackToMain} onNavigateToGatewayManager={handleNavigateToGatewayManager} />;
-  }
 
   return (
     <Layout

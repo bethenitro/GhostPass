@@ -334,14 +334,16 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                 <p className="text-slate-300 text-sm mb-4">
                   These are your totals. Detailed breakdowns are available in the Gateway Manager.
                 </p>
-                <button
-                  onClick={onNavigateToGatewayManager}
-                  className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-500/20 border border-blue-500/50 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors"
-                  title="View entry-point level details"
-                >
-                  <MapPin size={16} />
-                  <span>Open Gateway Manager</span>
-                </button>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={onNavigateToGatewayManager}
+                    className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-500/20 border border-blue-500/50 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors"
+                    title="View entry-point level details"
+                  >
+                    <MapPin size={16} />
+                    <span>Open Gateway Manager</span>
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
