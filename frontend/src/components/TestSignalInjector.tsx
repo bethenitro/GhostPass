@@ -1,21 +1,15 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  ArrowLeft, Send, Plus, Trash2, CheckCircle, XCircle, 
-  AlertTriangle, Zap, Package, Eye, Ear, Hand, Compass, Wind, Droplet
+  ArrowLeft, Send, CheckCircle, XCircle, 
+  Zap, Package, Eye, Ear, Hand, Compass, Wind, Droplet,
+  Monitor, Play, RotateCcw, Timer, Target
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { sensoryApi } from '@/lib/api';
 
 interface TestSignalInjectorProps {
   onBack: () => void;
-}
-
-interface SCUForm {
-  id: string;
-  sensory_type: string;
-  signal_data: string;
-  source_id: string;
 }
 
 const SENSORY_TYPES = [
@@ -28,89 +22,122 @@ const SENSORY_TYPES = [
 ];
 
 const EXAMPLE_DATA = {
-  VISION: '{\n  "objects_detected": ["person", "vehicle"],\n  "confidence_scores": [0.95, 0.87],\n  "scene": "urban_street"\n}',
-  HEARING: '{\n  "audio_pattern": "alert_tone",\n  "frequency_range": [800, 1200],\n  "duration_ms": 1000\n}',
-  TOUCH: '{\n  "pressure_points": [{"location": "surface_a", "pressure_psi": 15.2}],\n  "threshold_exceeded": false\n}',
-  BALANCE: '{\n  "orientation": {"pitch": 2.3, "roll": -1.1, "yaw": 0.5},\n  "stability_score": 0.94\n}',
-  SMELL: '{\n  "chemical_signatures": ["CO2", "CH4"],\n  "concentrations_ppm": [450, 2.1],\n  "anomaly_detected": false\n}',
-  TASTE: '{\n  "quality_metrics": {"pH": 7.2, "salinity": 0.05},\n  "fitness_score": 0.89,\n  "quality_grade": "A"\n}',
+  VISION: '{\n  "frame_id": "frame_001",\n  "objects_detected": ["person", "vehicle"],\n  "confidence_scores": [0.95, 0.87],\n  "bounding_boxes": [{"x": 100, "y": 50, "w": 200, "h": 300}],\n  "scene_type": "urban_street"\n}',
+  HEARING: '{\n  "audio_pattern": "alert_tone",\n  "frequency_range": [800, 1200],\n  "amplitude_db": 65,\n  "duration_ms": 1000,\n  "peak_detected": true\n}',
+  TOUCH: '{\n  "pressure_points": [{"location": "surface_a", "pressure_psi": 15.2}],\n  "threshold_psi": 12.0,\n  "threshold_exceeded": true,\n  "contact_area_cm2": 4.5\n}',
+  BALANCE: '{\n  "orientation": {"pitch": 2.3, "roll": -1.1, "yaw": 0.5},\n  "stability_score": 0.94,\n  "drift_rate": 0.02,\n  "axis_movement": "stable"\n}',
+  SMELL: '{\n  "chemical_signatures": ["CO2", "CH4", "H2S"],\n  "concentrations_ppm": [450, 2.1, 0.8],\n  "anomaly_detected": true,\n  "risk_score": 0.75,\n  "confidence_decay": 0.92\n}',
+  TASTE: '{\n  "quality_metrics": {"pH": 7.2, "salinity": 0.05, "sweetness": 3.2},\n  "fitness_score": 0.89,\n  "quality_grade": "A",\n  "acceptance_range": "within_limits",\n  "pass_fail": "pass"\n}',
 };
 
+// Preset multi-sensory capsules for testing
+const CAPSULE_PRESETS = [
+  {
+    name: 'Vision + Touch',
+    description: 'Test visual and tactile sensors together',
+    scus: [
+      { sensory_type: 'VISION', data: EXAMPLE_DATA.VISION },
+      { sensory_type: 'TOUCH', data: EXAMPLE_DATA.TOUCH }
+    ]
+  },
+  {
+    name: 'Audio + Balance',
+    description: 'Test hearing and stability sensors',
+    scus: [
+      { sensory_type: 'HEARING', data: EXAMPLE_DATA.HEARING },
+      { sensory_type: 'BALANCE', data: EXAMPLE_DATA.BALANCE }
+    ]
+  },
+  {
+    name: 'Chemical Detection',
+    description: 'Test smell and taste sensors',
+    scus: [
+      { sensory_type: 'SMELL', data: EXAMPLE_DATA.SMELL },
+      { sensory_type: 'TASTE', data: EXAMPLE_DATA.TASTE }
+    ]
+  },
+  {
+    name: 'Full Sensory Suite',
+    description: 'Test all 6 sensory types in one capsule',
+    scus: [
+      { sensory_type: 'VISION', data: EXAMPLE_DATA.VISION },
+      { sensory_type: 'HEARING', data: EXAMPLE_DATA.HEARING },
+      { sensory_type: 'TOUCH', data: EXAMPLE_DATA.TOUCH },
+      { sensory_type: 'BALANCE', data: EXAMPLE_DATA.BALANCE },
+      { sensory_type: 'SMELL', data: EXAMPLE_DATA.SMELL },
+      { sensory_type: 'TASTE', data: EXAMPLE_DATA.TASTE }
+    ]
+  }
+];
+
 const TestSignalInjector: React.FC<TestSignalInjectorProps> = ({ onBack }) => {
-  const [mode, setMode] = useState<'single' | 'capsule'>('single');
-  
-  // Single SCU state
-  const [singleSCU, setSingleSCU] = useState<SCUForm>({
-    id: '1',
-    sensory_type: 'VISION',
-    signal_data: EXAMPLE_DATA.VISION,
-    source_id: 'test_sensor_01'
-  });
-  
-  // Capsule state
-  const [capsuleSourceId, setCapsuleSourceId] = useState('sensor_hub_test');
-  const [capsuleSCUs, setCapsuleSCUs] = useState<SCUForm[]>([
-    {
-      id: '1',
-      sensory_type: 'VISION',
-      signal_data: EXAMPLE_DATA.VISION,
-      source_id: 'sensor_hub_test'
-    }
-  ]);
+  const [mode, setMode] = useState<'single' | 'capsule' | 'quick-test'>('quick-test');
   
   // Response state
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState<{ success: boolean; message: string; data?: any } | null>(null);
+  const [rapidFire, setRapidFire] = useState(false);
+  const [rapidFireCount, setRapidFireCount] = useState(0);
 
-  const handleSendSingle = async () => {
+  // Utility function to compute integrity hash exactly like the backend
+  const computeIntegrityHash = async (sensoryType: string, sourceId: string, signalData: any): Promise<string> => {
+    // Create deterministic JSON representation matching Python's json.dumps(sort_keys=True, separators=(',', ':'))
+    const sortedKeys = (obj: any): any => {
+      if (obj === null || typeof obj !== 'object') return obj;
+      if (Array.isArray(obj)) return obj.map(sortedKeys);
+      
+      const sorted: any = {};
+      Object.keys(obj).sort().forEach(key => {
+        sorted[key] = sortedKeys(obj[key]);
+      });
+      return sorted;
+    };
+    
+    const sortedData = sortedKeys(signalData);
+    const signalJson = JSON.stringify(sortedData, null, 0).replace(/\s/g, '');
+    
+    // Combine with sensory type and source for uniqueness (matching Python format)
+    const hashInput = `${sensoryType}:${sourceId}:${signalJson}`;
+    
+    const encoder = new TextEncoder();
+    const data = encoder.encode(hashInput);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  };
+
+  // Quick test functions
+  const sendQuickSignal = async (sensoryType: string) => {
     setLoading(true);
     setResponse(null);
 
     try {
-      // Parse signal data
-      const signalData = JSON.parse(singleSCU.signal_data);
-
-      // Create SCU payload
+      const signalData = JSON.parse(EXAMPLE_DATA[sensoryType as keyof typeof EXAMPLE_DATA]);
+      const sourceId = `quick_test_${sensoryType.toLowerCase()}`;
+      
       const payload = {
         schema_version: '1.0.0',
-        sensory_type: singleSCU.sensory_type,
+        sensory_type: sensoryType,
         signal_data: signalData,
         metadata: {
           timestamp: new Date().toISOString(),
-          source_id: singleSCU.source_id,
-          integrity_hash: '0'.repeat(64) // Placeholder - backend will validate
+          source_id: sourceId,
+          integrity_hash: await computeIntegrityHash(sensoryType, sourceId, signalData)
         }
       };
 
-      // Compute integrity hash (simplified for testing)
-      const hashInput = `${payload.sensory_type}:${payload.metadata.source_id}:${JSON.stringify(signalData, null, 0)}`;
-      const encoder = new TextEncoder();
-      const data = encoder.encode(hashInput);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-      payload.metadata.integrity_hash = hashHex;
-
-      // Send to Conduit
-      const res = await fetch('http://localhost:8000/conduit/receive', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      const result = await res.json();
-
-      if (res.ok) {
+      const result = await sensoryApi.sendTestSignal(payload);
+      
+      if (result) {
         setResponse({
           success: true,
-          message: 'Signal sent successfully!',
+          message: `${sensoryType} signal sent successfully!`,
           data: result
         });
       } else {
         setResponse({
           success: false,
-          message: result.detail?.message || result.message || 'Failed to send signal',
-          data: result
+          message: 'Failed to send signal'
         });
       }
     } catch (error: any) {
@@ -123,14 +150,14 @@ const TestSignalInjector: React.FC<TestSignalInjectorProps> = ({ onBack }) => {
     }
   };
 
-  const handleSendCapsule = async () => {
+  const sendPresetCapsule = async (preset: typeof CAPSULE_PRESETS[0]) => {
     setLoading(true);
     setResponse(null);
 
     try {
-      // Create SCUs with integrity hashes
-      const scus = await Promise.all(capsuleSCUs.map(async (scu) => {
-        const signalData = JSON.parse(scu.signal_data);
+      const scus = await Promise.all(preset.scus.map(async (scu) => {
+        const signalData = JSON.parse(scu.data);
+        const sourceId = `preset_${preset.name.toLowerCase().replace(/\s+/g, '_')}`;
         
         const scuPayload = {
           schema_version: '1.0.0',
@@ -138,51 +165,33 @@ const TestSignalInjector: React.FC<TestSignalInjectorProps> = ({ onBack }) => {
           signal_data: signalData,
           metadata: {
             timestamp: new Date().toISOString(),
-            source_id: scu.source_id,
-            integrity_hash: '0'.repeat(64)
+            source_id: sourceId,
+            integrity_hash: await computeIntegrityHash(scu.sensory_type, sourceId, signalData)
           }
         };
-
-        // Compute integrity hash
-        const hashInput = `${scuPayload.sensory_type}:${scuPayload.metadata.source_id}:${JSON.stringify(signalData, null, 0)}`;
-        const encoder = new TextEncoder();
-        const data = encoder.encode(hashInput);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        scuPayload.metadata.integrity_hash = hashHex;
 
         return scuPayload;
       }));
 
-      // Create capsule payload
       const capsulePayload = {
-        capsule_id: `test_capsule_${Date.now()}`,
+        capsule_id: `preset_${preset.name.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}`,
         timestamp: new Date().toISOString(),
-        source_id: capsuleSourceId,
+        source_id: `preset_hub_${preset.name.toLowerCase().replace(/\s+/g, '_')}`,
         scus: scus
       };
 
-      // Send to Conduit
-      const res = await fetch('http://localhost:8000/conduit/receive', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(capsulePayload)
-      });
+      const result = await sensoryApi.sendTestCapsule(capsulePayload);
 
-      const result = await res.json();
-
-      if (res.ok) {
+      if (result) {
         setResponse({
           success: true,
-          message: `Capsule with ${scus.length} SCUs sent successfully!`,
+          message: `${preset.name} capsule sent successfully!`,
           data: result
         });
       } else {
         setResponse({
           success: false,
-          message: result.detail?.message || result.message || 'Failed to send capsule',
-          data: result
+          message: 'Failed to send capsule'
         });
       }
     } catch (error: any) {
@@ -195,42 +204,30 @@ const TestSignalInjector: React.FC<TestSignalInjectorProps> = ({ onBack }) => {
     }
   };
 
-  const addSCUToCapsule = () => {
-    setCapsuleSCUs([
-      ...capsuleSCUs,
-      {
-        id: Date.now().toString(),
-        sensory_type: 'VISION',
-        signal_data: EXAMPLE_DATA.VISION,
-        source_id: capsuleSourceId
-      }
-    ]);
-  };
-
-  const removeSCUFromCapsule = (id: string) => {
-    setCapsuleSCUs(capsuleSCUs.filter(scu => scu.id !== id));
-  };
-
-  const updateCapsuleSCU = (id: string, field: keyof SCUForm, value: string) => {
-    setCapsuleSCUs(capsuleSCUs.map(scu => 
-      scu.id === id ? { ...scu, [field]: value } : scu
-    ));
-  };
-
-  const loadExampleData = (type: string, scuId?: string) => {
-    const exampleData = EXAMPLE_DATA[type as keyof typeof EXAMPLE_DATA] || '{}';
+  const startRapidFire = async () => {
+    setRapidFire(true);
+    setRapidFireCount(0);
     
-    if (mode === 'single') {
-      setSingleSCU({ ...singleSCU, signal_data: exampleData });
-    } else if (scuId) {
-      updateCapsuleSCU(scuId, 'signal_data', exampleData);
+    for (let i = 0; i < 10; i++) {
+      const sensoryTypes = Object.keys(EXAMPLE_DATA);
+      const randomType = sensoryTypes[Math.floor(Math.random() * sensoryTypes.length)];
+      
+      try {
+        await sendQuickSignal(randomType);
+        setRapidFireCount(i + 1);
+        await new Promise(resolve => setTimeout(resolve, 500)); // 500ms delay between signals
+      } catch (error) {
+        console.error('Rapid fire error:', error);
+      }
     }
+    
+    setRapidFire(false);
   };
 
   return (
     <div className="min-h-screen bg-slate-950 text-white p-4 sm:p-6">
       <div className="max-w-5xl mx-auto">
-        {/* Header with Warning */}
+        {/* Header with Monitor Link */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-4">
@@ -245,23 +242,35 @@ const TestSignalInjector: React.FC<TestSignalInjectorProps> = ({ onBack }) => {
               <div>
                 <h1 className="heading-primary text-2xl sm:text-3xl flex items-center space-x-2">
                   <Zap className="text-yellow-400" size={28} />
-                  <span>Test Signal Injector</span>
+                  <span>Sensory Signal Test Lab</span>
                 </h1>
-                <p className="label-tactical">Development tool for testing sensory signals</p>
+                <p className="label-tactical">Optimized for testing the Sensory Cargo Monitor</p>
               </div>
             </div>
+            
+            <motion.button
+              onClick={() => window.location.hash = '#/sensory-monitor'}
+              className="glass-panel px-4 py-3 hover:border-cyan-500/50 transition-all bg-cyan-500/10"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <div className="flex items-center space-x-2">
+                <Monitor className="text-cyan-400" size={20} />
+                <span className="text-cyan-400 font-semibold">Open Monitor</span>
+              </div>
+            </motion.button>
           </div>
 
-          {/* Warning Banner */}
+          {/* Enhanced Warning Banner */}
           <Card className="glass-card bg-yellow-500/10 border-yellow-500/50">
             <CardContent className="p-4">
               <div className="flex items-start space-x-3">
-                <AlertTriangle className="text-yellow-400 flex-shrink-0 mt-0.5" size={20} />
+                <Target className="text-yellow-400 flex-shrink-0 mt-0.5" size={20} />
                 <div className="text-sm">
-                  <p className="font-semibold text-yellow-400 mb-1">DEVELOPMENT TOOL ONLY</p>
+                  <p className="font-semibold text-yellow-400 mb-1">SENSORY CARGO MONITOR TEST LAB</p>
                   <p className="text-slate-300">
-                    This tool simulates external systems sending sensory signals. 
-                    For testing purposes only. Not for production use.
+                    Send test signals and immediately see them appear in the Sensory Cargo Monitor. 
+                    Use Quick Test for rapid testing, or create custom signals for detailed validation.
                   </p>
                 </div>
               </div>
@@ -270,234 +279,188 @@ const TestSignalInjector: React.FC<TestSignalInjectorProps> = ({ onBack }) => {
         </div>
 
         {/* Mode Selector */}
-        <div className="flex space-x-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <motion.button
+            onClick={() => setMode('quick-test')}
+            className={`glass-panel p-4 transition-all ${
+              mode === 'quick-test' ? 'border-emerald-500/50 bg-emerald-500/10' : 'hover:border-white/20'
+            }`}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <div className="flex items-center justify-center space-x-2 mb-2">
+              <Play className={mode === 'quick-test' ? 'text-emerald-400' : 'text-slate-400'} size={20} />
+              <span className={`font-semibold ${mode === 'quick-test' ? 'text-emerald-400' : 'text-slate-400'}`}>
+                Quick Test
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 text-center">
+              Instant testing with presets
+            </p>
+          </motion.button>
+
           <motion.button
             onClick={() => setMode('single')}
-            className={`flex-1 glass-panel p-4 transition-all ${
+            className={`glass-panel p-4 transition-all ${
               mode === 'single' ? 'border-cyan-500/50 bg-cyan-500/10' : 'hover:border-white/20'
             }`}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            <div className="flex items-center justify-center space-x-2">
+            <div className="flex items-center justify-center space-x-2 mb-2">
               <Send className={mode === 'single' ? 'text-cyan-400' : 'text-slate-400'} size={20} />
               <span className={`font-semibold ${mode === 'single' ? 'text-cyan-400' : 'text-slate-400'}`}>
                 Single SCU
               </span>
             </div>
+            <p className="text-xs text-slate-400 text-center">
+              Custom individual signals
+            </p>
           </motion.button>
 
           <motion.button
             onClick={() => setMode('capsule')}
-            className={`flex-1 glass-panel p-4 transition-all ${
+            className={`glass-panel p-4 transition-all ${
               mode === 'capsule' ? 'border-purple-500/50 bg-purple-500/10' : 'hover:border-white/20'
             }`}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            <div className="flex items-center justify-center space-x-2">
+            <div className="flex items-center justify-center space-x-2 mb-2">
               <Package className={mode === 'capsule' ? 'text-purple-400' : 'text-slate-400'} size={20} />
               <span className={`font-semibold ${mode === 'capsule' ? 'text-purple-400' : 'text-slate-400'}`}>
                 Sensory Capsule
               </span>
             </div>
+            <p className="text-xs text-slate-400 text-center">
+              Multi-sensory packages
+            </p>
           </motion.button>
         </div>
 
-        {/* Single SCU Mode */}
-        {mode === 'single' && (
-          <Card className="glass-card mb-6">
-            <CardHeader>
-              <CardTitle className="heading-primary">Send Individual SCU</CardTitle>
-              <CardDescription className="label-tactical">
-                Create and send a single sensory cargo unit
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Sensory Type */}
-              <div>
-                <label className="label-tactical block mb-2">Sensory Type</label>
-                <select
-                  value={singleSCU.sensory_type}
-                  onChange={(e) => {
-                    setSingleSCU({ ...singleSCU, sensory_type: e.target.value });
-                    loadExampleData(e.target.value);
-                  }}
-                  className="tactical-input w-full"
-                >
-                  {SENSORY_TYPES.map(type => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Source ID */}
-              <div>
-                <label className="label-tactical block mb-2">Source ID</label>
-                <Input
-                  value={singleSCU.source_id}
-                  onChange={(e) => setSingleSCU({ ...singleSCU, source_id: e.target.value })}
-                  className="tactical-input"
-                  placeholder="test_sensor_01"
-                />
-              </div>
-
-              {/* Signal Data */}
-              <div>
-                <label className="label-tactical block mb-2">Signal Data (JSON)</label>
-                <textarea
-                  value={singleSCU.signal_data}
-                  onChange={(e) => setSingleSCU({ ...singleSCU, signal_data: e.target.value })}
-                  className="tactical-input w-full font-mono text-sm"
-                  rows={8}
-                  placeholder='{"key": "value"}'
-                />
-              </div>
-
-              {/* Send Button */}
-              <motion.button
-                onClick={handleSendSingle}
-                disabled={loading}
-                className="btn-primary w-full"
-                whileHover={{ scale: loading ? 1 : 1.02 }}
-                whileTap={{ scale: loading ? 1 : 0.98 }}
-              >
-                {loading ? (
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="loading-spinner"></div>
-                    <span>SENDING...</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center space-x-2">
-                    <Send size={20} />
-                    <span>SEND SIGNAL</span>
-                  </div>
-                )}
-              </motion.button>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Capsule Mode */}
-        {mode === 'capsule' && (
-          <Card className="glass-card mb-6">
-            <CardHeader>
-              <CardTitle className="heading-primary">Send Sensory Capsule</CardTitle>
-              <CardDescription className="label-tactical">
-                Create and send multiple SCUs in one capsule
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Capsule Source ID */}
-              <div>
-                <label className="label-tactical block mb-2">Capsule Source ID</label>
-                <Input
-                  value={capsuleSourceId}
-                  onChange={(e) => setCapsuleSourceId(e.target.value)}
-                  className="tactical-input"
-                  placeholder="sensor_hub_test"
-                />
-              </div>
-
-              {/* SCUs */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <label className="label-tactical">SCUs in Capsule ({capsuleSCUs.length})</label>
-                  <motion.button
-                    onClick={addSCUToCapsule}
-                    className="glass-panel px-3 py-2 hover:border-cyan-500/50 transition-all"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <Plus className="text-cyan-400" size={16} />
-                      <span className="text-sm text-cyan-400">Add SCU</span>
-                    </div>
-                  </motion.button>
-                </div>
-
-                {capsuleSCUs.map((scu, index) => (
-                  <div key={scu.id} className="glass-panel p-4 space-y-3 border-l-4 border-purple-500/50">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-purple-400">SCU #{index + 1}</span>
-                      {capsuleSCUs.length > 1 && (
-                        <motion.button
-                          onClick={() => removeSCUFromCapsule(scu.id)}
-                          className="text-red-400 hover:text-red-300 transition-colors"
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                        >
-                          <Trash2 size={16} />
-                        </motion.button>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="label-tactical block mb-2">Sensory Type</label>
-                      <select
-                        value={scu.sensory_type}
-                        onChange={(e) => {
-                          updateCapsuleSCU(scu.id, 'sensory_type', e.target.value);
-                          loadExampleData(e.target.value, scu.id);
-                        }}
-                        className="tactical-input w-full"
+        {/* Quick Test Mode */}
+        {mode === 'quick-test' && (
+          <div className="space-y-6">
+            {/* Individual Sensory Tests */}
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle className="heading-primary flex items-center space-x-2">
+                  <Target className="text-emerald-400" size={20} />
+                  <span>Individual Sensory Tests</span>
+                </CardTitle>
+                <CardDescription className="label-tactical">
+                  Click any sensory type to instantly send a test signal
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {SENSORY_TYPES.map(type => {
+                    const Icon = type.icon;
+                    return (
+                      <motion.button
+                        key={type.value}
+                        onClick={() => sendQuickSignal(type.value)}
+                        disabled={loading}
+                        className={`glass-panel p-4 transition-all hover:border-current/50 ${type.color} ${
+                          loading ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                        whileHover={{ scale: loading ? 1 : 1.05 }}
+                        whileTap={{ scale: loading ? 1 : 0.95 }}
                       >
-                        {SENSORY_TYPES.map(type => (
-                          <option key={type.value} value={type.value}>
-                            {type.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                        <div className="flex flex-col items-center space-y-2">
+                          <Icon size={24} />
+                          <span className="font-semibold text-sm">{type.label}</span>
+                        </div>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
 
-                    <div>
-                      <label className="label-tactical block mb-2">Source ID</label>
-                      <Input
-                        value={scu.source_id}
-                        onChange={(e) => updateCapsuleSCU(scu.id, 'source_id', e.target.value)}
-                        className="tactical-input"
-                        placeholder={capsuleSourceId}
-                      />
-                    </div>
+            {/* Preset Capsules */}
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle className="heading-primary flex items-center space-x-2">
+                  <Package className="text-purple-400" size={20} />
+                  <span>Preset Multi-Sensory Capsules</span>
+                </CardTitle>
+                <CardDescription className="label-tactical">
+                  Test multiple sensory types together with realistic combinations
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {CAPSULE_PRESETS.map((preset, index) => (
+                    <motion.button
+                      key={index}
+                      onClick={() => sendPresetCapsule(preset)}
+                      disabled={loading}
+                      className={`glass-panel p-4 text-left transition-all hover:border-purple-500/50 ${
+                        loading ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                      whileHover={{ scale: loading ? 1 : 1.02 }}
+                      whileTap={{ scale: loading ? 1 : 0.98 }}
+                    >
+                      <div className="flex items-start space-x-3">
+                        <Package className="text-purple-400 flex-shrink-0 mt-1" size={20} />
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-purple-400 mb-1">{preset.name}</h4>
+                          <p className="text-sm text-slate-400 mb-2">{preset.description}</p>
+                          <div className="flex flex-wrap gap-1">
+                            {preset.scus.map((scu, scuIndex) => {
+                              const sensoryType = SENSORY_TYPES.find(t => t.value === scu.sensory_type);
+                              const Icon = sensoryType?.icon || Package;
+                              return (
+                                <div key={scuIndex} className={`flex items-center space-x-1 px-2 py-1 rounded text-xs ${sensoryType?.color || 'text-slate-400'} bg-current/10`}>
+                                  <Icon size={12} />
+                                  <span>{sensoryType?.label || scu.sensory_type}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </motion.button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
-                    <div>
-                      <label className="label-tactical block mb-2">Signal Data (JSON)</label>
-                      <textarea
-                        value={scu.signal_data}
-                        onChange={(e) => updateCapsuleSCU(scu.id, 'signal_data', e.target.value)}
-                        className="tactical-input w-full font-mono text-sm"
-                        rows={6}
-                        placeholder='{"key": "value"}'
-                      />
+            {/* Rapid Fire Testing */}
+            <Card className="glass-card border-orange-500/30">
+              <CardHeader>
+                <CardTitle className="heading-primary flex items-center space-x-2">
+                  <Timer className="text-orange-400" size={20} />
+                  <span>Rapid Fire Testing</span>
+                </CardTitle>
+                <CardDescription className="label-tactical">
+                  Send 10 random signals rapidly to stress test the monitor
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <motion.button
+                  onClick={startRapidFire}
+                  disabled={loading || rapidFire}
+                  className="btn-primary w-full bg-orange-500/20 border-orange-500/50 text-orange-400 hover:bg-orange-500/30"
+                  whileHover={{ scale: (loading || rapidFire) ? 1 : 1.02 }}
+                  whileTap={{ scale: (loading || rapidFire) ? 1 : 0.98 }}
+                >
+                  {rapidFire ? (
+                    <div className="flex items-center justify-center space-x-2">
+                      <RotateCcw className="animate-spin" size={20} />
+                      <span>RAPID FIRE IN PROGRESS... ({rapidFireCount}/10)</span>
                     </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Send Button */}
-              <motion.button
-                onClick={handleSendCapsule}
-                disabled={loading}
-                className="btn-primary w-full"
-                whileHover={{ scale: loading ? 1 : 1.02 }}
-                whileTap={{ scale: loading ? 1 : 0.98 }}
-              >
-                {loading ? (
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="loading-spinner"></div>
-                    <span>SENDING...</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center space-x-2">
-                    <Package size={20} />
-                    <span>SEND CAPSULE ({capsuleSCUs.length} SCUs)</span>
-                  </div>
-                )}
-              </motion.button>
-            </CardContent>
-          </Card>
+                  ) : (
+                    <div className="flex items-center justify-center space-x-2">
+                      <Timer size={20} />
+                      <span>START RAPID FIRE TEST</span>
+                    </div>
+                  )}
+                </motion.button>
+              </CardContent>
+            </Card>
+          </div>
         )}
 
         {/* Response Display */}
@@ -507,6 +470,7 @@ const TestSignalInjector: React.FC<TestSignalInjectorProps> = ({ onBack }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
+              className="mt-6"
             >
               <Card className={`glass-card ${
                 response.success 

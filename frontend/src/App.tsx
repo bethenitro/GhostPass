@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './components/AuthProvider';
 import LoginScreen from './components/LoginScreen';
 import DashboardSelector from './components/DashboardSelector';
 import SensoryCargoMonitor from './components/SensoryCargoMonitor';
+import TestSignalInjector from './components/TestSignalInjector';
 import Layout from './components/Layout';
 import WalletDashboard from './components/WalletDashboard';
 import QRCodeView from './components/QRCodeView';
@@ -60,6 +61,7 @@ const AppContent: React.FC = () => {
   const isAuditTrailRoute = currentRoute === '#/audit-trail';
   const isCommandCenterRoute = currentRoute === '#/command-center';
   const isSensoryMonitorRoute = currentRoute === '#/sensory-monitor';
+  const isTestSignalInjectorRoute = currentRoute === '#/test-signal-injector';
 
   const purchaseMutation = useMutation({
     mutationFn: (duration: number) => ghostPassApi.purchase(duration),
@@ -162,6 +164,11 @@ const AppContent: React.FC = () => {
   // Show Sensory Monitor page if on sensory-monitor route
   if (isSensoryMonitorRoute) {
     return <SensoryCargoMonitor onBack={handleBackToMain} />;
+  }
+
+  // Show Test Signal Injector page if on test-signal-injector route
+  if (isTestSignalInjectorRoute) {
+    return <TestSignalInjector onBack={handleBackToMain} />;
   }
 
   // Show Dashboard Selector first

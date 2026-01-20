@@ -2,10 +2,30 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Eye, Ear, Hand, Compass, Wind, Droplet, 
-  CheckCircle, XCircle, Clock, ArrowLeft, Package,
-  Activity, TrendingUp, AlertCircle, Shield, Scale, Send, AlertTriangle
+  CheckCircle, XCircle, Clock, ArrowLeft,
+  AlertCircle, Shield, Scale,
+  BarChart3, Zap, FileText
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { sensoryApi } from '@/lib/api';
+
+/**
+ * SENSORY CARGO MONITOR - OBSERVABILITY SURFACE ONLY
+ * 
+ * CRITICAL ARCHITECTURAL CONSTRAINTS:
+ * - We do NOT select sensories
+ * - We do NOT request sensories  
+ * - We do NOT interpret sensories
+ * - This UI is observability only - no decision logic
+ * 
+ * PURPOSE: Display what sensory channels exist, their current state,
+ * live incoming SCUs, and governance status for traceability.
+ * 
+ * LAYOUT (NON-NEGOTIABLE):
+ * TOP: Sensory Receptor Panel - Always show 6 fixed sensory tiles
+ * MIDDLE: Live Sensory Signal Feed - Real-time updates, visual style matches sensory type
+ * BOTTOM: Governance & Audit Strip - Ghost Pass summary, Senate queue, audit access
+ */
 
 interface Signal {
   signal_id: string;
@@ -25,430 +45,423 @@ interface Signal {
   scus?: any[];
 }
 
-interface Evaluation {
-  evaluation_id: string;
-  signal_id: string;
-  signal_data: any;
-  status: string;
-  priority: string;
-  received_at: string;
-  context: {
-    source_id: string;
-    payload_type: string;
-    sensory_types: string[];
-    timestamp: string;
-  };
-  applicable_policies?: any[];
-}
-
-interface Decision {
-  decision_id: string;
-  signal_id: string;
-  decision: string;
-  reason: string;
-  reviewer_id: string;
-  trust_score?: number;
-  timestamp: string;
-  context: any;
-}
-
 interface SensoryCargoMonitorProps {
   onBack: () => void;
 }
 
+// Sensory receptor states - matches backend SensoryReceptorStatus
+type SensoryState = 'unavailable' | 'available' | 'active';
+
+interface SensoryReceptor {
+  type: string;
+  name: string;
+  state: SensoryState;
+  source_authority?: string;
+  last_seen_at?: string;
+  icon: React.ComponentType<any>;
+}
+
+// Live signal feed item for visualization
+interface LiveSignalItem {
+  id: string;
+  sensoryType: string;
+  timestamp: string;
+  data: any;
+  ghostPassStatus: boolean;
+  senateStatus: 'pending' | 'approved' | 'escalated';
+  originalSignal: Signal;
+}
+
+// Governance data interfaces
+interface GhostPassSummary {
+  total_signals: number;
+  by_status: {
+    approved: number;
+    rejected: number;
+  };
+}
+
+interface SenateStats {
+  pending_count: number;
+  escalated_count: number;
+}
+
+interface AuditTrailSummary {
+  last_decision_timestamp?: string;
+  total_events: number;
+}
+
 const SENSORY_COLORS = {
-  VISION: { bg: 'bg-blue-500/20', border: 'border-blue-500/50', text: 'text-blue-400', icon: Eye },
-  HEARING: { bg: 'bg-purple-500/20', border: 'border-purple-500/50', text: 'text-purple-400', icon: Ear },
-  TOUCH: { bg: 'bg-orange-500/20', border: 'border-orange-500/50', text: 'text-orange-400', icon: Hand },
-  BALANCE: { bg: 'bg-green-500/20', border: 'border-green-500/50', text: 'text-green-400', icon: Compass },
-  SMELL: { bg: 'bg-yellow-500/20', border: 'border-yellow-500/50', text: 'text-yellow-400', icon: Wind },
-  TASTE: { bg: 'bg-pink-500/20', border: 'border-pink-500/50', text: 'text-pink-400', icon: Droplet },
+  VISION: { bg: 'bg-blue-500/20', border: 'border-blue-500/50', text: 'text-blue-400', icon: Eye, active: { bg: 'bg-blue-500/60', border: 'border-blue-400/90', text: 'text-blue-100', ring: 'ring-blue-400/60' } },
+  HEARING: { bg: 'bg-purple-500/20', border: 'border-purple-500/50', text: 'text-purple-400', icon: Ear, active: { bg: 'bg-purple-500/60', border: 'border-purple-400/90', text: 'text-purple-100', ring: 'ring-purple-400/60' } },
+  TOUCH: { bg: 'bg-orange-500/20', border: 'border-orange-500/50', text: 'text-orange-400', icon: Hand, active: { bg: 'bg-orange-500/60', border: 'border-orange-400/90', text: 'text-orange-100', ring: 'ring-orange-400/60' } },
+  BALANCE: { bg: 'bg-green-500/20', border: 'border-green-500/50', text: 'text-green-400', icon: Compass, active: { bg: 'bg-green-500/60', border: 'border-green-400/90', text: 'text-green-100', ring: 'ring-green-400/60' } },
+  SMELL: { bg: 'bg-yellow-500/20', border: 'border-yellow-500/50', text: 'text-yellow-400', icon: Wind, active: { bg: 'bg-yellow-500/60', border: 'border-yellow-400/90', text: 'text-yellow-100', ring: 'ring-yellow-400/60' } },
+  TASTE: { bg: 'bg-pink-500/20', border: 'border-pink-500/50', text: 'text-pink-400', icon: Droplet, active: { bg: 'bg-pink-500/60', border: 'border-pink-400/90', text: 'text-pink-100', ring: 'ring-pink-400/60' } },
 };
 
-const PRIORITY_COLORS = {
-  high: { bg: 'bg-red-500/20', border: 'border-red-500/50', text: 'text-red-400' },
-  medium: { bg: 'bg-yellow-500/20', border: 'border-yellow-500/50', text: 'text-yellow-400' },
-  normal: { bg: 'bg-blue-500/20', border: 'border-blue-500/50', text: 'text-blue-400' },
-};
+// Fixed sensory receptors - always present, never conditional
+const SENSORY_RECEPTORS: SensoryReceptor[] = [
+  { type: 'VISION', name: 'Vision', state: 'available', icon: Eye },
+  { type: 'HEARING', name: 'Hearing', state: 'available', icon: Ear },
+  { type: 'TOUCH', name: 'Touch / Pressure', state: 'available', icon: Hand },
+  { type: 'BALANCE', name: 'Balance', state: 'available', icon: Compass },
+  { type: 'SMELL', name: 'Smell', state: 'available', icon: Wind },
+  { type: 'TASTE', name: 'Taste', state: 'available', icon: Droplet },
+];
 
 const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => {
-  const [view, setView] = useState<'signals' | 'senate-pending' | 'senate-review' | 'senate-history' | 'test-injector'>('signals');
-  const [signals, setSignals] = useState<Signal[]>([]);
+  // State management
   const [selectedSignal, setSelectedSignal] = useState<Signal | null>(null);
-  const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  // Disable auto-refresh for now
-  // const [autoRefresh, setAutoRefresh] = useState(false);
-  // Disable realtime for now
-  // const [realtimeEnabled, setRealtimeEnabled] = useState(false);
-  // const [realtimeConnected, setRealtimeConnected] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [sensoryReceptors, setSensoryReceptors] = useState<SensoryReceptor[]>(SENSORY_RECEPTORS);
+  const [liveSignals, setLiveSignals] = useState<LiveSignalItem[]>([]);
+  const [selectedSensoryFilter, setSelectedSensoryFilter] = useState<string | null>(null);
 
-  // Check if in development mode
-  const isDevelopment = import.meta.env.DEV || window.location.hostname === 'localhost';
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalSignals, setTotalSignals] = useState(0);
+  const SIGNALS_PER_PAGE = 10;
 
-  // Senate state
-  const [pendingEvaluations, setPendingEvaluations] = useState<Evaluation[]>([]);
-  const [selectedEvaluation, setSelectedEvaluation] = useState<Evaluation | null>(null);
-  const [senateHistory, setSenateHistory] = useState<Decision[]>([]);
-  const [senateStats, setSenateStats] = useState<any>(null);
-  
-  // Decision form state
-  const [decision, setDecision] = useState<string>('');
-  const [reason, setReason] = useState<string>('');
-  const [trustScore, setTrustScore] = useState<number>(75);
-  const [submitting, setSubmitting] = useState(false);
-  const [reviewingEvaluationId, setReviewingEvaluationId] = useState<string | null>(null);
+  // Governance & audit data
+  const [ghostPassSummary, setGhostPassSummary] = useState<GhostPassSummary | null>(null);
+  const [senateStats, setSenateStats] = useState<SenateStats>({ pending_count: 0, escalated_count: 0 });
+  const [auditSummary, setAuditSummary] = useState<AuditTrailSummary>({ total_events: 0 });
+  const [lastRefreshTime, setLastRefreshTime] = useState<string | null>(null);
 
-  // Test Injector state
-  const [injectorMode, setInjectorMode] = useState<'single' | 'capsule'>('single');
-  const [singleSCU, setSingleSCU] = useState({
-    sensory_type: 'VISION',
-    signal_data: '{\n  "objects_detected": ["person", "vehicle"],\n  "confidence_scores": [0.95, 0.87],\n  "scene": "urban_street"\n}',
-    source_id: 'test_sensor_01'
-  });
-  const [capsuleSourceId, setCapsuleSourceId] = useState('sensor_hub_test');
-  const [capsuleSCUs, setCapsuleSCUs] = useState([
-    {
-      id: '1',
-      sensory_type: 'VISION',
-      signal_data: '{\n  "objects_detected": ["person", "vehicle"],\n  "confidence_scores": [0.95, 0.87],\n  "scene": "urban_street"\n}',
-      source_id: 'sensor_hub_test'
+  // Event handlers - UI interactions only, no business logic
+  const onReceptorClick = (type: string) => {
+    setSelectedSensoryFilter(selectedSensoryFilter === type ? null : type);
+  };
+
+  const onSignalClick = (signal: LiveSignalItem) => {
+    setSelectedSignal(signal.originalSignal);
+  };
+
+  // Filter signals based on selected sensory type
+  const filteredSignals = selectedSensoryFilter 
+    ? liveSignals.filter(s => s.sensoryType === selectedSensoryFilter)
+    : liveSignals;
+
+  const getStateColor = (state: SensoryState, receptorType: string) => {
+    const baseColor = SENSORY_COLORS[receptorType as keyof typeof SENSORY_COLORS];
+    
+    switch (state) {
+      case 'unavailable': 
+        return 'bg-slate-600/50 border-slate-500/50 text-slate-500';
+      case 'available': 
+        return `${baseColor.bg} ${baseColor.border} ${baseColor.text}`;
+      case 'active': 
+        return `${baseColor.active.bg} ${baseColor.active.border} ${baseColor.active.text} ring-2 ${baseColor.active.ring} shadow-lg shadow-current/30`;
+      default:
+        return 'bg-slate-600/50 border-slate-500/50 text-slate-500';
     }
-  ]);
-  const [injectorResponse, setInjectorResponse] = useState<{ success: boolean; message: string; data?: any } | null>(null);
-  const [injectorLoading, setInjectorLoading] = useState(false);
+  };
 
-  const fetchSignals = async () => {
+  const getStateIndicator = (state: SensoryState) => {
+    switch (state) {
+      case 'unavailable': return <XCircle size={12} />;
+      case 'available': return <Clock size={12} />;
+      case 'active': return <Zap size={12} />;
+    }
+  };
+
+  const renderSensoryVisualization = (signal: LiveSignalItem) => {
+    const sensoryType = signal.sensoryType;
+    
+    // If no data, show a placeholder
+    if (!signal.data) {
+      return (
+        <div className="w-12 h-8 bg-slate-600/30 border border-slate-500/50 rounded flex items-center justify-center flex-shrink-0">
+          <div className="w-2 h-2 bg-slate-500 rounded animate-pulse"></div>
+        </div>
+      );
+    }
+    
+    switch (sensoryType) {
+      case 'VISION':
+        // Frame tiles/thumbnails, bounding boxes/contours, confidence overlays, timestamp per frame
+        return (
+          <div className="w-12 h-8 bg-blue-500/30 border border-blue-500/50 rounded relative flex-shrink-0">
+            <div className="absolute inset-1 border border-blue-400/60 rounded"></div>
+            <div className="absolute top-1 left-1 w-2 h-1 bg-blue-400 rounded"></div>
+            <div className="absolute bottom-1 right-1 w-1 h-1 bg-blue-300 rounded"></div>
+            <div className="absolute top-0 right-0 text-xs text-blue-300 bg-blue-900/50 px-1 rounded-bl text-[8px]">
+              {new Date(signal.timestamp).getSeconds()}s
+            </div>
+          </div>
+        );
+      
+      case 'HEARING':
+        // Waveform/spectral bars, time-scrolling view, peak indicators
+        return (
+          <div className="flex space-x-0.5 items-end flex-shrink-0 w-12 h-8 relative">
+            {[...Array(8)].map((_, i) => (
+              <div 
+                key={i} 
+                className="w-1 bg-purple-400 rounded-t relative" 
+                style={{ height: `${Math.random() * 24 + 4}px` }}
+              >
+                {Math.random() > 0.7 && (
+                  <div className="absolute -top-1 left-0 w-1 h-1 bg-purple-200 rounded"></div>
+                )}
+              </div>
+            ))}
+            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-purple-600/30"></div>
+          </div>
+        );
+      
+      case 'TOUCH':
+        // Threshold bars, gauge meters, binary crossings (above/below limit)
+        return (
+          <div className="w-12 h-8 bg-orange-500/30 border border-orange-500/50 rounded relative flex-shrink-0">
+            <div className="absolute inset-1 bg-gradient-to-r from-orange-600/20 to-orange-400/60 rounded"></div>
+            <div className="absolute left-2 top-1 bottom-1 w-0.5 bg-orange-300 rounded"></div>
+            <div className="absolute right-2 top-2 w-2 h-1 bg-orange-400 rounded"></div>
+            <div className="absolute right-1 bottom-1 text-xs text-orange-300 text-[8px]">
+              {Math.random() > 0.5 ? '↑' : '↓'}
+            </div>
+          </div>
+        );
+      
+      case 'BALANCE':
+        // Drift lines, axis movement visualization, stability cone/tilt indicator
+        return (
+          <div className="w-10 h-10 border border-green-500/50 rounded-full relative flex-shrink-0">
+            <div className="absolute inset-2 border border-green-400/30 rounded-full"></div>
+            <div className="absolute top-1/2 left-1/2 w-0.5 h-0.5 bg-green-400 rounded-full transform -translate-x-1/2 -translate-y-1/2"></div>
+            <div className="absolute top-1/2 left-1/2 w-4 h-0.5 bg-green-300/60 transform -translate-x-1/2 -translate-y-1/2 rotate-12"></div>
+            <div className="absolute top-2 left-2 w-1 h-1 border-l border-t border-green-300/40"></div>
+            <div className="absolute bottom-2 right-2 w-1 h-1 border-r border-b border-green-300/40"></div>
+          </div>
+        );
+      
+      case 'SMELL':
+        // Anomaly spike graph, confidence decay/risk score trend, event markers
+        return (
+          <div className="flex space-x-0.5 items-end flex-shrink-0 w-12 h-8 relative">
+            {[...Array(6)].map((_, i) => {
+              const height = Math.random() * 20 + 2;
+              const isSpike = Math.random() > 0.8;
+              return (
+                <div key={i} className="relative">
+                  <div 
+                    className={`w-1 rounded-t ${isSpike ? 'bg-yellow-300' : 'bg-yellow-400/60'}`}
+                    style={{ height: `${isSpike ? height * 1.5 : height}px` }}
+                  ></div>
+                  {isSpike && (
+                    <div className="absolute -top-1 left-0 w-1 h-1 bg-yellow-200 rounded"></div>
+                  )}
+                </div>
+              );
+            })}
+            <div className="absolute bottom-0 right-0 text-xs text-yellow-300 text-[8px]">●</div>
+          </div>
+        );
+      
+      case 'TASTE':
+        // Quality band visualization, acceptance range indicator, pass/fail envelope
+        return (
+          <div className="w-12 h-8 bg-pink-500/30 border border-pink-500/50 rounded relative flex-shrink-0">
+            <div className="absolute inset-1 bg-gradient-to-b from-pink-400/20 via-pink-400/60 to-pink-400/20 rounded"></div>
+            <div className="absolute left-1 top-2 right-1 h-0.5 bg-pink-300/80 rounded"></div>
+            <div className="absolute left-1 bottom-2 right-1 h-0.5 bg-pink-300/80 rounded"></div>
+            <div className="absolute right-1 top-1/2 w-1 h-2 bg-pink-400 rounded transform -translate-y-1/2"></div>
+            <div className="absolute top-1 right-1 text-xs text-pink-300 text-[8px]">
+              {Math.random() > 0.5 ? '✓' : '✗'}
+            </div>
+          </div>
+        );
+      
+      default:
+        return (
+          <div className="w-8 h-8 bg-cyan-500/30 border border-cyan-500/50 rounded flex items-center justify-center flex-shrink-0">
+            <div className="w-2 h-2 bg-cyan-400 rounded"></div>
+          </div>
+        );
+    }
+  };
+
+  const fetchSignals = async (page: number = 0, append: boolean = false) => {
     try {
-      const response = await fetch('http://localhost:8000/sensory-monitor/signals?limit=50');
-      const data = await response.json();
-      setSignals(data.signals);
+      const offset = page * SIGNALS_PER_PAGE;
+      const data = await sensoryApi.getSignals(SIGNALS_PER_PAGE, offset);
+      
+      // Update sensory receptor states based on recent signals (only for first page)
+      if (page === 0) {
+        updateSensoryStates(data.signals);
+      }
+      
+      // Convert signals to live feed items
+      const liveItems = data.signals.flatMap((signal: Signal) => {
+        if (signal.payload_type === 'capsule' && signal.scus && Array.isArray(signal.scus)) {
+          // For capsules with multiple sensory types, create separate feed items for each SCU
+          return signal.scus.map((scu: any, index: number) => ({
+            id: `${signal.signal_id}_${scu.sensory_type}_${index}`,
+            sensoryType: scu.sensory_type,
+            timestamp: signal.received_at,
+            data: scu.signal_data, // Use signal_data from individual SCU
+            ghostPassStatus: signal.ghost_pass_approved,
+            senateStatus: 'pending' as const,
+            originalSignal: signal
+          }));
+        } else if (signal.payload_type === 'capsule' && signal.sensory_types && Array.isArray(signal.sensory_types)) {
+          // Fallback: if scus is not available but sensory_types is, create items without data
+          return signal.sensory_types.map((sensoryType: string, index: number) => ({
+            id: `${signal.signal_id}_${sensoryType}_${index}`,
+            sensoryType: sensoryType,
+            timestamp: signal.received_at,
+            data: null, // No data available
+            ghostPassStatus: signal.ghost_pass_approved,
+            senateStatus: 'pending' as const,
+            originalSignal: signal
+          }));
+        } else if (signal.payload_type === 'scu') {
+          // For single SCUs
+          return [{
+            id: signal.signal_id,
+            sensoryType: signal.sensory_type || 'UNKNOWN',
+            timestamp: signal.received_at,
+            data: signal.signal_data, // Use signal_data from backend
+            ghostPassStatus: signal.ghost_pass_approved,
+            senateStatus: 'pending' as const,
+            originalSignal: signal
+          }];
+        } else {
+          // Fallback for unknown types
+          return [];
+        }
+      });
+      
+      if (append) {
+        setLiveSignals(prev => [...prev, ...liveItems]);
+      } else {
+        setLiveSignals(liveItems);
+      }
+      
+      // Update pagination state
+      const actualHasMore = data.has_more !== undefined ? data.has_more : (data.signals.length === SIGNALS_PER_PAGE);
+      setHasMore(actualHasMore);
+      setTotalSignals(data.total || 0);
+      
     } catch (error) {
       console.error('Failed to fetch signals:', error);
     }
   };
 
-  const fetchStats = async () => {
-    try {
-      const response = await fetch('http://localhost:8000/sensory-monitor/stats');
-      const data = await response.json();
-      setStats(data);
-    } catch (error) {
-      console.error('Failed to fetch stats:', error);
-    }
+  // Load more signals (pagination)
+  const loadMoreSignals = async () => {
+    if (loadingMore || !hasMore) return;
+    
+    setLoadingMore(true);
+    const nextPage = currentPage + 1;
+    await fetchSignals(nextPage, true);
+    setCurrentPage(nextPage);
+    setLoadingMore(false);
   };
 
-  // Real-time WebSocket callbacks (disabled for now)
-  // const handleSignalChange = useCallback((payload: RealtimePostgresChangesPayload<any>) => {
-  //   console.log('[REALTIME] Signal change:', payload);
-  //   
-  //   if (payload.eventType === 'INSERT') {
-  //     // Add new signal to the list
-  //     setSignals(prev => [payload.new, ...prev]);
-  //     // Refresh stats to get updated counts
-  //     fetchStats();
-  //   } else if (payload.eventType === 'UPDATE') {
-  //     // Update existing signal
-  //     setSignals(prev => prev.map(signal => 
-  //       signal.signal_id === payload.new.signal_id ? payload.new : signal
-  //     ));
-  //     fetchStats();
-  //   } else if (payload.eventType === 'DELETE') {
-  //     // Remove deleted signal
-  //     setSignals(prev => prev.filter(signal => signal.signal_id !== payload.old.signal_id));
-  //     fetchStats();
-  //   }
-  // }, []);
-
-  // const handleEvaluationChange = useCallback((payload: RealtimePostgresChangesPayload<any>) => {
-  //   console.log('[REALTIME] Evaluation change:', payload);
-  //   
-  //   if (payload.eventType === 'INSERT') {
-  //     // Add new evaluation to pending list
-  //     setPendingEvaluations(prev => [payload.new, ...prev]);
-  //     fetchSenateStats();
-  //   } else if (payload.eventType === 'UPDATE') {
-  //     // Update existing evaluation
-  //     setPendingEvaluations(prev => prev.map(evaluation => 
-  //       evaluation.evaluation_id === payload.new.evaluation_id ? payload.new : evaluation
-  //     ));
-  //     fetchSenateStats();
-  //   } else if (payload.eventType === 'DELETE') {
-  //     // Remove evaluation from pending (likely moved to decisions)
-  //     setPendingEvaluations(prev => prev.filter(evaluation => 
-  //       evaluation.evaluation_id !== payload.old.evaluation_id
-  //     ));
-  //     fetchSenateStats();
-  //   }
-  // }, []);
-
-  // const handleDecisionChange = useCallback((payload: RealtimePostgresChangesPayload<any>) => {
-  //   console.log('[REALTIME] Decision change:', payload);
-  //   
-  //   if (payload.eventType === 'INSERT') {
-  //     // Add new decision to history
-  //     setSenateHistory(prev => [payload.new, ...prev]);
-  //     fetchSenateStats();
-  //   }
-  // }, []);
-
-  // Setup real-time WebSocket connections (disabled for now)
-  // useSensorySystemRealtime({
-  //   onSignalChange: handleSignalChange,
-  //   onEvaluationChange: handleEvaluationChange,
-  //   onDecisionChange: handleDecisionChange,
-  // }, {
-  //   enabled: realtimeEnabled,
-  //   onConnectionChange: (connected) => {
-  //     setRealtimeConnected(connected);
-  //     console.log(`[REALTIME] Connection status changed: ${connected ? 'Connected' : 'Disconnected'}`);
-  //   },
-  //   onError: (error) => {
-  //     console.error('[REALTIME] WebSocket error:', error);
-  //     // Could show a toast notification here
-  //   }
-  // });
-
-  const fetchSenatePending = async () => {
+  const fetchGovernanceData = async () => {
     try {
-      const response = await fetch('http://localhost:8000/senate/pending');
-      const data = await response.json();
-      setPendingEvaluations(data.evaluations);
+      // Fetch Ghost Pass summary
+      const ghostPassData = await sensoryApi.getStats();
+      setGhostPassSummary(ghostPassData);
+
+      // Fetch Senate statistics
+      const senateData = await sensoryApi.getSenateStats();
+      setSenateStats(senateData);
+
+      // Fetch audit summary (last decision timestamp)
+      const historyData = await sensoryApi.getSenateHistory(1);
+      if (historyData.decisions && historyData.decisions.length > 0) {
+        setAuditSummary({
+          last_decision_timestamp: historyData.decisions[0].timestamp,
+          total_events: historyData.total_count || 0
+        });
+      }
     } catch (error) {
-      console.error('Failed to fetch pending evaluations:', error);
+      console.error('Failed to fetch governance data:', error);
+      // Set fallback values to prevent UI errors
+      setGhostPassSummary(null);
+      setSenateStats({ pending_count: 0, escalated_count: 0 });
+      setAuditSummary({ total_events: 0 });
     }
   };
+  // Update sensory receptor states based on recent signal activity
+  const updateSensoryStates = (signals: Signal[]) => {
+    const recentSignals = signals.filter(s => {
+      const signalTime = new Date(s.received_at);
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+      return signalTime > fiveMinutesAgo;
+    });
 
-  const fetchSenateHistory = async () => {
-    try {
-      const response = await fetch('http://localhost:8000/senate/history');
-      const data = await response.json();
-      setSenateHistory(data.decisions);
-    } catch (error) {
-      console.error('Failed to fetch senate history:', error);
-    }
+    const activeSensories = new Set<string>();
+    recentSignals.forEach(signal => {
+      if (signal.payload_type === 'capsule' && signal.scus) {
+        // For capsules, get sensory types from individual SCUs
+        signal.scus.forEach((scu: any) => {
+          if (scu.sensory_type) {
+            activeSensories.add(scu.sensory_type);
+          }
+        });
+      } else if (signal.sensory_type) {
+        // For single SCUs
+        activeSensories.add(signal.sensory_type);
+      }
+    });
+
+    setSensoryReceptors(prev => prev.map(receptor => {
+      const isActive = activeSensories.has(receptor.type);
+      let last_seen_at = receptor.last_seen_at;
+      
+      if (isActive) {
+        // Find the most recent signal for this sensory type
+        const recentSignal = recentSignals.find(s => {
+          if (s.payload_type === 'capsule' && s.scus) {
+            return s.scus.some((scu: any) => scu.sensory_type === receptor.type);
+          } else {
+            return s.sensory_type === receptor.type;
+          }
+        });
+        if (recentSignal) {
+          last_seen_at = recentSignal.received_at;
+        }
+      }
+      
+      return {
+        ...receptor,
+        state: isActive ? 'active' : 'available',
+        last_seen_at
+      };
+    }));
   };
 
-  const fetchSenateStats = async () => {
-    try {
-      const response = await fetch('http://localhost:8000/senate/stats');
-      const data = await response.json();
-      setSenateStats(data);
-    } catch (error) {
-      console.error('Failed to fetch senate stats:', error);
-    }
-  };
-
+  // Initialize data on component mount
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      await Promise.all([fetchSignals(), fetchStats(), fetchSenatePending(), fetchSenateStats()]);
+      setCurrentPage(0);
+      await Promise.all([fetchSignals(0, false), fetchGovernanceData()]);
       setLoading(false);
     };
 
     loadData();
-
-    // Auto-refresh disabled for now
-    // const interval = setInterval(() => {
-    //   if (autoRefresh) {
-    //     handleRefresh();
-    //   }
-    // }, 3000);
-
-    // return () => clearInterval(interval);
+    setLastRefreshTime(new Date().toISOString());
   }, []);
 
-  // Manual refresh function
+  // Refresh handler
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await Promise.all([fetchSignals(), fetchStats(), fetchSenatePending(), fetchSenateStats()]);
+      setCurrentPage(0);
+      await Promise.all([fetchSignals(0, false), fetchGovernanceData()]);
+      setLastRefreshTime(new Date().toISOString());
     } catch (error) {
       console.error('Failed to refresh data:', error);
     } finally {
       setRefreshing(false);
-    }
-  };
-
-  const handleSenateReview = async (evaluation: Evaluation) => {
-    setReviewingEvaluationId(evaluation.evaluation_id);
-    
-    try {
-      const response = await fetch(`http://localhost:8000/senate/pending/${evaluation.evaluation_id}`);
-      const data = await response.json();
-      setSelectedEvaluation(data);
-      setView('senate-review');
-      setDecision('');
-      setReason('');
-      setTrustScore(75);
-    } catch (error) {
-      console.error('Failed to fetch evaluation details:', error);
-    } finally {
-      setReviewingEvaluationId(null);
-    }
-  };
-
-  const handleSubmitDecision = async () => {
-    if (!selectedEvaluation || !decision || !reason) return;
-
-    setSubmitting(true);
-
-    try {
-      const response = await fetch('http://localhost:8000/senate/evaluate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          signal_id: selectedEvaluation.signal_id,
-          decision,
-          reason,
-          reviewer_id: 'admin_user',
-          trust_score: trustScore / 100
-        })
-      });
-
-      if (response.ok) {
-        await Promise.all([fetchSenatePending(), fetchSenateHistory(), fetchSenateStats()]);
-        setView('senate-pending');
-        setSelectedEvaluation(null);
-      }
-    } catch (error) {
-      console.error('Failed to submit decision:', error);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  // Helper function to match Python's JSON serialization (sorted keys, no spaces)
-  const serializeForHash = (obj: any): string => {
-    if (obj === null) return 'null';
-    if (typeof obj !== 'object') return JSON.stringify(obj);
-    if (Array.isArray(obj)) {
-      return '[' + obj.map(serializeForHash).join(',') + ']';
-    }
-    const keys = Object.keys(obj).sort();
-    const pairs = keys.map(key => `"${key}":${serializeForHash(obj[key])}`);
-    return '{' + pairs.join(',') + '}';
-  };
-
-  // Test Injector handlers
-  const handleSendSingle = async () => {
-    setInjectorLoading(true);
-    setInjectorResponse(null);
-
-    try {
-      const signalData = JSON.parse(singleSCU.signal_data);
-      const payload = {
-        schema_version: '1.0.0',
-        sensory_type: singleSCU.sensory_type,
-        signal_data: signalData,
-        metadata: {
-          timestamp: new Date().toISOString(),
-          source_id: singleSCU.source_id,
-          integrity_hash: '0'.repeat(64)
-        }
-      };
-
-      // Match Python's JSON formatting: no spaces, sorted keys
-      const hashInput = `${payload.sensory_type}:${payload.metadata.source_id}:${serializeForHash(signalData)}`;
-      const encoder = new TextEncoder();
-      const data = encoder.encode(hashInput);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-      payload.metadata.integrity_hash = hashHex;
-
-      const res = await fetch('http://localhost:8000/conduit/receive', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      const result = await res.json();
-
-      if (res.ok) {
-        setInjectorResponse({ success: true, message: 'Signal sent successfully!', data: result });
-        // Refresh signals
-        await fetchSignals();
-        
-        // Auto-dismiss after 3 seconds
-        setTimeout(() => setInjectorResponse(null), 3000);
-      } else {
-        setInjectorResponse({ success: false, message: result.detail?.message || 'Failed to send signal', data: result });
-        
-        // Auto-dismiss errors after 5 seconds
-        setTimeout(() => setInjectorResponse(null), 5000);
-      }
-    } catch (error: any) {
-      setInjectorResponse({ success: false, message: error.message || 'Error sending signal' });
-      setTimeout(() => setInjectorResponse(null), 5000);
-    } finally {
-      setInjectorLoading(false);
-    }
-  };
-
-  const handleSendCapsule = async () => {
-    setInjectorLoading(true);
-    setInjectorResponse(null);
-
-    try {
-      const scus = await Promise.all(capsuleSCUs.map(async (scu) => {
-        const signalData = JSON.parse(scu.signal_data);
-        const scuPayload = {
-          schema_version: '1.0.0',
-          sensory_type: scu.sensory_type,
-          signal_data: signalData,
-          metadata: {
-            timestamp: new Date().toISOString(),
-            source_id: scu.source_id,
-            integrity_hash: '0'.repeat(64)
-          }
-        };
-
-        // Match Python's JSON formatting: no spaces, sorted keys
-        const hashInput = `${scuPayload.sensory_type}:${scuPayload.metadata.source_id}:${serializeForHash(signalData)}`;
-        const encoder = new TextEncoder();
-        const data = encoder.encode(hashInput);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        scuPayload.metadata.integrity_hash = hashHex;
-
-        return scuPayload;
-      }));
-
-      const capsulePayload = {
-        capsule_id: `test_capsule_${Date.now()}`,
-        timestamp: new Date().toISOString(),
-        source_id: capsuleSourceId,
-        scus: scus
-      };
-
-      const res = await fetch('http://localhost:8000/conduit/receive', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(capsulePayload)
-      });
-
-      const result = await res.json();
-
-      if (res.ok) {
-        setInjectorResponse({ success: true, message: `Capsule with ${scus.length} SCUs sent successfully!`, data: result });
-        await fetchSignals();
-        
-        // Auto-dismiss after 3 seconds
-        setTimeout(() => setInjectorResponse(null), 3000);
-      } else {
-        setInjectorResponse({ success: false, message: result.detail?.message || 'Failed to send capsule', data: result });
-        
-        // Auto-dismiss errors after 5 seconds
-        setTimeout(() => setInjectorResponse(null), 5000);
-      }
-    } catch (error: any) {
-      setInjectorResponse({ success: false, message: error.message || 'Error sending capsule' });
-      setTimeout(() => setInjectorResponse(null), 5000);
-    } finally {
-      setInjectorLoading(false);
     }
   };
 
@@ -463,29 +476,175 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
     );
   }
 
-  // Senate Review Workspace
-  if (view === 'senate-review' && selectedEvaluation) {
-    return (
-      <SenateReviewWorkspace
-        evaluation={selectedEvaluation}
-        decision={decision}
-        setDecision={setDecision}
-        reason={reason}
-        setReason={setReason}
-        trustScore={trustScore}
-        setTrustScore={setTrustScore}
-        submitting={submitting}
-        onSubmit={handleSubmitDecision}
-        onBack={() => setView('senate-pending')}
-      />
-    );
-  }
-
   // Signal Detail View
   if (selectedSignal) {
-    return <SignalDetailView signal={selectedSignal} onBack={() => setSelectedSignal(null)} />;
-  }
+    return (
+      <div className="min-h-screen bg-slate-950 text-white p-2 sm:p-4 lg:p-6">
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="flex items-center space-x-3 sm:space-x-4 mb-4 sm:mb-6">
+            <motion.button
+              onClick={() => setSelectedSignal(null)}
+              className="glass-panel p-2 sm:p-3 hover:border-cyan-500/50 transition-all flex-shrink-0"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <ArrowLeft className="text-cyan-400" size={18} />
+            </motion.button>
+            <div className="min-w-0 flex-1">
+              <h1 className="heading-primary text-xl sm:text-2xl truncate">Signal Details</h1>
+              <p className="label-tactical text-xs sm:text-sm truncate">Full SCU information and validation results</p>
+            </div>
+          </div>
 
+          {/* Status Banner */}
+          <Card className={`glass-card mb-4 sm:mb-6 ${selectedSignal.ghost_pass_approved ? 'border-emerald-500/50' : 'border-red-500/50'}`}>
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+                <div className="flex items-center space-x-3 sm:space-x-4">
+                  {selectedSignal.ghost_pass_approved ? (
+                    <CheckCircle className="text-emerald-400 flex-shrink-0" size={24} />
+                  ) : (
+                    <XCircle className="text-red-400 flex-shrink-0" size={24} />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className={`text-lg sm:text-xl font-bold ${selectedSignal.ghost_pass_approved ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {selectedSignal.ghost_pass_approved ? 'Ghost Pass Approved' : 'Ghost Pass Rejected'}
+                    </p>
+                    <p className="text-xs sm:text-sm text-slate-400">
+                      {selectedSignal.ghost_pass_approved ? 'Signal forwarded to Senate' : 'Signal blocked by validation'}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-left sm:text-right">
+                  <p className="label-tactical text-xs sm:text-sm">Status</p>
+                  <p className="data-mono text-sm sm:text-base">{selectedSignal.status}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* SCU Metadata */}
+          <Card className="glass-card mb-4 sm:mb-6">
+            <CardHeader>
+              <CardTitle className="heading-primary text-lg sm:text-xl">SCU Metadata</CardTitle>
+              <p className="label-tactical text-sm">Complete signal information and validation results</p>
+            </CardHeader>
+            <CardContent className="space-y-3 sm:space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div>
+                  <p className="label-tactical text-xs sm:text-sm">SCU ID</p>
+                  <p className="data-mono text-xs sm:text-sm break-all">{selectedSignal.signal_id}</p>
+                </div>
+                <div>
+                  <p className="label-tactical text-xs sm:text-sm">Sensory Type</p>
+                  <p className="data-mono text-sm sm:text-base">
+                    {selectedSignal.payload_type === 'capsule' 
+                      ? selectedSignal.sensory_types?.join(', ') || 'Multiple'
+                      : selectedSignal.sensory_type || 'Unknown'
+                    }
+                  </p>
+                </div>
+                <div>
+                  <p className="label-tactical text-xs sm:text-sm">Source ID</p>
+                  <p className="data-mono text-sm sm:text-base">{selectedSignal.source_id}</p>
+                </div>
+                <div>
+                  <p className="label-tactical text-xs sm:text-sm">Payload Type</p>
+                  <p className="data-mono text-sm sm:text-base uppercase">{selectedSignal.payload_type}</p>
+                </div>
+                <div>
+                  <p className="label-tactical text-xs sm:text-sm">Timestamp</p>
+                  <p className="data-mono text-xs sm:text-sm">{formatTimestamp(selectedSignal.timestamp)}</p>
+                </div>
+                <div>
+                  <p className="label-tactical text-xs sm:text-sm">Received At</p>
+                  <p className="data-mono text-xs sm:text-sm">{formatTimestamp(selectedSignal.received_at)}</p>
+                </div>
+                {selectedSignal.metadata?.integrity_hash && (
+                  <div className="sm:col-span-2">
+                    <p className="label-tactical text-xs sm:text-sm">Payload Hash</p>
+                    <p className="data-mono text-xs break-all">{selectedSignal.metadata.integrity_hash}</p>
+                  </div>
+                )}
+              </div>
+              
+              {/* Ghost Pass Validation Status */}
+              <div className="border-t border-slate-700 pt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <div>
+                    <p className="label-tactical text-xs sm:text-sm">Ghost Pass Validation</p>
+                    <div className="flex items-center space-x-2">
+                      {selectedSignal.ghost_pass_approved ? (
+                        <CheckCircle className="text-emerald-400" size={16} />
+                      ) : (
+                        <XCircle className="text-red-400" size={16} />
+                      )}
+                      <span className={`text-sm font-semibold ${selectedSignal.ghost_pass_approved ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {selectedSignal.ghost_pass_approved ? 'APPROVED' : 'REJECTED'}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="label-tactical text-xs sm:text-sm">Senate Status</p>
+                    <div className="flex items-center space-x-2">
+                      <Scale className="text-purple-400" size={16} />
+                      <span className="text-sm text-purple-400 uppercase">
+                        {selectedSignal.ghost_pass_approved ? 'Pending Evaluation' : 'Blocked'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Signal Data */}
+          <Card className="glass-card mb-6">
+            <CardHeader>
+              <CardTitle className="heading-primary">Signal Data</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {selectedSignal.payload_type === 'capsule' && selectedSignal.scus ? (
+                // For capsules, show all SCU data
+                <div className="space-y-4">
+                  {selectedSignal.scus.map((scu: any, index: number) => (
+                    <div key={index} className="border border-slate-700 rounded p-4">
+                      <h4 className="text-sm font-semibold text-cyan-400 mb-2">
+                        SCU {index + 1}: {scu.sensory_type}
+                      </h4>
+                      <pre className="p-4 bg-slate-950/50 rounded text-sm overflow-x-auto">
+                        {JSON.stringify(scu.signal_data, null, 2)}
+                      </pre>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                // For single SCUs, show the signal data directly
+                <pre className="p-4 bg-slate-950/50 rounded text-sm overflow-x-auto">
+                  {JSON.stringify(selectedSignal.signal_data, null, 2)}
+                </pre>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Validation Results */}
+          {selectedSignal.validation_result && (
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle className="heading-primary">Validation Results</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <pre className="p-4 bg-slate-950/50 rounded text-sm overflow-x-auto">
+                  {JSON.stringify(selectedSignal.validation_result, null, 2)}
+                </pre>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-slate-950 text-white p-3 sm:p-4 lg:p-6">
       {/* Header */}
@@ -502,12 +661,16 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
             </motion.button>
             <div className="min-w-0 flex-1">
               <h1 className="heading-primary text-2xl sm:text-2xl lg:text-3xl">Sensory Cargo Monitor</h1>
-              <p className="label-tactical text-sm">Real-time signal feed and Senate evaluation</p>
+              <p className="label-tactical text-sm">Observability surface for sensory governance</p>
             </div>
           </div>
 
-          <div className="flex items-center justify-end">
-            {/* Refresh Button */}
+          <div className="flex items-center justify-end space-x-4">
+            {lastRefreshTime && (
+              <div className="text-xs text-slate-500">
+                Last updated: {getTimeAgo(lastRefreshTime)}
+              </div>
+            )}
             <motion.button
               onClick={handleRefresh}
               disabled={refreshing}
@@ -532,483 +695,259 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
           </div>
         </div>
 
-        {/* View Tabs */}
-        <div className="flex flex-wrap gap-2 sm:gap-2 mb-6 overflow-x-auto pb-1">
-          <motion.button
-            onClick={() => setView('signals')}
-            className={`glass-panel px-4 py-3 sm:px-4 sm:py-2 transition-all whitespace-nowrap flex-shrink-0 ${
-              view === 'signals' ? 'border-cyan-500/50 bg-cyan-500/10' : 'hover:border-white/20'
-            }`}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <span className={`text-sm ${view === 'signals' ? 'text-cyan-400' : 'text-slate-400'}`}>Signal Feed</span>
-          </motion.button>
-          
-          <motion.button
-            onClick={() => setView('senate-pending')}
-            className={`glass-panel px-4 py-3 sm:px-4 sm:py-2 transition-all whitespace-nowrap flex-shrink-0 ${
-              view === 'senate-pending' ? 'border-purple-500/50 bg-purple-500/10' : 'hover:border-white/20'
-            }`}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <div className="flex items-center space-x-2">
-              <Scale className={view === 'senate-pending' ? 'text-purple-400' : 'text-slate-400'} size={14} />
-              <span className={`text-sm ${view === 'senate-pending' ? 'text-purple-400' : 'text-slate-400'}`}>
-                Senate Pending {senateStats && senateStats.pending_count > 0 && `(${senateStats.pending_count})`}
-              </span>
-            </div>
-          </motion.button>
-
-          <motion.button
-            onClick={() => {
-              setView('senate-history');
-              fetchSenateHistory();
-            }}
-            className={`glass-panel px-4 py-3 sm:px-4 sm:py-2 transition-all whitespace-nowrap flex-shrink-0 ${
-              view === 'senate-history' ? 'border-purple-500/50 bg-purple-500/10' : 'hover:border-white/20'
-            }`}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <span className={`text-sm ${view === 'senate-history' ? 'text-purple-400' : 'text-slate-400'}`}>Senate History</span>
-          </motion.button>
-
-          {/* Test Injector Tab (Dev Only) */}
-          {isDevelopment && (
-            <motion.button
-              onClick={() => setView('test-injector')}
-              className={`glass-panel px-4 py-3 sm:px-4 sm:py-2 transition-all whitespace-nowrap flex-shrink-0 ${
-                view === 'test-injector' ? 'border-yellow-500/50 bg-yellow-500/10' : 'hover:border-white/20'
-              }`}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <div className="flex items-center space-x-2">
-                <Send className={view === 'test-injector' ? 'text-yellow-400' : 'text-slate-400'} size={14} />
-                <span className={`text-sm ${view === 'test-injector' ? 'text-yellow-400' : 'text-slate-400'}`}>
-                  Test Injector [DEV]
-                </span>
-              </div>
-            </motion.button>
-          )}
-        </div>
-
-        {/* Stats Cards */}
-        {stats && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
-            <Card className="glass-card">
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex flex-col space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="label-tactical text-xs leading-tight">Total Signals</p>
-                    <TrendingUp className="text-cyan-400 flex-shrink-0" size={16} />
-                  </div>
-                  <p className="text-xl sm:text-2xl font-bold text-cyan-400">{stats.total_signals}</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="glass-card">
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex flex-col space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="label-tactical text-xs leading-tight">Approved</p>
-                    <CheckCircle className="text-emerald-400 flex-shrink-0" size={16} />
-                  </div>
-                  <p className="text-xl sm:text-2xl font-bold text-emerald-400">
-                    {stats.by_status?.approved || 0}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="glass-card">
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex flex-col space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="label-tactical text-xs leading-tight">Rejected</p>
-                    <XCircle className="text-red-400 flex-shrink-0" size={16} />
-                  </div>
-                  <p className="text-xl sm:text-2xl font-bold text-red-400">
-                    {stats.by_status?.rejected || 0}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="glass-card">
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex flex-col space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="label-tactical text-xs leading-tight">Capsules</p>
-                    <Package className="text-purple-400 flex-shrink-0" size={16} />
-                  </div>
-                  <p className="text-xl sm:text-2xl font-bold text-purple-400">
-                    {signals.filter(s => s.payload_type === 'capsule').length}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-      </div>
-
-      {/* Signal Feed */}
-      <div className="max-w-7xl mx-auto">
-        {view === 'signals' && (
-          <Card className="glass-card">
-            <CardHeader>
-              <CardTitle className="heading-primary flex items-center space-x-2">
-                <Activity className="text-cyan-400" size={20} />
-                <span>Live Signal Feed</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {signals.length === 0 ? (
-                <div className="text-center py-12">
-                  <AlertCircle className="text-slate-400 mx-auto mb-4" size={48} />
-                  <p className="text-slate-400">No signals received yet</p>
-                  <p className="text-sm text-slate-500 mt-2">Signals will appear here as they arrive</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <AnimatePresence>
-                    {signals.map((signal, index) => (
-                      <SignalCard
-                        key={signal.signal_id}
-                        signal={signal}
-                        index={index}
-                        onClick={() => setSelectedSignal(signal)}
-                      />
-                    ))}
-                  </AnimatePresence>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Senate Pending */}
-        {view === 'senate-pending' && (
-          <Card className="glass-card border-purple-500/30">
-            <CardHeader>
-              <CardTitle className="heading-primary flex items-center space-x-2">
-                <Shield className="text-purple-400" size={20} />
-                <span>Senate Pending Evaluation</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {pendingEvaluations.length === 0 ? (
-                <div className="text-center py-12">
-                  <CheckCircle className="text-slate-400 mx-auto mb-4" size={48} />
-                  <p className="text-slate-400">No pending evaluations</p>
-                  <p className="text-sm text-slate-500 mt-2">All signals have been reviewed</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {pendingEvaluations.map((evaluation, index) => (
-                    <SenateEvaluationCard
-                      key={evaluation.evaluation_id}
-                      evaluation={evaluation}
-                      index={index}
-                      onReview={() => handleSenateReview(evaluation)}
-                      isLoading={reviewingEvaluationId === evaluation.evaluation_id}
-                    />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Senate History */}
-        {view === 'senate-history' && (
-          <Card className="glass-card border-purple-500/30">
-            <CardHeader>
-              <CardTitle className="heading-primary flex items-center space-x-2">
-                <Scale className="text-purple-400" size={20} />
-                <span>Senate Decision History</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {senateHistory.length === 0 ? (
-                <div className="text-center py-12">
-                  <Scale className="text-slate-400 mx-auto mb-4" size={48} />
-                  <p className="text-slate-400">No decisions yet</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {senateHistory.map((decision, index) => (
-                    <SenateDecisionCard key={decision.decision_id} decision={decision} index={index} />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Test Injector (Dev Only) */}
-        {view === 'test-injector' && isDevelopment && (
-          <TestInjectorView
-            mode={injectorMode}
-            setMode={setInjectorMode}
-            singleSCU={singleSCU}
-            setSingleSCU={setSingleSCU}
-            capsuleSourceId={capsuleSourceId}
-            setCapsuleSourceId={setCapsuleSourceId}
-            capsuleSCUs={capsuleSCUs}
-            setCapsuleSCUs={setCapsuleSCUs}
-            response={injectorResponse}
-            loading={injectorLoading}
-            onSendSingle={handleSendSingle}
-            onSendCapsule={handleSendCapsule}
-          />
-        )}
-      </div>
-    </div>
-  );
-};
-
-interface SignalCardProps {
-  signal: Signal;
-  index: number;
-  onClick: () => void;
-}
-
-const SignalCard: React.FC<SignalCardProps> = ({ signal, index, onClick }) => {
-  const isApproved = signal.ghost_pass_approved;
-  const isCapsule = signal.payload_type === 'capsule';
-  
-  const primaryType = isCapsule 
-    ? (signal.sensory_types?.[0] || 'UNKNOWN')
-    : (signal.sensory_type || 'UNKNOWN');
-  
-  const color = getSensoryColor(primaryType);
-  const { Icon, className } = getSensoryIcon(primaryType);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 20 }}
-      transition={{ delay: index * 0.05 }}
-      onClick={onClick}
-      className={`glass-panel p-3 sm:p-4 cursor-pointer transition-all hover:border-cyan-500/50 ${
-        !isApproved ? 'border-red-500/50' : ''
-      }`}
-      whileHover={{ scale: 1.01 }}
-      whileTap={{ scale: 0.99 }}
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2 sm:space-x-4 flex-1 min-w-0">
-          {/* Icon */}
-          <div className={`${color.bg} ${color.border} border rounded-lg p-2 sm:p-3 flex-shrink-0`}>
-            <Icon className={className} size={16} />
-          </div>
-
-          {/* Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center space-x-1 sm:space-x-2 mb-1">
-              {isCapsule && (
-                <Package className="text-purple-400 flex-shrink-0" size={14} />
-              )}
-              <span className={`font-semibold ${color.text} text-sm sm:text-base truncate`}>
-                {isCapsule ? `Capsule (${signal.scu_count} SCUs)` : primaryType}
-              </span>
-              {isCapsule && signal.sensory_types && signal.sensory_types.length > 1 && (
-                <span className="text-xs text-slate-400 flex-shrink-0">
-                  +{signal.sensory_types.length - 1} more
-                </span>
-              )}
-            </div>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-xs sm:text-sm text-slate-400 space-y-1 sm:space-y-0">
-              <span className="truncate">Source: {signal.source_id}</span>
-              <span className="flex items-center space-x-1 flex-shrink-0">
-                <Clock size={10} />
-                <span>{getTimeAgo(signal.received_at)}</span>
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Status */}
-        <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0 ml-2">
-          {isApproved ? (
-            <div className="flex items-center space-x-1 text-emerald-400">
-              <CheckCircle size={16} />
-              <span className="text-xs sm:text-sm font-medium hidden sm:inline">Approved</span>
-            </div>
-          ) : (
-            <div className="flex items-center space-x-1 text-red-400">
-              <XCircle size={16} />
-              <span className="text-xs sm:text-sm font-medium hidden sm:inline">Rejected</span>
-            </div>
-          )}
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
-const SignalDetailView: React.FC<{ signal: Signal; onBack: () => void }> = ({ signal, onBack }) => {
-  const isCapsule = signal.payload_type === 'capsule';
-  const isApproved = signal.ghost_pass_approved;
-
-  return (
-    <div className="min-h-screen bg-slate-950 text-white p-2 sm:p-4 lg:p-6">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center space-x-3 sm:space-x-4 mb-4 sm:mb-6">
-          <motion.button
-            onClick={onBack}
-            className="glass-panel p-2 sm:p-3 hover:border-cyan-500/50 transition-all flex-shrink-0"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <ArrowLeft className="text-cyan-400" size={18} />
-          </motion.button>
-          <div className="min-w-0 flex-1">
-            <h1 className="heading-primary text-xl sm:text-2xl truncate">Signal Details</h1>
-            <p className="label-tactical text-xs sm:text-sm truncate">Full SCU information and validation results</p>
-          </div>
-        </div>
-
-        {/* Status Banner */}
-        <Card className={`glass-card mb-4 sm:mb-6 ${isApproved ? 'border-emerald-500/50' : 'border-red-500/50'}`}>
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-              <div className="flex items-center space-x-3 sm:space-x-4">
-                {isApproved ? (
-                  <CheckCircle className="text-emerald-400 flex-shrink-0" size={24} />
-                ) : (
-                  <XCircle className="text-red-400 flex-shrink-0" size={24} />
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className={`text-lg sm:text-xl font-bold ${isApproved ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {isApproved ? 'Ghost Pass Approved' : 'Ghost Pass Rejected'}
-                  </p>
-                  <p className="text-xs sm:text-sm text-slate-400">
-                    {isApproved ? 'Signal forwarded to Senate' : 'Signal blocked by validation'}
-                  </p>
-                </div>
-              </div>
-              <div className="text-left sm:text-right">
-                <p className="label-tactical text-xs sm:text-sm">Status</p>
-                <p className="data-mono text-sm sm:text-base">{signal.status}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Metadata */}
-        <Card className="glass-card mb-4 sm:mb-6">
+        {/* TOP SECTION - Sensory Receptor Panel */}
+        <Card className="glass-card mb-6">
           <CardHeader>
-            <CardTitle className="heading-primary text-lg sm:text-xl">Metadata</CardTitle>
+            <CardTitle className="heading-primary text-lg">Sensory Receptor Panel</CardTitle>
+            <p className="label-tactical text-sm">Available sensory channels and their current state</p>
           </CardHeader>
-          <CardContent className="space-y-3 sm:space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div>
-                <p className="label-tactical text-xs sm:text-sm">Signal ID</p>
-                <p className="data-mono text-xs sm:text-sm break-all">{signal.signal_id}</p>
-              </div>
-              <div>
-                <p className="label-tactical text-xs sm:text-sm">Source ID</p>
-                <p className="data-mono text-sm sm:text-base">{signal.source_id}</p>
-              </div>
-              <div>
-                <p className="label-tactical text-xs sm:text-sm">Timestamp</p>
-                <p className="data-mono text-xs sm:text-sm">{formatTimestamp(signal.timestamp)}</p>
-              </div>
-              <div>
-                <p className="label-tactical text-xs sm:text-sm">Received At</p>
-                <p className="data-mono text-xs sm:text-sm">{formatTimestamp(signal.received_at)}</p>
-              </div>
-              {signal.metadata?.integrity_hash && (
-                <div className="sm:col-span-2">
-                  <p className="label-tactical text-xs sm:text-sm">Integrity Hash</p>
-                  <p className="data-mono text-xs break-all">{signal.metadata.integrity_hash}</p>
-                </div>
-              )}
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+              {sensoryReceptors.map((receptor) => {
+                const Icon = receptor.icon;
+                const isSelected = selectedSensoryFilter === receptor.type;
+                const stateColor = getStateColor(receptor.state, receptor.type);
+                const stateIndicator = getStateIndicator(receptor.state);
+                
+                return (
+                  <motion.button
+                    key={receptor.type}
+                    onClick={() => onReceptorClick(receptor.type)}
+                    className={`glass-panel p-4 transition-all ${stateColor} ${
+                      isSelected ? 'ring-2 ring-cyan-400/50' : ''
+                    }`}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <div className="flex flex-col items-center space-y-2">
+                      <Icon size={24} />
+                      <div className="text-center">
+                        <p className="font-semibold text-sm">{receptor.name}</p>
+                        <div className="flex items-center justify-center space-x-1 mt-1">
+                          {stateIndicator}
+                          <span className="text-xs capitalize">{receptor.state}</span>
+                        </div>
+                        {receptor.last_seen_at && receptor.state === 'active' && (
+                          <p className="text-xs mt-1 opacity-75">
+                            {getTimeAgo(receptor.last_seen_at)}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </motion.button>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
 
-        {/* Capsule View or Single SCU */}
-        {isCapsule ? (
-          <Card className="glass-card mb-6">
-            <CardHeader>
-              <CardTitle className="heading-primary flex items-center space-x-2">
-                <Package className="text-purple-400" size={20} />
-                <span>Sensory Capsule ({signal.scu_count} SCUs)</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {signal.scus?.map((scu, index) => (
-                  <div key={index} className="glass-panel p-4 border-l-4 border-cyan-500/50">
-                    <div className="flex items-center space-x-3 mb-3">
-                      {(() => {
-                        const { Icon, className } = getSensoryIcon(scu.sensory_type);
-                        return <Icon className={className} size={20} />;
-                      })()}
-                      <span className="font-semibold text-cyan-400">{scu.sensory_type}</span>
+        {/* MIDDLE SECTION - Live Sensory Signal Feed */}
+        <Card className="glass-card mb-6">
+          <CardHeader>
+            <CardTitle className="heading-primary text-lg flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <BarChart3 className="text-cyan-400" size={20} />
+                <span>Live Sensory Signal Feed</span>
+                {selectedSensoryFilter && (
+                  <span className="text-sm text-slate-400">
+                    - Filtered by {selectedSensoryFilter}
+                  </span>
+                )}
+              </div>
+              <div className="text-sm text-slate-400">
+                {totalSignals > 0 && (
+                  <span>
+                    {liveSignals.length} live feeds from {totalSignals} signals
+                  </span>
+                )}
+              </div>
+            </CardTitle>
+            <p className="label-tactical text-sm">Real-time incoming SCUs with sensory-appropriate visual metaphors</p>
+          </CardHeader>
+          <CardContent>
+            {filteredSignals.length === 0 ? (
+              <div className="text-center py-12">
+                <AlertCircle className="text-slate-400 mx-auto mb-4" size={48} />
+                <p className="text-slate-400 text-lg mb-2">
+                  {selectedSensoryFilter ? `No ${selectedSensoryFilter} signals active` : 'No active signals detected'}
+                </p>
+                <p className="text-sm text-slate-500 mb-4">
+                  Live SCUs will appear here as they are received and processed
+                </p>
+                <div className="text-xs text-slate-600 bg-slate-800/50 rounded p-3 max-w-md mx-auto">
+                  <p className="font-semibold mb-1">Monitor Status:</p>
+                  <p>This monitor displays incoming sensory data for visibility and traceability.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto overflow-x-hidden">
+                <AnimatePresence>
+                  {filteredSignals.map((signal, index) => {
+                    const color = getSensoryColor(signal.sensoryType);
+                    
+                    return (
+                      <motion.div
+                        key={signal.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={{ delay: index * 0.02 }}
+                        onClick={() => onSignalClick(signal)}
+                        className={`glass-panel p-4 cursor-pointer transition-colors hover:border-cyan-500/50 ${color.border} border-l-4`}
+                      >
+                        <div className="flex items-center space-x-4">
+                          <div className="flex-shrink-0">
+                            {renderSensoryVisualization(signal)}
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-3">
+                              <span className={`font-semibold text-lg ${color.text}`}>
+                                {signal.sensoryType}
+                              </span>
+                              <span className="text-sm text-slate-400">
+                                {getTimeAgo(signal.timestamp)}
+                              </span>
+                            </div>
+                            
+                            <div className="flex items-center space-x-4 mt-1">
+                              <div className="flex items-center space-x-1">
+                                {signal.ghostPassStatus ? (
+                                  <CheckCircle className="text-emerald-400" size={16} />
+                                ) : (
+                                  <XCircle className="text-red-400" size={16} />
+                                )}
+                                <span className="text-sm text-slate-300">Ghost Pass</span>
+                              </div>
+                              
+                              <div className="flex items-center space-x-1">
+                                <Scale size={16} />
+                                <span className="text-sm text-slate-300 capitalize">{signal.senateStatus}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </AnimatePresence>
+                
+                {/* Load More Button */}
+                {hasMore && !selectedSensoryFilter && (
+                  <div className="flex justify-center pt-4">
+                    <motion.button
+                      onClick={loadMoreSignals}
+                      disabled={loadingMore}
+                      className="glass-panel px-6 py-3 hover:border-cyan-500/50 transition-all"
+                      whileHover={{ scale: loadingMore ? 1 : 1.05 }}
+                      whileTap={{ scale: loadingMore ? 1 : 0.95 }}
+                    >
+                      <div className="flex items-center space-x-2">
+                        {loadingMore ? (
+                          <div className="w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+                        ) : (
+                          <BarChart3 className="text-cyan-400" size={16} />
+                        )}
+                        <span className="text-cyan-400">
+                          {loadingMore ? 'Loading...' : 'Load More Signals'}
+                        </span>
+                      </div>
+                    </motion.button>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* BOTTOM SECTION - Governance & Audit Strip */}
+        <Card className="glass-card border-purple-500/30">
+          <CardHeader>
+            <CardTitle className="heading-primary text-lg flex items-center space-x-2">
+              <Shield className="text-purple-400" size={20} />
+              <span>Governance & Audit Status</span>
+            </CardTitle>
+            <p className="label-tactical text-sm">System status and traceability overview</p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Ghost Pass Validation Summary */}
+              <div className="glass-panel p-4 border-l-4 border-emerald-500/50">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Shield className="text-emerald-400" size={16} />
+                  <span className="font-semibold text-emerald-400">Ghost Pass Summary</span>
+                </div>
+                {ghostPassSummary ? (
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Approved:</span>
+                      <span className="text-emerald-400">{ghostPassSummary.by_status?.approved || 0}</span>
                     </div>
-                    <div className="space-y-2 text-sm">
-                      <div>
-                        <span className="label-tactical">Source:</span>
-                        <span className="data-mono ml-2">{scu.source_id}</span>
-                      </div>
-                      <div>
-                        <span className="label-tactical">Signal Data:</span>
-                        <pre className="mt-2 p-3 bg-slate-950/50 rounded text-xs overflow-x-auto">
-                          {JSON.stringify(scu.signal_data, null, 2)}
-                        </pre>
-                      </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Rejected:</span>
+                      <span className="text-red-400">{ghostPassSummary.by_status?.rejected || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Total:</span>
+                      <span className="text-cyan-400">{ghostPassSummary.total_signals || 0}</span>
                     </div>
                   </div>
-                ))}
+                ) : (
+                  <div className="text-sm text-slate-400">Loading validation data...</div>
+                )}
               </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card className="glass-card mb-6">
-            <CardHeader>
-              <CardTitle className="heading-primary">Signal Data</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <pre className="p-4 bg-slate-950/50 rounded text-sm overflow-x-auto">
-                {JSON.stringify(signal.signal_data, null, 2)}
-              </pre>
-            </CardContent>
-          </Card>
-        )}
 
-        {/* Validation Results */}
-        {signal.validation_result && (
-          <Card className="glass-card">
-            <CardHeader>
-              <CardTitle className="heading-primary">Validation Results</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <pre className="p-4 bg-slate-950/50 rounded text-sm overflow-x-auto">
-                {JSON.stringify(signal.validation_result, null, 2)}
-              </pre>
-            </CardContent>
-          </Card>
-        )}
+              {/* Senate Queue Status */}
+              <div className="glass-panel p-4 border-l-4 border-purple-500/50">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Scale className="text-purple-400" size={16} />
+                  <span className="font-semibold text-purple-400">Senate Queue Status</span>
+                </div>
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Pending:</span>
+                    <span className={`font-bold ${senateStats.pending_count > 0 ? 'text-yellow-400' : 'text-emerald-400'}`}>
+                      {senateStats.pending_count}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Escalated:</span>
+                    <span className={`font-bold ${senateStats.escalated_count > 0 ? 'text-red-400' : 'text-slate-500'}`}>
+                      {senateStats.escalated_count}
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    {senateStats.pending_count === 0 ? 'All signals reviewed' : `${senateStats.pending_count} awaiting decision`}
+                  </div>
+                </div>
+              </div>
+
+              {/* Audit Trail Access */}
+              <div className="glass-panel p-4 border-l-4 border-cyan-500/50">
+                <div className="flex items-center space-x-2 mb-2">
+                  <FileText className="text-cyan-400" size={16} />
+                  <span className="font-semibold text-cyan-400">Audit Trail Access</span>
+                </div>
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Last Decision:</span>
+                    <span className="text-cyan-400">
+                      {auditSummary.last_decision_timestamp ? getTimeAgo(auditSummary.last_decision_timestamp) : 'None'}
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    Full audit trail available
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
 };
-
-function getSensoryIcon(type: string) {
-  const config = SENSORY_COLORS[type as keyof typeof SENSORY_COLORS];
-  if (!config) return { Icon: Activity, className: 'text-cyan-400' };
-  return { Icon: config.icon, className: config.text };
-}
-
+// Utility functions
 function getSensoryColor(type: string) {
   return SENSORY_COLORS[type as keyof typeof SENSORY_COLORS] || {
     bg: 'bg-cyan-500/20',
@@ -1034,756 +973,3 @@ function formatTimestamp(timestamp: string) {
 }
 
 export default SensoryCargoMonitor;
-
-
-interface SenateEvaluationCardProps {
-  evaluation: Evaluation;
-  index: number;
-  onReview: () => void;
-  isLoading?: boolean;
-}
-
-const SenateEvaluationCard: React.FC<SenateEvaluationCardProps> = ({ evaluation, index, onReview, isLoading = false }) => {
-  const priorityColor = PRIORITY_COLORS[evaluation.priority as keyof typeof PRIORITY_COLORS] || PRIORITY_COLORS.normal;
-  const sensoryTypes = evaluation.context.sensory_types || [];
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: index * 0.05 }}
-      className={`glass-panel p-3 sm:p-4 ${priorityColor.border} border-l-4`}
-    >
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-        <div className="flex-1 space-y-2">
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <span className={`px-2 py-1 rounded text-xs font-semibold ${priorityColor.bg} ${priorityColor.text}`}>
-              {evaluation.priority.toUpperCase()}
-            </span>
-            <span className="text-xs sm:text-sm text-slate-400 truncate">ID: {evaluation.signal_id}</span>
-          </div>
-
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-            <div className="flex items-center space-x-2">
-              <div className="flex items-center space-x-1">
-                {sensoryTypes.slice(0, 3).map((type: string) => {
-                  const Icon = getSensoryIcon(type).Icon;
-                  return <Icon key={type} className="text-purple-400" size={14} />;
-                })}
-                {sensoryTypes.length > 3 && (
-                  <span className="text-xs text-slate-400">+{sensoryTypes.length - 3}</span>
-                )}
-              </div>
-              <span className="text-xs sm:text-sm text-slate-300">
-                {sensoryTypes.length} sensory type{sensoryTypes.length !== 1 ? 's' : ''}
-              </span>
-            </div>
-
-            <div className="flex items-center space-x-1 text-xs sm:text-sm text-slate-400">
-              <Clock size={10} />
-              <span>{getTimeAgo(evaluation.received_at)}</span>
-            </div>
-          </div>
-
-          <div className="text-xs sm:text-sm text-slate-400">
-            Source: <span className="text-cyan-400">{evaluation.context.source_id}</span>
-          </div>
-        </div>
-
-        <motion.button
-          onClick={onReview}
-          disabled={isLoading}
-          className={`btn-primary px-3 py-2 sm:px-4 sm:py-2 text-xs sm:text-sm w-full sm:w-auto ${isLoading ? 'opacity-75 cursor-not-allowed' : ''}`}
-          whileHover={{ scale: isLoading ? 1 : 1.05 }}
-          whileTap={{ scale: isLoading ? 1 : 0.95 }}
-        >
-          {isLoading ? (
-            <div className="flex items-center justify-center space-x-2">
-              <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
-              <span>Loading...</span>
-            </div>
-          ) : (
-            'Review'
-          )}
-        </motion.button>
-      </div>
-    </motion.div>
-  );
-};
-
-interface SenateDecisionCardProps {
-  decision: Decision;
-  index: number;
-}
-
-const SenateDecisionCard: React.FC<SenateDecisionCardProps> = ({ decision, index }) => {
-  const getDecisionColor = (dec: string) => {
-    switch (dec) {
-      case 'approved': return { icon: CheckCircle, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/50' };
-      case 'rejected': return { icon: XCircle, color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/50' };
-      case 'escalated': return { icon: AlertTriangle, color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/50' };
-      case 'request_more_data': return { icon: Send, color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/50' };
-      default: return { icon: Activity, color: 'text-slate-400', bg: 'bg-slate-500/10', border: 'border-slate-500/50' };
-    }
-  };
-
-  const config = getDecisionColor(decision.decision);
-  const Icon = config.icon;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: index * 0.05 }}
-      className={`glass-panel p-3 sm:p-4 ${config.border} border-l-4`}
-    >
-      <div className="flex items-start space-x-3 sm:space-x-4">
-        <div className={`${config.bg} p-2 sm:p-3 rounded-lg flex-shrink-0`}>
-          <Icon className={config.color} size={16} />
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 space-y-1 sm:space-y-0">
-            <span className={`font-semibold ${config.color} text-sm sm:text-base`}>
-              {decision.decision.replace('_', ' ').toUpperCase()}
-            </span>
-            <span className="text-xs text-slate-400">
-              {formatTimestamp(decision.timestamp)}
-            </span>
-          </div>
-
-          <p className="text-xs sm:text-sm text-slate-300 mb-2 break-words">{decision.reason}</p>
-
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs text-slate-400">
-            <span className="truncate">Signal: {decision.signal_id}</span>
-            {decision.trust_score && (
-              <span className="flex-shrink-0">Trust: {(decision.trust_score * 100).toFixed(0)}%</span>
-            )}
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
-interface SenateReviewWorkspaceProps {
-  evaluation: Evaluation;
-  decision: string;
-  setDecision: (d: string) => void;
-  reason: string;
-  setReason: (r: string) => void;
-  trustScore: number;
-  setTrustScore: (t: number) => void;
-  submitting: boolean;
-  onSubmit: () => void;
-  onBack: () => void;
-}
-
-const SenateReviewWorkspace: React.FC<SenateReviewWorkspaceProps> = ({
-  evaluation,
-  decision,
-  setDecision,
-  reason,
-  setReason,
-  trustScore,
-  setTrustScore,
-  submitting,
-  onSubmit,
-  onBack
-}) => {
-  const sensoryTypes = evaluation.context.sensory_types || [];
-
-  return (
-    <div className="min-h-screen bg-slate-950 text-white p-2 sm:p-4 lg:p-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex items-center space-x-3 sm:space-x-4 mb-4 sm:mb-6">
-          <motion.button
-            onClick={onBack}
-            className="glass-panel p-2 sm:p-3 hover:border-purple-500/50 transition-all flex-shrink-0"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <ArrowLeft className="text-purple-400" size={18} />
-          </motion.button>
-          <div className="min-w-0 flex-1">
-            <h1 className="heading-primary text-xl sm:text-2xl truncate">Senate Review Workspace</h1>
-            <p className="label-tactical text-xs sm:text-sm truncate">Evaluate signal and make governance decision</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
-            <Card className="glass-card border-purple-500/30">
-              <CardHeader>
-                <CardTitle className="heading-primary text-lg sm:text-xl">Signal Overview</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 sm:space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <div>
-                    <p className="label-tactical text-xs sm:text-sm">Signal ID</p>
-                    <p className="data-mono text-xs sm:text-sm break-all">{evaluation.signal_id}</p>
-                  </div>
-                  <div>
-                    <p className="label-tactical text-xs sm:text-sm">Priority</p>
-                    <p className="data-mono text-sm sm:text-base">{evaluation.priority.toUpperCase()}</p>
-                  </div>
-                  <div>
-                    <p className="label-tactical text-xs sm:text-sm">Source</p>
-                    <p className="data-mono text-sm sm:text-base">{evaluation.context.source_id}</p>
-                  </div>
-                  <div>
-                    <p className="label-tactical text-xs sm:text-sm">Received</p>
-                    <p className="data-mono text-xs sm:text-sm">{formatTimestamp(evaluation.received_at)}</p>
-                  </div>
-                </div>
-
-                <div>
-                  <p className="label-tactical mb-2 text-xs sm:text-sm">Sensory Types</p>
-                  <div className="flex flex-wrap gap-2">
-                    {sensoryTypes.map((type: string) => {
-                      const Icon = getSensoryIcon(type).Icon;
-                      return (
-                        <div key={type} className="glass-panel px-2 py-1 sm:px-3 sm:py-2 flex items-center space-x-1 sm:space-x-2">
-                          <Icon className="text-purple-400" size={14} />
-                          <span className="text-xs sm:text-sm">{type}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {evaluation.applicable_policies && evaluation.applicable_policies.length > 0 && (
-              <Card className="glass-card">
-                <CardHeader>
-                  <CardTitle className="heading-primary">Applicable Policies</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {evaluation.applicable_policies.map((policy: any) => (
-                    <div key={policy.policy_id} className="glass-panel p-3 border-l-4 border-yellow-500/50">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="font-semibold text-yellow-400">{policy.name}</p>
-                          <p className="text-sm text-slate-300 mt-1">{policy.description}</p>
-                        </div>
-                        <span className={`text-xs px-2 py-1 rounded ${
-                          policy.severity === 'high' ? 'bg-red-500/20 text-red-400' : 'bg-yellow-500/20 text-yellow-400'
-                        }`}>
-                          {policy.severity}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            )}
-
-            <Card className="glass-card">
-              <CardHeader>
-                <CardTitle className="heading-primary">Signal Data</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <pre className="p-4 bg-slate-950/50 rounded text-xs overflow-x-auto">
-                  {JSON.stringify(evaluation.signal_data, null, 2)}
-                </pre>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="space-y-4 sm:space-y-6">
-            <Card className="glass-card border-purple-500/30">
-              <CardHeader>
-                <CardTitle className="heading-primary text-lg sm:text-xl">Trust Score</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center mb-3 sm:mb-4">
-                  <div className="text-3xl sm:text-4xl font-bold text-purple-400">{trustScore}%</div>
-                  <p className="text-xs sm:text-sm text-slate-400 mt-1">Confidence Level</p>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={trustScore}
-                  onChange={(e) => setTrustScore(parseInt(e.target.value))}
-                  className="w-full"
-                  style={{ accentColor: '#a855f7' }}
-                />
-              </CardContent>
-            </Card>
-
-            <Card className="glass-card border-purple-500/30">
-              <CardHeader>
-                <CardTitle className="heading-primary text-lg sm:text-xl">Make Decision</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 sm:space-y-4">
-                <div className="space-y-2">
-                  {[
-                    { value: 'approved', label: 'Approve', icon: CheckCircle, color: 'emerald' },
-                    { value: 'rejected', label: 'Reject', icon: XCircle, color: 'red' },
-                    { value: 'escalated', label: 'Escalate to Judge', icon: AlertTriangle, color: 'yellow' },
-                    { value: 'request_more_data', label: 'Request More Data', icon: Send, color: 'blue' }
-                  ].map((option) => {
-                    const Icon = option.icon;
-                    return (
-                      <motion.button
-                        key={option.value}
-                        onClick={() => setDecision(option.value)}
-                        className={`w-full glass-panel p-3 transition-all ${
-                          decision === option.value 
-                            ? `border-${option.color}-500/50 bg-${option.color}-500/10` 
-                            : 'hover:border-white/20'
-                        }`}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        <div className="flex items-center space-x-2 sm:space-x-3">
-                          <Icon className={`text-${option.color}-400 flex-shrink-0`} size={18} />
-                          <span className={`text-sm sm:text-base ${decision === option.value ? `text-${option.color}-400` : 'text-slate-300'}`}>
-                            {option.label}
-                          </span>
-                        </div>
-                      </motion.button>
-                    );
-                  })}
-                </div>
-
-                <div>
-                  <label className="label-tactical block mb-2 text-xs sm:text-sm">Reason (Required)</label>
-                  <textarea
-                    value={reason}
-                    onChange={(e) => setReason(e.target.value)}
-                    className="tactical-input w-full text-sm"
-                    rows={4}
-                    placeholder="Explain your decision..."
-                  />
-                </div>
-
-                <motion.button
-                  onClick={onSubmit}
-                  disabled={!decision || !reason || submitting}
-                  className="btn-primary w-full py-3 text-sm sm:text-base"
-                  whileHover={{ scale: submitting || !decision || !reason ? 1 : 1.02 }}
-                  whileTap={{ scale: submitting || !decision || !reason ? 1 : 0.98 }}
-                >
-                  {submitting ? (
-                    <div className="flex items-center justify-center space-x-2">
-                      <div className="loading-spinner"></div>
-                      <span>SUBMITTING...</span>
-                    </div>
-                  ) : (
-                    <span>SUBMIT DECISION</span>
-                  )}
-                </motion.button>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-
-const EXAMPLE_DATA: Record<string, string> = {
-  VISION: '{\n  "objects_detected": ["person", "vehicle"],\n  "confidence_scores": [0.95, 0.87],\n  "scene": "urban_street"\n}',
-  HEARING: '{\n  "audio_pattern": "alert_tone",\n  "frequency_range": [800, 1200],\n  "duration_ms": 1000\n}',
-  TOUCH: '{\n  "pressure_points": [{"location": "surface_a", "pressure_psi": 15.2}],\n  "threshold_exceeded": false\n}',
-  BALANCE: '{\n  "orientation": {"pitch": 2.3, "roll": -1.1, "yaw": 0.5},\n  "stability_score": 0.94\n}',
-  SMELL: '{\n  "chemical_signatures": ["CO2", "CH4"],\n  "concentrations_ppm": [450, 2.1],\n  "anomaly_detected": false\n}',
-  TASTE: '{\n  "quality_metrics": {"pH": 7.2, "salinity": 0.05},\n  "fitness_score": 0.89,\n  "quality_grade": "A"\n}',
-};
-
-const SENSORY_TYPES = [
-  { value: 'VISION', label: 'Vision' },
-  { value: 'HEARING', label: 'Hearing' },
-  { value: 'TOUCH', label: 'Touch' },
-  { value: 'BALANCE', label: 'Balance' },
-  { value: 'SMELL', label: 'Smell' },
-  { value: 'TASTE', label: 'Taste' },
-];
-
-interface TestInjectorViewProps {
-  mode: 'single' | 'capsule';
-  setMode: (m: 'single' | 'capsule') => void;
-  singleSCU: any;
-  setSingleSCU: (s: any) => void;
-  capsuleSourceId: string;
-  setCapsuleSourceId: (s: string) => void;
-  capsuleSCUs: any[];
-  setCapsuleSCUs: (s: any[]) => void;
-  response: { success: boolean; message: string; data?: any } | null;
-  loading: boolean;
-  onSendSingle: () => void;
-  onSendCapsule: () => void;
-}
-
-const TestInjectorView: React.FC<TestInjectorViewProps> = ({
-  mode,
-  setMode,
-  singleSCU,
-  setSingleSCU,
-  capsuleSourceId,
-  setCapsuleSourceId,
-  capsuleSCUs,
-  setCapsuleSCUs,
-  response,
-  loading,
-  onSendSingle,
-  onSendCapsule
-}) => {
-  const addSCUToCapsule = () => {
-    setCapsuleSCUs([
-      ...capsuleSCUs,
-      {
-        id: Date.now().toString(),
-        sensory_type: 'VISION',
-        signal_data: EXAMPLE_DATA.VISION,
-        source_id: capsuleSourceId
-      }
-    ]);
-  };
-
-  const removeSCUFromCapsule = (id: string) => {
-    setCapsuleSCUs(capsuleSCUs.filter(scu => scu.id !== id));
-  };
-
-  const updateCapsuleSCU = (id: string, field: string, value: string) => {
-    setCapsuleSCUs(capsuleSCUs.map(scu => 
-      scu.id === id ? { ...scu, [field]: value } : scu
-    ));
-  };
-
-  return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Warning Banner */}
-      <Card className="glass-card bg-yellow-500/10 border-yellow-500/50">
-        <CardContent className="p-3 sm:p-4">
-          <div className="flex items-start space-x-2 sm:space-x-3">
-            <AlertTriangle className="text-yellow-400 flex-shrink-0 mt-0.5" size={18} />
-            <div className="text-xs sm:text-sm">
-              <p className="font-semibold text-yellow-400 mb-1">DEVELOPMENT TOOL ONLY</p>
-              <p className="text-slate-300">
-                This tool simulates external systems sending sensory signals. For testing purposes only.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Mode Selector */}
-      <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-        <motion.button
-          onClick={() => setMode('single')}
-          className={`flex-1 glass-panel p-3 sm:p-4 transition-all ${
-            mode === 'single' ? 'border-cyan-500/50 bg-cyan-500/10' : 'hover:border-white/20'
-          }`}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <div className="flex items-center justify-center space-x-2">
-            <Send className={mode === 'single' ? 'text-cyan-400' : 'text-slate-400'} size={18} />
-            <span className={`font-semibold text-sm sm:text-base ${mode === 'single' ? 'text-cyan-400' : 'text-slate-400'}`}>
-              Single SCU
-            </span>
-          </div>
-        </motion.button>
-
-        <motion.button
-          onClick={() => setMode('capsule')}
-          className={`flex-1 glass-panel p-3 sm:p-4 transition-all ${
-            mode === 'capsule' ? 'border-purple-500/50 bg-purple-500/10' : 'hover:border-white/20'
-          }`}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <div className="flex items-center justify-center space-x-2">
-            <Package className={mode === 'capsule' ? 'text-purple-400' : 'text-slate-400'} size={18} />
-            <span className={`font-semibold text-sm sm:text-base ${mode === 'capsule' ? 'text-purple-400' : 'text-slate-400'}`}>
-              Sensory Capsule
-            </span>
-          </div>
-        </motion.button>
-      </div>
-
-      {/* Single SCU Mode */}
-      {mode === 'single' && (
-        <Card className="glass-card">
-          <CardHeader>
-            <CardTitle className="heading-primary text-lg sm:text-xl">Send Individual SCU</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 sm:space-y-4">
-            <div>
-              <label className="label-tactical block mb-2 text-xs sm:text-sm">Sensory Type</label>
-              <select
-                value={singleSCU.sensory_type}
-                onChange={(e) => {
-                  const newType = e.target.value;
-                  const exampleData = EXAMPLE_DATA[newType] || '{}';
-                  setSingleSCU({ 
-                    ...singleSCU, 
-                    sensory_type: newType,
-                    signal_data: exampleData
-                  });
-                }}
-                className="tactical-input w-full text-sm"
-              >
-                {SENSORY_TYPES.map(type => (
-                  <option key={type.value} value={type.value}>{type.label}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="label-tactical block mb-2 text-xs sm:text-sm">Source ID</label>
-              <input
-                value={singleSCU.source_id}
-                onChange={(e) => setSingleSCU({ ...singleSCU, source_id: e.target.value })}
-                className="tactical-input w-full text-sm"
-                placeholder="test_sensor_01"
-              />
-            </div>
-
-            <div>
-              <label className="label-tactical block mb-2 text-xs sm:text-sm">Signal Data (JSON)</label>
-              <textarea
-                value={singleSCU.signal_data}
-                onChange={(e) => setSingleSCU({ ...singleSCU, signal_data: e.target.value })}
-                className="tactical-input w-full font-mono text-xs sm:text-sm"
-                rows={6}
-                placeholder='{"key": "value"}'
-              />
-            </div>
-
-            <motion.button
-              onClick={onSendSingle}
-              disabled={loading}
-              className="btn-primary w-full py-3 text-sm sm:text-base"
-              whileHover={{ scale: loading ? 1 : 1.02 }}
-              whileTap={{ scale: loading ? 1 : 0.98 }}
-            >
-              {loading ? (
-                <div className="flex items-center justify-center space-x-2">
-                  <div className="loading-spinner"></div>
-                  <span>SENDING...</span>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center space-x-2">
-                  <Send size={18} />
-                  <span>SEND SIGNAL</span>
-                </div>
-              )}
-            </motion.button>
-
-            {/* Quick confirmation below button */}
-            {response && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className={`mt-3 p-3 rounded-lg text-xs sm:text-sm ${
-                  response.success 
-                    ? 'bg-emerald-500/20 border border-emerald-500/50 text-emerald-400' 
-                    : 'bg-red-500/20 border border-red-500/50 text-red-400'
-                }`}
-              >
-                <div className="flex items-center space-x-2">
-                  {response.success ? (
-                    <CheckCircle size={16} />
-                  ) : (
-                    <XCircle size={16} />
-                  )}
-                  <span>{response.message}</span>
-                </div>
-              </motion.div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Capsule Mode */}
-      {mode === 'capsule' && (
-        <Card className="glass-card">
-          <CardHeader>
-            <CardTitle className="heading-primary">Send Sensory Capsule</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-              <label className="label-tactical block mb-2">Capsule Source ID</label>
-              <input
-                value={capsuleSourceId}
-                onChange={(e) => setCapsuleSourceId(e.target.value)}
-                className="tactical-input w-full"
-                placeholder="sensor_hub_test"
-              />
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <label className="label-tactical">SCUs in Capsule ({capsuleSCUs.length})</label>
-                <motion.button
-                  onClick={addSCUToCapsule}
-                  className="glass-panel px-3 py-2 hover:border-cyan-500/50 transition-all"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <div className="flex items-center space-x-2">
-                    <Package className="text-cyan-400" size={16} />
-                    <span className="text-sm text-cyan-400">Add SCU</span>
-                  </div>
-                </motion.button>
-              </div>
-
-              {capsuleSCUs.map((scu, index) => (
-                <div key={scu.id} className="glass-panel p-4 space-y-3 border-l-4 border-purple-500/50">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-purple-400">SCU #{index + 1}</span>
-                    {capsuleSCUs.length > 1 && (
-                      <motion.button
-                        onClick={() => removeSCUFromCapsule(scu.id)}
-                        className="text-red-400 hover:text-red-300 transition-colors"
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                      >
-                        <XCircle size={16} />
-                      </motion.button>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="label-tactical block mb-2">Sensory Type</label>
-                    <select
-                      value={scu.sensory_type}
-                      onChange={(e) => {
-                        const newType = e.target.value;
-                        const exampleData = EXAMPLE_DATA[newType] || '{}';
-                        setCapsuleSCUs(capsuleSCUs.map(s => 
-                          s.id === scu.id 
-                            ? { ...s, sensory_type: newType, signal_data: exampleData }
-                            : s
-                        ));
-                      }}
-                      className="tactical-input w-full"
-                    >
-                      {SENSORY_TYPES.map(type => (
-                        <option key={type.value} value={type.value}>{type.label}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="label-tactical block mb-2">Source ID</label>
-                    <input
-                      value={scu.source_id}
-                      onChange={(e) => updateCapsuleSCU(scu.id, 'source_id', e.target.value)}
-                      className="tactical-input w-full"
-                      placeholder={capsuleSourceId}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="label-tactical block mb-2">Signal Data (JSON)</label>
-                    <textarea
-                      value={scu.signal_data}
-                      onChange={(e) => updateCapsuleSCU(scu.id, 'signal_data', e.target.value)}
-                      className="tactical-input w-full font-mono text-sm"
-                      rows={6}
-                      placeholder='{"key": "value"}'
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <motion.button
-              onClick={onSendCapsule}
-              disabled={loading}
-              className="btn-primary w-full"
-              whileHover={{ scale: loading ? 1 : 1.02 }}
-              whileTap={{ scale: loading ? 1 : 0.98 }}
-            >
-              {loading ? (
-                <div className="flex items-center justify-center space-x-2">
-                  <div className="loading-spinner"></div>
-                  <span>SENDING...</span>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center space-x-2">
-                  <Package size={20} />
-                  <span>SEND CAPSULE ({capsuleSCUs.length} SCUs)</span>
-                </div>
-              )}
-            </motion.button>
-
-            {/* Quick confirmation below button */}
-            {response && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className={`mt-3 p-3 rounded-lg text-sm ${
-                  response.success 
-                    ? 'bg-emerald-500/20 border border-emerald-500/50 text-emerald-400' 
-                    : 'bg-red-500/20 border border-red-500/50 text-red-400'
-                }`}
-              >
-                <div className="flex items-center space-x-2">
-                  {response.success ? (
-                    <CheckCircle size={16} />
-                  ) : (
-                    <XCircle size={16} />
-                  )}
-                  <span>{response.message}</span>
-                </div>
-              </motion.div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Response Display */}
-      {response && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <Card className={`glass-card ${
-            response.success 
-              ? 'border-emerald-500/50 bg-emerald-500/10' 
-              : 'border-red-500/50 bg-red-500/10'
-          }`}>
-            <CardContent className="p-6">
-              <div className="flex items-start space-x-4">
-                {response.success ? (
-                  <CheckCircle className="text-emerald-400 flex-shrink-0" size={32} />
-                ) : (
-                  <XCircle className="text-red-400 flex-shrink-0" size={32} />
-                )}
-                <div className="flex-1">
-                  <p className={`text-xl font-bold mb-2 ${
-                    response.success ? 'text-emerald-400' : 'text-red-400'
-                  }`}>
-                    {response.success ? 'Success!' : 'Error'}
-                  </p>
-                  <p className="text-slate-300 mb-4">{response.message}</p>
-                  
-                  {response.data && (
-                    <details className="mt-4">
-                      <summary className="cursor-pointer text-sm text-cyan-400 hover:text-cyan-300 mb-2">
-                        View Response Details
-                      </summary>
-                      <pre className="p-4 bg-slate-950/50 rounded text-xs overflow-x-auto">
-                        {JSON.stringify(response.data, null, 2)}
-                      </pre>
-                    </details>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
-    </div>
-  );
-};

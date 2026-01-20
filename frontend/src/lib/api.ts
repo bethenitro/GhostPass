@@ -494,3 +494,83 @@ export const auditApi = {
     return data;
   }
 };
+// Sensory System API - SENSORY CARGO MONITOR
+export const sensoryApi = {
+  // Get signals for monitoring
+  getSignals: async (limit: number = 50, offset: number = 0) => {
+    const { data } = await api.get('/sensory-monitor/signals', {
+      params: { limit, offset }
+    });
+    return data;
+  },
+
+  // Get system statistics
+  getStats: async () => {
+    const { data } = await api.get('/sensory-monitor/stats');
+    return data;
+  },
+
+  // Get Senate statistics
+  getSenateStats: async () => {
+    const { data } = await api.get('/senate/stats');
+    return data;
+  },
+
+  // Get Senate decision history
+  getSenateHistory: async (limit: number = 50) => {
+    const { data } = await api.get('/senate/history', {
+      params: { limit }
+    });
+    return data;
+  },
+
+  // Get pending Senate evaluations
+  getPendingEvaluations: async () => {
+    const { data } = await api.get('/senate/pending');
+    return data;
+  },
+
+  // Submit Senate decision
+  submitDecision: async (decision: {
+    signal_id: string;
+    decision: string;
+    reason: string;
+    reviewer_id: string;
+    trust_score: number;
+  }) => {
+    const { data } = await api.post('/senate/evaluate', decision);
+    return data;
+  },
+
+  // Get specific evaluation details
+  getEvaluationDetails: async (evaluationId: string) => {
+    const { data } = await api.get(`/senate/pending/${evaluationId}`);
+    return data;
+  },
+
+  // Send test signal (development only)
+  sendTestSignal: async (signal: {
+    schema_version: string;
+    sensory_type: string;
+    signal_data: any;
+    metadata: {
+      timestamp: string;
+      source_id: string;
+      integrity_hash: string;
+    };
+  }) => {
+    const { data } = await api.post('/conduit/receive', signal);
+    return data;
+  },
+
+  // Send test capsule (development only)
+  sendTestCapsule: async (capsule: {
+    capsule_id: string;
+    timestamp: string;
+    source_id: string;
+    scus: any[];
+  }) => {
+    const { data } = await api.post('/conduit/receive', capsule);
+    return data;
+  }
+};

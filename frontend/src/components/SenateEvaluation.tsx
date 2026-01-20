@@ -6,6 +6,7 @@ import {
   Clock, Shield, FileText, Scale
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { sensoryApi } from '@/lib/api';
 
 interface SenateEvaluationProps {
   onBack: () => void;
@@ -69,8 +70,7 @@ const SenateEvaluation: React.FC<SenateEvaluationProps> = ({ onBack }) => {
 
   const fetchPending = async () => {
     try {
-      const response = await fetch('http://localhost:8000/senate/pending');
-      const data = await response.json();
+      const data = await sensoryApi.getPendingEvaluations();
       setPendingEvaluations(data.evaluations);
     } catch (error) {
       console.error('Failed to fetch pending evaluations:', error);
@@ -79,8 +79,7 @@ const SenateEvaluation: React.FC<SenateEvaluationProps> = ({ onBack }) => {
 
   const fetchHistory = async () => {
     try {
-      const response = await fetch('http://localhost:8000/senate/history');
-      const data = await response.json();
+      const data = await sensoryApi.getSenateHistory();
       setHistory(data.decisions);
     } catch (error) {
       console.error('Failed to fetch history:', error);
@@ -89,8 +88,7 @@ const SenateEvaluation: React.FC<SenateEvaluationProps> = ({ onBack }) => {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('http://localhost:8000/senate/stats');
-      const data = await response.json();
+      const data = await sensoryApi.getSenateStats();
       setStats(data);
     } catch (error) {
       console.error('Failed to fetch stats:', error);
@@ -118,8 +116,7 @@ const SenateEvaluation: React.FC<SenateEvaluationProps> = ({ onBack }) => {
   const handleReview = async (evaluation: Evaluation) => {
     // Fetch detailed evaluation data
     try {
-      const response = await fetch(`http://localhost:8000/senate/pending/${evaluation.evaluation_id}`);
-      const data = await response.json();
+      const data = await sensoryApi.getEvaluationDetails(evaluation.evaluation_id);
       setSelectedEvaluation(data);
       setView('review');
       setDecision('');
@@ -136,24 +133,18 @@ const SenateEvaluation: React.FC<SenateEvaluationProps> = ({ onBack }) => {
     setSubmitting(true);
 
     try {
-      const response = await fetch('http://localhost:8000/senate/evaluate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          signal_id: selectedEvaluation.signal_id,
-          decision,
-          reason,
-          reviewer_id: 'admin_user', // In production, use actual user ID
-          trust_score: trustScore / 100
-        })
+      await sensoryApi.submitDecision({
+        signal_id: selectedEvaluation.signal_id,
+        decision,
+        reason,
+        reviewer_id: 'admin_user', // In production, use actual user ID
+        trust_score: trustScore / 100
       });
 
-      if (response.ok) {
-        // Refresh data
-        await Promise.all([fetchPending(), fetchHistory(), fetchStats()]);
-        setView('pending');
-        setSelectedEvaluation(null);
-      }
+      // Refresh data
+      await Promise.all([fetchPending(), fetchHistory(), fetchStats()]);
+      setView('pending');
+      setSelectedEvaluation(null);
     } catch (error) {
       console.error('Failed to submit decision:', error);
     } finally {

@@ -390,3 +390,55 @@ export interface RecentScansResponse {
     metadata?: Record<string, any>;
   }>;
 }
+
+// Sensory Cargo Monitor Types
+export type SensoryType = 'VISION' | 'HEARING' | 'TOUCH' | 'BALANCE' | 'SMELL' | 'TASTE';
+export type SensoryState = 'unavailable' | 'available' | 'active';
+
+export interface SensoryReceptorStatus {
+  sensory_type: SensoryType;
+  state: SensoryState;
+  source_authority?: string;
+  last_seen_at?: string;
+}
+
+export interface SCU {
+  id: string;
+  sensory_type: SensoryType;
+  payload_hash: string;
+  metadata: Record<string, any>;
+  timestamp: string;
+}
+
+export interface SignalStream {
+  scu_id: string;
+  ingest_status: 'received' | 'validated' | 'rejected';
+}
+
+export interface GhostPassValidation {
+  scu_id: string;
+  schema_valid: boolean;
+  integrity_valid: boolean;
+}
+
+export interface SenateEvaluationState {
+  status: 'pending' | 'approved' | 'escalated';
+}
+
+export interface AuditLogEntry {
+  event_type: string;
+  source: string;
+  actor: string;
+  timestamp: string;
+}
+
+export interface DecisionRecord {
+  decision_id: string;
+  evaluation_id: string;
+  signal_id: string;
+  decision: string;
+  reason: string;
+  reviewer_id: string;
+  trust_score?: number;
+  timestamp: string;
+}
