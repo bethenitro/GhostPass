@@ -601,15 +601,15 @@ export const environmentApi = {
     return data;
   },
 
-  // Get all Sensory Type statuses
-  getSensoryTypes: async () => {
-    const { data } = await api.get('/environment/sensory-types');
+  // Get all sensory channel statuses
+  getSensoryChannels: async () => {
+    const { data } = await api.get('/environment/sensory-channels');
     return data;
   },
 
-  // Get specific Sensory Type status
-  getSensoryTypeStatus: async (sensoryType: string) => {
-    const { data } = await api.get(`/environment/sensory-types/${sensoryType}`);
+  // Get specific sensory channel status
+  getSensoryChannelStatus: async (sensoryType: string) => {
+    const { data } = await api.get(`/environment/sensory-channels/${sensoryType}`);
     return data;
   },
 

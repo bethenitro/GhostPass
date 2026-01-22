@@ -81,13 +81,15 @@ interface EnvironmentConfig {
   is_production: boolean;
 }
 
-// Sensory Type status from backend
-interface SensoryTypeStatus {
+// Sensory channel status from backend
+interface SensoryChannelStatus {
   sensory_type: string;
   available: boolean;
   authority_required: boolean;
   locked: boolean;
   environment_mode: string;
+  authority_bypassed?: boolean;
+}
   authority_bypassed?: boolean;
 }
 
