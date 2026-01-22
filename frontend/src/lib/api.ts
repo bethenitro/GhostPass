@@ -592,3 +592,30 @@ export const sensoryApi = {
     return data;
   }
 };
+
+// Environment Configuration API
+export const environmentApi = {
+  // Get current environment mode
+  getMode: async () => {
+    const { data } = await api.get('/environment/mode');
+    return data;
+  },
+
+  // Get all Sensory Type statuses
+  getSensoryTypes: async () => {
+    const { data } = await api.get('/environment/sensory-types');
+    return data;
+  },
+
+  // Get specific Sensory Type status
+  getSensoryTypeStatus: async (sensoryType: string) => {
+    const { data } = await api.get(`/environment/sensory-types/${sensoryType}`);
+    return data;
+  },
+
+  // Get authority policies
+  getAuthorityPolicies: async () => {
+    const { data } = await api.get('/environment/authority-policies');
+    return data;
+  }
+};

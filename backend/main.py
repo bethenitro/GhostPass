@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from routes import auth, wallet, ghostpass, scan, vendor, admin, session, gateway, audit, conduit, sensory_monitor, senate
+from routes import auth, wallet, ghostpass, scan, vendor, admin, session, gateway, audit, conduit, sensory_monitor, senate, environment
 import logging
 
 # Configure logging
@@ -46,6 +46,7 @@ app.include_router(audit.router)
 app.include_router(conduit.router)
 app.include_router(sensory_monitor.router)
 app.include_router(senate.router)
+app.include_router(environment.router)
 
 @app.get("/")
 async def root():

@@ -3,9 +3,14 @@ Sensory Cargo Unit (SCU) Data Structure
 
 A standardized format for receiving external sensory signals.
 Each SCU is a standalone, auditable package of information.
+
+LANGUAGE CONTRACT - CANONICAL DEFINITIONS:
+- Sensory Type: One of 6 conceptual channels (VISION, HEARING, TOUCH, BALANCE, SMELL, TASTE)
+- SCU (Sensory Cargo Unit): One incoming signal payload, belongs to exactly one Sensory Type
+- Sensory Capsule: Container of multiple SCUs, no logic, payload type = capsule
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 from datetime import datetime
 from enum import Enum
 import hashlib
@@ -14,14 +19,19 @@ from pydantic import BaseModel, Field, validator
 
 
 class SensoryType(str, Enum):
-    """Extensible sensory signal categories"""
+    """
+    Six fixed sensory signal categories - count is ALWAYS 6, never dynamic.
+    
+    LANGUAGE CONTRACT:
+    - These represent conceptual channels, not signal counts
+    - UI must never display "10 sensories" - always "SCUs from TOUCH channel"
+    """
     VISION = "VISION"
     HEARING = "HEARING"
-    TOUCH = "TOUCH"
+    TOUCH = "TOUCH"  # Touch / Pressure
     BALANCE = "BALANCE"
     SMELL = "SMELL"
     TASTE = "TASTE"
-    # Extensible: new types can be added without breaking existing SCUs
 
 
 class SCUMetadata(BaseModel):
@@ -238,12 +248,45 @@ class SCUValidator:
             return False, str(e)
     
     @staticmethod
-    def validate_batch(scu_batch: list[Dict[str, Any]]) -> Dict[str, Any]:
+    def validate_with_environment(scu_data: Dict[str, Any]) -> tuple[bool, Optional[str]]:
+        """
+        Validate SCU with environment-aware authority checking.
+        
+        Args:
+            scu_data: Dictionary representation of SCU
+            
+        Returns:
+            tuple: (is_valid, error_message)
+        """
+        # First validate structure
+        is_valid, error = SCUValidator.validate_structure(scu_data)
+        if not is_valid:
+            return is_valid, error
+        
+        # Environment-aware validation
+        from environment_config import environment_config
+        
+        try:
+            scu = SensoryCargonUnit(**scu_data)
+            sensory_type = scu.sensory_type.value
+            
+            # Check if signal should be blocked based on environment mode
+            if environment_config.should_block_signal(sensory_type):
+                return False, f"Sensory Type {sensory_type} is locked (authority required)"
+            
+            return True, None
+            
+        except Exception as e:
+            return False, str(e)
+    
+    @staticmethod
+    def validate_batch(scu_batch: List[Dict[str, Any]], check_environment: bool = True) -> Dict[str, Any]:
         """
         Validate multiple SCUs and return results.
         
         Args:
             scu_batch: List of SCU dictionaries
+            check_environment: Whether to apply environment-aware validation
             
         Returns:
             dict: Validation results with counts and errors
@@ -252,16 +295,23 @@ class SCUValidator:
             "total": len(scu_batch),
             "valid": 0,
             "invalid": 0,
+            "blocked": 0,
             "errors": []
         }
         
+        validator_func = (SCUValidator.validate_with_environment 
+                         if check_environment 
+                         else SCUValidator.validate_structure)
+        
         for idx, scu_data in enumerate(scu_batch):
-            is_valid, error = SCUValidator.validate_structure(scu_data)
+            is_valid, error = validator_func(scu_data)
             
             if is_valid:
                 results["valid"] += 1
             else:
                 results["invalid"] += 1
+                if "locked" in str(error):
+                    results["blocked"] += 1
                 results["errors"].append({
                     "index": idx,
                     "error": error

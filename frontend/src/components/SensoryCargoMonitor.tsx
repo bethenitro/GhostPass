@@ -7,24 +7,33 @@ import {
   BarChart3, Zap, FileText
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { sensoryApi } from '@/lib/api';
+import { sensoryApi, environmentApi } from '@/lib/api';
 
 /**
  * SENSORY CARGO MONITOR - OBSERVABILITY SURFACE ONLY
  * 
  * CRITICAL ARCHITECTURAL CONSTRAINTS:
- * - We do NOT select sensories
- * - We do NOT request sensories  
- * - We do NOT interpret sensories
+ * - We do NOT select sensory types
+ * - We do NOT request sensory types  
+ * - We do NOT interpret sensory types
  * - This UI is observability only - no decision logic
  * 
- * PURPOSE: Display what sensory channels exist, their current state,
+ * PURPOSE: Display what Sensory Types exist, their current state,
  * live incoming SCUs, and governance status for traceability.
  * 
  * LAYOUT (NON-NEGOTIABLE):
  * TOP: Sensory Receptor Panel - Always show 6 fixed sensory tiles
  * MIDDLE: Live Sensory Signal Feed - Real-time updates, visual style matches sensory type
  * BOTTOM: Governance & Audit Strip - Ghost Pass summary, Senate queue, audit access
+ * 
+ * LANGUAGE CONTRACT - NO AMBIGUITY:
+ * - Sensory Type: One of 6 conceptual channels (VISION, HEARING, TOUCH, BALANCE, SMELL, TASTE)
+ * - SCU: One incoming signal payload, belongs to exactly one Sensory Type
+ * - Sensory Capsule: Container of multiple SCUs, no logic
+ * 
+ * ENVIRONMENT MODES:
+ * - Sandbox: All 6 sensory types always visible, authority bypassed, zero friction
+ * - Production: Sensory Types may be locked if authority required and no token
  */
 
 interface Signal {
@@ -59,8 +68,27 @@ interface SensoryReceptor {
   source_authority?: string;
   last_seen_at?: string;
   icon: React.ComponentType<any>;
-  required_by_authority?: boolean;
+  authority_required?: boolean;
   locked?: boolean;
+  authority_bypassed?: boolean;
+  environment_mode?: string;
+}
+
+// Environment configuration
+interface EnvironmentConfig {
+  environment_mode: 'sandbox' | 'production';
+  is_sandbox: boolean;
+  is_production: boolean;
+}
+
+// Sensory Type status from backend
+interface SensoryTypeStatus {
+  sensory_type: string;
+  available: boolean;
+  authority_required: boolean;
+  locked: boolean;
+  environment_mode: string;
+  authority_bypassed?: boolean;
 }
 
 // Live signal feed item for visualization
@@ -103,13 +131,14 @@ const SENSORY_COLORS = {
 };
 
 // Fixed sensory receptors - always present, never conditional
-const SENSORY_RECEPTORS: SensoryReceptor[] = [
-  { type: 'VISION', name: 'Vision', state: 'available', icon: Eye, required_by_authority: true, locked: true },
-  { type: 'HEARING', name: 'Hearing', state: 'available', icon: Ear, required_by_authority: false, locked: false },
-  { type: 'TOUCH', name: 'Touch / Pressure', state: 'available', icon: Hand, required_by_authority: true, locked: false },
-  { type: 'BALANCE', name: 'Balance', state: 'available', icon: Compass, required_by_authority: false, locked: false },
-  { type: 'SMELL', name: 'Smell', state: 'available', icon: Wind, required_by_authority: true, locked: true },
-  { type: 'TASTE', name: 'Taste', state: 'available', icon: Droplet, required_by_authority: false, locked: false },
+// Status determined by environment mode and authority policies
+const SENSORY_RECEPTOR_TEMPLATES: Omit<SensoryReceptor, 'state' | 'locked' | 'authority_required' | 'authority_bypassed'>[] = [
+  { type: 'VISION', name: 'Vision', icon: Eye },
+  { type: 'HEARING', name: 'Hearing', icon: Ear },
+  { type: 'TOUCH', name: 'Touch / Pressure', icon: Hand },
+  { type: 'BALANCE', name: 'Balance', icon: Compass },
+  { type: 'SMELL', name: 'Smell', icon: Wind },
+  { type: 'TASTE', name: 'Taste', icon: Droplet },
 ];
 
 const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => {
@@ -118,7 +147,11 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [sensoryReceptors, setSensoryReceptors] = useState<SensoryReceptor[]>(SENSORY_RECEPTORS);
+  
+  // Environment and Sensory Type state
+  const [environmentConfig, setEnvironmentConfig] = useState<EnvironmentConfig | null>(null);
+  const [sensoryChannels, setSensoryChannels] = useState<Record<string, SensoryTypeStatus>>({});
+  const [sensoryReceptors, setSensoryReceptors] = useState<SensoryReceptor[]>([]);
   const [liveSignals, setLiveSignals] = useState<LiveSignalItem[]>([]);
   const [selectedSensoryFilter, setSelectedSensoryFilter] = useState<string | null>(null);
 
@@ -429,23 +462,23 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
       return signalTime > fiveMinutesAgo;
     });
 
-    const activeSensories = new Set<string>();
+    const activeSensoryTypes = new Set<string>();
     recentSignals.forEach(signal => {
       if (signal.payload_type === 'capsule' && signal.scus) {
         // For capsules, get sensory types from individual SCUs
         signal.scus.forEach((scu: any) => {
           if (scu.sensory_type) {
-            activeSensories.add(scu.sensory_type);
+            activeSensoryTypes.add(scu.sensory_type);
           }
         });
       } else if (signal.sensory_type) {
         // For single SCUs
-        activeSensories.add(signal.sensory_type);
+        activeSensoryTypes.add(signal.sensory_type);
       }
     });
 
     setSensoryReceptors(prev => prev.map(receptor => {
-      const isActive = activeSensories.has(receptor.type);
+      const isActive = activeSensoryTypes.has(receptor.type);
       let last_seen_at = receptor.last_seen_at;
       
       if (isActive) {
@@ -475,7 +508,11 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
     const loadData = async () => {
       setLoading(true);
       setCurrentPage(0);
-      await Promise.all([fetchSignals(0, false), fetchGovernanceData()]);
+      await Promise.all([
+        fetchSignals(0, false), 
+        fetchGovernanceData(),
+        loadEnvironmentConfig()
+      ]);
       setLoading(false);
     };
 
@@ -483,12 +520,56 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
     setLastRefreshTime(new Date().toISOString());
   }, []);
 
+  // Load environment configuration and Sensory Type status
+  const loadEnvironmentConfig = async () => {
+    try {
+      // Get environment mode
+      const envConfig = await environmentApi.getMode();
+      setEnvironmentConfig(envConfig);
+
+      // Get Sensory Type statuses
+      const typesResponse = await environmentApi.getSensoryTypes();
+      setSensoryChannels(typesResponse.sensory_types);
+
+      // Build sensory receptors with environment-aware status
+      const receptors = SENSORY_RECEPTOR_TEMPLATES.map(template => {
+        const typeStatus = typesResponse.sensory_types[template.type];
+        return {
+          ...template,
+          state: typeStatus?.available ? 'available' : 'unavailable',
+          authority_required: typeStatus?.authority_required || false,
+          locked: typeStatus?.locked || false,
+          authority_bypassed: typeStatus?.authority_bypassed || false,
+          environment_mode: typeStatus?.environment_mode || 'sandbox'
+        };
+      });
+      setSensoryReceptors(receptors);
+
+    } catch (error) {
+      console.error('Failed to load environment configuration:', error);
+      // Fallback to default receptors
+      const defaultReceptors = SENSORY_RECEPTOR_TEMPLATES.map(template => ({
+        ...template,
+        state: 'available' as SensoryState,
+        authority_required: false,
+        locked: false,
+        authority_bypassed: true,
+        environment_mode: 'sandbox'
+      }));
+      setSensoryReceptors(defaultReceptors);
+    }
+  };
+
   // Refresh handler
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
       setCurrentPage(0);
-      await Promise.all([fetchSignals(0, false), fetchGovernanceData()]);
+      await Promise.all([
+        fetchSignals(0, false), 
+        fetchGovernanceData(),
+        loadEnvironmentConfig()
+      ]);
       setLastRefreshTime(new Date().toISOString());
     } catch (error) {
       console.error('Failed to refresh data:', error);
@@ -692,8 +773,26 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
               <ArrowLeft className="text-cyan-400" size={20} />
             </motion.button>
             <div className="min-w-0 flex-1">
-              <h1 className="heading-primary text-2xl sm:text-2xl lg:text-3xl">Sensory Cargo Monitor</h1>
-              <p className="label-tactical text-sm">Observability surface for sensory governance</p>
+              <div className="flex items-center space-x-3">
+                <h1 className="heading-primary text-2xl sm:text-2xl lg:text-3xl">Sensory Cargo Monitor</h1>
+                {environmentConfig && (
+                  <div className={`px-2 py-1 rounded text-xs font-semibold ${
+                    environmentConfig.is_sandbox 
+                      ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50' 
+                      : 'bg-red-500/20 text-red-400 border border-red-500/50'
+                  }`}>
+                    {environmentConfig.environment_mode.toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <p className="label-tactical text-sm">
+                Observability surface for sensory governance
+                {environmentConfig && (
+                  <span className="ml-2 text-slate-500">
+                    • {environmentConfig.is_sandbox ? 'Full observability, zero friction' : 'Policy-enforced locking'}
+                  </span>
+                )}
+              </p>
             </div>
           </div>
 
@@ -731,7 +830,7 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
         <Card className="glass-card mb-6">
           <CardHeader>
             <CardTitle className="heading-primary text-lg">Sensory Receptor Panel</CardTitle>
-            <p className="label-tactical text-sm">Available sensory channels and their current state</p>
+            <p className="label-tactical text-sm">6 fixed Sensory Types and their current state</p>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -748,7 +847,7 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
                     className={`glass-panel p-4 transition-all ${stateColor} ${
                       isSelected ? 'ring-2 ring-cyan-400/50' : ''
                     } ${receptor.locked ? 'cursor-not-allowed opacity-75' : ''} ${
-                      receptor.required_by_authority ? 'border-orange-500/50' : ''
+                      receptor.authority_required ? 'border-orange-500/50' : ''
                     }`}
                     whileHover={{ scale: receptor.locked ? 1 : 1.02 }}
                     whileTap={{ scale: receptor.locked ? 1 : 0.98 }}
@@ -756,6 +855,11 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
                     <div className="flex flex-col items-center space-y-2">
                       <div className="relative">
                         <Icon size={24} />
+                        {receptor.locked && (
+                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
+                            <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                          </div>
+                        )}
                       </div>
                       <div className="text-center">
                         <p className="font-semibold text-sm">{receptor.name}</p>
@@ -763,12 +867,22 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
                           {stateIndicator}
                           <span className="text-xs capitalize">{receptor.state}</span>
                         </div>
-                        {receptor.required_by_authority && (
-                          <p className="text-xs text-orange-400 mt-1">Authority Required</p>
+                        
+                        {/* Environment-aware status display */}
+                        {receptor.authority_required && (
+                          <div className="mt-1">
+                            {receptor.authority_bypassed ? (
+                              <p className="text-xs text-yellow-400">Authority Required (Sandbox: bypassed)</p>
+                            ) : (
+                              <p className="text-xs text-orange-400">Authority Required</p>
+                            )}
+                          </div>
                         )}
+                        
                         {receptor.locked && (
                           <p className="text-xs text-red-400 mt-1">Locked</p>
                         )}
+                        
                         {receptor.last_seen_at && receptor.state === 'active' && (
                           <p className="text-xs mt-1 opacity-75">
                             {getTimeAgo(receptor.last_seen_at)}
@@ -804,17 +918,25 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
                 )}
               </div>
             </CardTitle>
-            <p className="label-tactical text-sm">Real-time incoming SCUs</p>
+            <p className="label-tactical text-sm">
+              Real-time SCU events • 
+              {totalSignals > 0 && (
+                <span className="ml-1">
+                  {totalSignals} SCUs received
+                  {selectedSensoryFilter && ` • Filtered by ${selectedSensoryFilter} channel`}
+                </span>
+              )}
+            </p>
           </CardHeader>
           <CardContent>
             {Object.keys(groupedSignals).length === 0 ? (
               <div className="text-center py-12">
                 <AlertCircle className="text-slate-400 mx-auto mb-4" size={48} />
                 <p className="text-slate-400 text-lg mb-2">
-                  {selectedSensoryFilter ? `No ${selectedSensoryFilter} signals active` : 'No active signals detected'}
+                  {selectedSensoryFilter ? `No SCUs from ${selectedSensoryFilter} channel` : 'No active SCU events'}
                 </p>
                 <p className="text-sm text-slate-500 mb-4">
-                  Live SCUs will appear here as they are received and processed
+                  Live SCU events will appear here as they are received and processed
                 </p>
                 <div className="text-xs text-slate-600 bg-slate-800/50 rounded p-3 max-w-md mx-auto">
                   <p className="font-semibold mb-1">Monitor Status:</p>
@@ -825,14 +947,14 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
               <div className="space-y-6 max-h-96 overflow-y-auto overflow-x-hidden">
                 {Object.entries(groupedSignals).map(([sensoryType, signals]) => (
                   <div key={sensoryType} className="space-y-3">
-                    {/* Sensory Channel Header */}
+                    {/* Sensory Type Header */}
                     <div className="flex items-center space-x-3 pb-2 border-b border-slate-700/50">
                       <div className={`w-3 h-3 rounded-full ${getSensoryColor(sensoryType).bg.replace('/20', '/60')}`}></div>
                       <h3 className={`font-semibold text-lg ${getSensoryColor(sensoryType).text}`}>
                         {sensoryType} Channel
                       </h3>
                       <span className="text-sm text-slate-400">
-                        ({signals.length} signal{signals.length !== 1 ? 's' : ''})
+                        ({signals.length} SCU{signals.length !== 1 ? 's' : ''})
                       </span>
                     </div>
                     

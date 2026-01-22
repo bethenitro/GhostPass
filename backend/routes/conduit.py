@@ -26,7 +26,7 @@ router = APIRouter(
 
 
 class ConduitLogger:
-    """Audit trail logger for all received signals"""
+    """Audit trail logger for all received SCUs"""
     
     @staticmethod
     def log_received(payload_type: str, source_id: str, scu_count: int, success: bool, error: str = None):
@@ -196,7 +196,7 @@ async def receive_signal(request: Request):
 
 async def handle_single_scu(payload: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Handle a single SCU payload.
+    Handle a single SCU payload with environment-aware validation.
     
     Args:
         payload: SCU dictionary
@@ -204,8 +204,8 @@ async def handle_single_scu(payload: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         dict: Validation and forwarding result
     """
-    # Step 3: Validate structure
-    is_valid, error = SCUValidator.validate_structure(payload)
+    # Step 3: Validate structure with environment awareness
+    is_valid, error = SCUValidator.validate_with_environment(payload)
     
     if not is_valid:
         # Log failure
@@ -217,6 +217,19 @@ async def handle_single_scu(payload: Dict[str, Any]) -> Dict[str, Any]:
             success=False,
             error=error
         )
+        
+        # Check if this is an authority/environment block
+        if "locked" in str(error):
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "error": "Sensory Type blocked",
+                    "message": error,
+                    "payload_type": "scu",
+                    "environment_mode": "production",
+                    "reason": "Authority policy enforcement"
+                }
+            )
         
         raise HTTPException(
             status_code=422,
