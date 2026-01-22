@@ -90,8 +90,6 @@ interface SensoryChannelStatus {
   environment_mode: string;
   authority_bypassed?: boolean;
 }
-  authority_bypassed?: boolean;
-}
 
 // Live signal feed item for visualization
 interface LiveSignalItem {
