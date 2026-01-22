@@ -81,16 +81,6 @@ interface EnvironmentConfig {
   is_production: boolean;
 }
 
-// Sensory channel status from backend
-interface SensoryChannelStatus {
-  sensory_type: string;
-  available: boolean;
-  authority_required: boolean;
-  locked: boolean;
-  environment_mode: string;
-  authority_bypassed?: boolean;
-}
-
 // Live signal feed item for visualization
 interface LiveSignalItem {
   id: string;
