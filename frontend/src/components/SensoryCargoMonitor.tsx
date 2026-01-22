@@ -148,9 +148,8 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   
-  // Environment and Sensory Type state
+  // Environment and sensory channel state
   const [environmentConfig, setEnvironmentConfig] = useState<EnvironmentConfig | null>(null);
-  const [sensoryChannels, setSensoryChannels] = useState<Record<string, SensoryTypeStatus>>({});
   const [sensoryReceptors, setSensoryReceptors] = useState<SensoryReceptor[]>([]);
   const [liveSignals, setLiveSignals] = useState<LiveSignalItem[]>([]);
   const [selectedSensoryFilter, setSelectedSensoryFilter] = useState<string | null>(null);
@@ -520,27 +519,26 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
     setLastRefreshTime(new Date().toISOString());
   }, []);
 
-  // Load environment configuration and Sensory Type status
+  // Load environment configuration and sensory channel status
   const loadEnvironmentConfig = async () => {
     try {
       // Get environment mode
       const envConfig = await environmentApi.getMode();
       setEnvironmentConfig(envConfig);
 
-      // Get Sensory Type statuses
-      const typesResponse = await environmentApi.getSensoryTypes();
-      setSensoryChannels(typesResponse.sensory_types);
+      // Get sensory channel statuses
+      const channelsResponse = await environmentApi.getSensoryChannels();
 
       // Build sensory receptors with environment-aware status
       const receptors = SENSORY_RECEPTOR_TEMPLATES.map(template => {
-        const typeStatus = typesResponse.sensory_types[template.type];
+        const channelStatus = channelsResponse.sensory_channels[template.type];
         return {
           ...template,
-          state: typeStatus?.available ? 'available' : 'unavailable',
-          authority_required: typeStatus?.authority_required || false,
-          locked: typeStatus?.locked || false,
-          authority_bypassed: typeStatus?.authority_bypassed || false,
-          environment_mode: typeStatus?.environment_mode || 'sandbox'
+          state: (channelStatus?.available ? 'available' : 'unavailable') as SensoryState,
+          authority_required: channelStatus?.authority_required || false,
+          locked: channelStatus?.locked || false,
+          authority_bypassed: channelStatus?.authority_bypassed || false,
+          environment_mode: channelStatus?.environment_mode || 'sandbox'
         };
       });
       setSensoryReceptors(receptors);
