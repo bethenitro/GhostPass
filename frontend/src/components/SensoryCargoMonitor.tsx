@@ -59,6 +59,8 @@ interface SensoryReceptor {
   source_authority?: string;
   last_seen_at?: string;
   icon: React.ComponentType<any>;
+  required_by_authority?: boolean;
+  locked?: boolean;
 }
 
 // Live signal feed item for visualization
@@ -102,12 +104,12 @@ const SENSORY_COLORS = {
 
 // Fixed sensory receptors - always present, never conditional
 const SENSORY_RECEPTORS: SensoryReceptor[] = [
-  { type: 'VISION', name: 'Vision', state: 'available', icon: Eye },
-  { type: 'HEARING', name: 'Hearing', state: 'available', icon: Ear },
-  { type: 'TOUCH', name: 'Touch / Pressure', state: 'available', icon: Hand },
-  { type: 'BALANCE', name: 'Balance', state: 'available', icon: Compass },
-  { type: 'SMELL', name: 'Smell', state: 'available', icon: Wind },
-  { type: 'TASTE', name: 'Taste', state: 'available', icon: Droplet },
+  { type: 'VISION', name: 'Vision', state: 'available', icon: Eye, required_by_authority: true, locked: true },
+  { type: 'HEARING', name: 'Hearing', state: 'available', icon: Ear, required_by_authority: false, locked: false },
+  { type: 'TOUCH', name: 'Touch / Pressure', state: 'available', icon: Hand, required_by_authority: true, locked: false },
+  { type: 'BALANCE', name: 'Balance', state: 'available', icon: Compass, required_by_authority: false, locked: false },
+  { type: 'SMELL', name: 'Smell', state: 'available', icon: Wind, required_by_authority: true, locked: true },
+  { type: 'TASTE', name: 'Taste', state: 'available', icon: Droplet, required_by_authority: false, locked: false },
 ];
 
 const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => {
@@ -137,14 +139,44 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
     setSelectedSensoryFilter(selectedSensoryFilter === type ? null : type);
   };
 
-  const onSignalClick = (signal: LiveSignalItem) => {
+  const onSignalClick = async (signal: LiveSignalItem) => {
+    // Log audit entry for signal access
+    try {
+      await sensoryApi.logAuditEntry({
+        signal_id: signal.originalSignal.signal_id,
+        sensory_type: signal.sensoryType,
+        timestamp: new Date().toISOString(),
+        outcome: 'VIEWED',
+        metadata: {
+          user_action: 'signal_detail_view',
+          ghost_pass_status: signal.ghostPassStatus,
+          senate_status: signal.senateStatus
+        }
+      });
+    } catch (error) {
+      console.error('Failed to log audit entry:', error);
+    }
+    
     setSelectedSignal(signal.originalSignal);
   };
 
-  // Filter signals based on selected sensory type
-  const filteredSignals = selectedSensoryFilter 
-    ? liveSignals.filter(s => s.sensoryType === selectedSensoryFilter)
-    : liveSignals;
+  // Group signals by sensory type by default
+  const groupedSignals = React.useMemo(() => {
+    const filtered = selectedSensoryFilter 
+      ? liveSignals.filter(s => s.sensoryType === selectedSensoryFilter)
+      : liveSignals;
+    
+    // Group by sensory type
+    const groups: Record<string, LiveSignalItem[]> = {};
+    filtered.forEach(signal => {
+      if (!groups[signal.sensoryType]) {
+        groups[signal.sensoryType] = [];
+      }
+      groups[signal.sensoryType].push(signal);
+    });
+    
+    return groups;
+  }, [liveSignals, selectedSensoryFilter]);
 
   const getStateColor = (state: SensoryState, receptorType: string) => {
     const baseColor = SENSORY_COLORS[receptorType as keyof typeof SENSORY_COLORS];
@@ -712,21 +744,31 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
                 return (
                   <motion.button
                     key={receptor.type}
-                    onClick={() => onReceptorClick(receptor.type)}
+                    onClick={() => receptor.locked ? null : onReceptorClick(receptor.type)}
                     className={`glass-panel p-4 transition-all ${stateColor} ${
                       isSelected ? 'ring-2 ring-cyan-400/50' : ''
+                    } ${receptor.locked ? 'cursor-not-allowed opacity-75' : ''} ${
+                      receptor.required_by_authority ? 'border-orange-500/50' : ''
                     }`}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileHover={{ scale: receptor.locked ? 1 : 1.02 }}
+                    whileTap={{ scale: receptor.locked ? 1 : 0.98 }}
                   >
                     <div className="flex flex-col items-center space-y-2">
-                      <Icon size={24} />
+                      <div className="relative">
+                        <Icon size={24} />
+                      </div>
                       <div className="text-center">
                         <p className="font-semibold text-sm">{receptor.name}</p>
                         <div className="flex items-center justify-center space-x-1 mt-1">
                           {stateIndicator}
                           <span className="text-xs capitalize">{receptor.state}</span>
                         </div>
+                        {receptor.required_by_authority && (
+                          <p className="text-xs text-orange-400 mt-1">Authority Required</p>
+                        )}
+                        {receptor.locked && (
+                          <p className="text-xs text-red-400 mt-1">Locked</p>
+                        )}
                         {receptor.last_seen_at && receptor.state === 'active' && (
                           <p className="text-xs mt-1 opacity-75">
                             {getTimeAgo(receptor.last_seen_at)}
@@ -762,10 +804,10 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
                 )}
               </div>
             </CardTitle>
-            <p className="label-tactical text-sm">Real-time incoming SCUs with sensory-appropriate visual metaphors</p>
+            <p className="label-tactical text-sm">Real-time incoming SCUs</p>
           </CardHeader>
           <CardContent>
-            {filteredSignals.length === 0 ? (
+            {Object.keys(groupedSignals).length === 0 ? (
               <div className="text-center py-12">
                 <AlertCircle className="text-slate-400 mx-auto mb-4" size={48} />
                 <p className="text-slate-400 text-lg mb-2">
@@ -780,57 +822,70 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
                 </div>
               </div>
             ) : (
-              <div className="space-y-3 max-h-96 overflow-y-auto overflow-x-hidden">
-                <AnimatePresence>
-                  {filteredSignals.map((signal, index) => {
-                    const color = getSensoryColor(signal.sensoryType);
+              <div className="space-y-6 max-h-96 overflow-y-auto overflow-x-hidden">
+                {Object.entries(groupedSignals).map(([sensoryType, signals]) => (
+                  <div key={sensoryType} className="space-y-3">
+                    {/* Sensory Channel Header */}
+                    <div className="flex items-center space-x-3 pb-2 border-b border-slate-700/50">
+                      <div className={`w-3 h-3 rounded-full ${getSensoryColor(sensoryType).bg.replace('/20', '/60')}`}></div>
+                      <h3 className={`font-semibold text-lg ${getSensoryColor(sensoryType).text}`}>
+                        {sensoryType} Channel
+                      </h3>
+                      <span className="text-sm text-slate-400">
+                        ({signals.length} signal{signals.length !== 1 ? 's' : ''})
+                      </span>
+                    </div>
                     
-                    return (
-                      <motion.div
-                        key={signal.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20 }}
-                        transition={{ delay: index * 0.02 }}
-                        onClick={() => onSignalClick(signal)}
-                        className={`glass-panel p-4 cursor-pointer transition-colors hover:border-cyan-500/50 ${color.border} border-l-4`}
-                      >
-                        <div className="flex items-center space-x-4">
-                          <div className="flex-shrink-0">
-                            {renderSensoryVisualization(signal)}
-                          </div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center space-x-3">
-                              <span className={`font-semibold text-lg ${color.text}`}>
-                                {signal.sensoryType}
-                              </span>
-                              <span className="text-sm text-slate-400">
-                                {getTimeAgo(signal.timestamp)}
-                              </span>
-                            </div>
-                            
-                            <div className="flex items-center space-x-4 mt-1">
-                              <div className="flex items-center space-x-1">
-                                {signal.ghostPassStatus ? (
-                                  <CheckCircle className="text-emerald-400" size={16} />
-                                ) : (
-                                  <XCircle className="text-red-400" size={16} />
-                                )}
-                                <span className="text-sm text-slate-300">Ghost Pass</span>
+                    {/* Signals in this channel */}
+                    <AnimatePresence>
+                      {signals.map((signal, index) => {
+                        const color = getSensoryColor(signal.sensoryType);
+                        
+                        return (
+                          <motion.div
+                            key={signal.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 20 }}
+                            transition={{ delay: index * 0.02 }}
+                            onClick={() => onSignalClick(signal)}
+                            className={`glass-panel p-4 cursor-pointer transition-colors hover:border-cyan-500/50 ${color.border} border-l-4 ml-6`}
+                          >
+                            <div className="flex items-center space-x-4">
+                              <div className="flex-shrink-0">
+                                {renderSensoryVisualization(signal)}
                               </div>
                               
-                              <div className="flex items-center space-x-1">
-                                <Scale size={16} />
-                                <span className="text-sm text-slate-300 capitalize">{signal.senateStatus}</span>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center space-x-3">
+                                  <span className="text-sm text-slate-400">
+                                    {getTimeAgo(signal.timestamp)}
+                                  </span>
+                                </div>
+                                
+                                <div className="flex items-center space-x-4 mt-1">
+                                  <div className="flex items-center space-x-1">
+                                    {signal.ghostPassStatus ? (
+                                      <CheckCircle className="text-emerald-400" size={16} />
+                                    ) : (
+                                      <XCircle className="text-red-400" size={16} />
+                                    )}
+                                    <span className="text-sm text-slate-300">Ghost Pass</span>
+                                  </div>
+                                  
+                                  <div className="flex items-center space-x-1">
+                                    <Scale size={16} />
+                                    <span className="text-sm text-slate-300 capitalize">{signal.senateStatus}</span>
+                                  </div>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </AnimatePresence>
+                          </motion.div>
+                        );
+                      })}
+                    </AnimatePresence>
+                  </div>
+                ))}
                 
                 {/* Load More Button */}
                 {hasMore && !selectedSensoryFilter && (

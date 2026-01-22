@@ -268,6 +268,67 @@ class SensorySignalStore:
             'by_type': by_type,
             'by_status': by_status
         }
+    
+    @classmethod
+    def add_audit_entry(cls, audit_entry: Dict[str, Any]) -> bool:
+        """
+        Add an immutable audit entry.
+        
+        Args:
+            audit_entry: Audit entry data
+            
+        Returns:
+            bool: Success status
+        """
+        client = get_supabase_client()
+        
+        if client:
+            try:
+                # Convert datetime objects to ISO strings for JSON serialization
+                audit_entry_copy = cls._prepare_for_database(audit_entry)
+                
+                # Store in database (immutable table)
+                client.table('signal_audit_log').insert(audit_entry_copy).execute()
+                logger.info(f"[DATABASE] Stored audit entry {audit_entry.get('audit_id')} in database")
+                return True
+            except Exception as e:
+                logger.error(f"[DATABASE] Failed to store audit entry: {e}")
+        
+        # In-memory fallback (for development)
+        if not hasattr(cls, '_audit_entries'):
+            cls._audit_entries = []
+        cls._audit_entries.append(audit_entry)
+        logger.info(f"[MEMORY] Stored audit entry {audit_entry.get('audit_id')} in memory")
+        return True
+    
+    @classmethod
+    def get_audit_entries(cls, signal_id: str) -> List[Dict[str, Any]]:
+        """
+        Get audit entries for a specific signal.
+        
+        Args:
+            signal_id: Signal identifier
+            
+        Returns:
+            List of audit entries
+        """
+        client = get_supabase_client()
+        
+        if client:
+            try:
+                response = client.table('signal_audit_log')\
+                    .select('*')\
+                    .eq('signal_id', signal_id)\
+                    .order('created_at', desc=False)\
+                    .execute()
+                return response.data
+            except Exception as e:
+                logger.error(f"[DATABASE] Failed to fetch audit entries: {e}")
+        
+        # In-memory fallback
+        if not hasattr(cls, '_audit_entries'):
+            cls._audit_entries = []
+        return [entry for entry in cls._audit_entries if entry.get('signal_id') == signal_id]
 
 
 class SenateEvaluationStore:

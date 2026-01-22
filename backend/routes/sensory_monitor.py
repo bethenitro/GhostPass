@@ -93,6 +93,60 @@ async def get_stats():
     }
 
 
+@router.post("/audit")
+async def log_audit_entry(entry: dict):
+    """
+    Log an immutable audit entry for signal processing.
+    
+    Args:
+        entry: Audit entry with signal_id, sensory_type, timestamp, outcome
+        
+    Returns:
+        dict: Confirmation of audit log
+    """
+    # Add to audit store (immutable)
+    audit_entry = {
+        "audit_id": f"audit_{int(datetime.utcnow().timestamp() * 1000)}",
+        "signal_id": entry.get("signal_id"),
+        "sensory_type": entry.get("sensory_type"),
+        "timestamp": entry.get("timestamp", datetime.utcnow().isoformat()),
+        "outcome": entry.get("outcome"),
+        "metadata": entry.get("metadata", {}),
+        "created_at": datetime.utcnow().isoformat()
+    }
+    
+    # Store in database (immutable)
+    SensorySignalStore.add_audit_entry(audit_entry)
+    
+    logger.info(f"[AUDIT] Logged entry for signal {entry.get('signal_id')}: {entry.get('outcome')}")
+    
+    return {
+        "status": "success",
+        "audit_id": audit_entry["audit_id"],
+        "message": "Audit entry logged"
+    }
+
+
+@router.get("/audit/{signal_id}")
+async def get_audit_trail(signal_id: str):
+    """
+    Get audit trail for a specific signal.
+    
+    Args:
+        signal_id: Signal identifier
+        
+    Returns:
+        dict: Audit trail entries
+    """
+    entries = SensorySignalStore.get_audit_entries(signal_id)
+    
+    return {
+        "signal_id": signal_id,
+        "audit_entries": entries,
+        "total_entries": len(entries)
+    }
+
+
 @router.get("/health")
 async def monitor_health():
     """Health check for Sensory Monitor"""

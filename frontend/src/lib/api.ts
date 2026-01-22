@@ -572,5 +572,23 @@ export const sensoryApi = {
   }) => {
     const { data } = await api.post('/conduit/receive', capsule);
     return data;
+  },
+
+  // Log audit entry for signal processing
+  logAuditEntry: async (entry: {
+    signal_id: string;
+    sensory_type: string;
+    timestamp: string;
+    outcome: string;
+    metadata?: Record<string, any>;
+  }) => {
+    const { data } = await api.post('/sensory-monitor/audit', entry);
+    return data;
+  },
+
+  // Get audit trail for a signal
+  getAuditTrail: async (signalId: string) => {
+    const { data } = await api.get(`/sensory-monitor/audit/${signalId}`);
+    return data;
   }
 };
