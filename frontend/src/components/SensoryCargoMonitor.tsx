@@ -23,13 +23,14 @@ import { sensoryApi, environmentApi } from '@/lib/api';
  * 
  * LAYOUT (NON-NEGOTIABLE):
  * TOP: Sensory Receptor Panel - Always show 6 fixed sensory tiles
- * MIDDLE: Live Sensory Signal Feed - Real-time updates, visual style matches sensory type
+ * MIDDLE: Live Sensory Feed - Real-time SCU events, visual style matches sensory type
  * BOTTOM: Governance & Audit Strip - Ghost Pass summary, Senate queue, audit access
  * 
  * LANGUAGE CONTRACT - NO AMBIGUITY:
  * - Sensory Type: One of 6 conceptual channels (VISION, HEARING, TOUCH, BALANCE, SMELL, TASTE)
- * - SCU: One incoming signal payload, belongs to exactly one Sensory Type
- * - Sensory Capsule: Container of multiple SCUs, no logic
+ * - SCU: One incoming data payload (Sensory Cargo Unit), belongs to exactly one Sensory Type
+ * - Sensory Capsule: Container of multiple SCUs from a single Ghost Pass interaction
+ * - Ghost Pass: Authentication/validation system that can generate multiple SCUs
  * 
  * ENVIRONMENT MODES:
  * - Sandbox: All 6 sensory types always visible, authority bypassed, zero friction
@@ -162,7 +163,7 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
   };
 
   const onSignalClick = async (signal: LiveSignalItem) => {
-    // Log audit entry for signal access
+    // Log audit entry for SCU access
     try {
       await sensoryApi.logAuditEntry({
         signal_id: signal.originalSignal.signal_id,
@@ -170,7 +171,7 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
         timestamp: new Date().toISOString(),
         outcome: 'VIEWED',
         metadata: {
-          user_action: 'signal_detail_view',
+          user_action: 'scu_detail_view',
           ghost_pass_status: signal.ghostPassStatus,
           senate_status: signal.senateStatus
         }
@@ -593,8 +594,8 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
               <ArrowLeft className="text-cyan-400" size={18} />
             </motion.button>
             <div className="min-w-0 flex-1">
-              <h1 className="heading-primary text-xl sm:text-2xl truncate">Signal Details</h1>
-              <p className="label-tactical text-xs sm:text-sm truncate">Full SCU information and validation results</p>
+              <h1 className="heading-primary text-xl sm:text-2xl truncate">SCU Details</h1>
+              <p className="label-tactical text-xs sm:text-sm truncate">Complete SCU information and validation results</p>
             </div>
           </div>
 
@@ -613,7 +614,7 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
                       {selectedSignal.ghost_pass_approved ? 'Ghost Pass Approved' : 'Ghost Pass Rejected'}
                     </p>
                     <p className="text-xs sm:text-sm text-slate-400">
-                      {selectedSignal.ghost_pass_approved ? 'Signal forwarded to Senate' : 'Signal blocked by validation'}
+                      {selectedSignal.ghost_pass_approved ? 'SCU forwarded to Senate' : 'SCU blocked by validation'}
                     </p>
                   </div>
                 </div>
@@ -629,7 +630,7 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
           <Card className="glass-card mb-4 sm:mb-6">
             <CardHeader>
               <CardTitle className="heading-primary text-lg sm:text-xl">SCU Metadata</CardTitle>
-              <p className="label-tactical text-sm">Complete signal information and validation results</p>
+              <p className="label-tactical text-sm">Complete SCU information and validation results</p>
             </CardHeader>
             <CardContent className="space-y-3 sm:space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -700,10 +701,10 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
             </CardContent>
           </Card>
 
-          {/* Signal Data */}
+          {/* SCU Data */}
           <Card className="glass-card mb-6">
             <CardHeader>
-              <CardTitle className="heading-primary">Signal Data</CardTitle>
+              <CardTitle className="heading-primary">SCU Data</CardTitle>
             </CardHeader>
             <CardContent>
               {selectedSignal.payload_type === 'capsule' && selectedSignal.scus ? (
@@ -814,6 +815,22 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
           </div>
         </div>
 
+        {/* Helper Note about SCUs and Ghost Pass */}
+        <div className="mb-4">
+          <div className="glass-panel p-3 border-l-4 border-cyan-500/50 bg-cyan-500/5">
+            <div className="flex items-start space-x-2">
+              <div className="w-2 h-2 bg-cyan-400 rounded-full mt-2 flex-shrink-0"></div>
+              <div className="text-sm text-slate-300">
+                <span className="font-semibold text-cyan-400">About SCUs:</span> 
+                <span className="ml-1">
+                  SCUs (Sensory Cargo Units) are individual data events from sensory channels. 
+                  Multiple SCUs can originate from a single Ghost Pass interaction.
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* TOP SECTION - Sensory Receptor Panel */}
         <Card className="glass-card mb-6">
           <CardHeader>
@@ -891,7 +908,7 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
             <CardTitle className="heading-primary text-lg flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <BarChart3 className="text-cyan-400" size={20} />
-                <span>Live Sensory Signal Feed</span>
+                <span>Live Sensory Feed</span>
                 {selectedSensoryFilter && (
                   <span className="text-sm text-slate-400">
                     - Filtered by {selectedSensoryFilter}
@@ -899,18 +916,20 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
                 )}
               </div>
               <div className="text-sm text-slate-400">
-                {totalSignals > 0 && (
+                {Object.keys(groupedSignals).length > 0 && (
                   <span>
-                    {liveSignals.length} live feeds from {totalSignals} signals
+                    {Object.entries(groupedSignals).map(([type, signals]) => 
+                      `${type}: ${signals.length} SCU${signals.length !== 1 ? 's' : ''}`
+                    ).join(' • ')}
                   </span>
                 )}
               </div>
             </CardTitle>
             <p className="label-tactical text-sm">
-              Real-time SCU events • 
+              Real-time SCU events from sensory channels • 
               {totalSignals > 0 && (
                 <span className="ml-1">
-                  {totalSignals} SCUs received
+                  {totalSignals} SCUs received total
                   {selectedSensoryFilter && ` • Filtered by ${selectedSensoryFilter} channel`}
                 </span>
               )}
@@ -927,8 +946,8 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
                   Live SCU events will appear here as they are received and processed
                 </p>
                 <div className="text-xs text-slate-600 bg-slate-800/50 rounded p-3 max-w-md mx-auto">
-                  <p className="font-semibold mb-1">Monitor Status:</p>
-                  <p>This monitor displays incoming sensory data for visibility and traceability.</p>
+                  <p className="font-semibold mb-1">About SCUs:</p>
+                  <p>SCUs (Sensory Cargo Units) are individual data events from sensory channels. Multiple SCUs can originate from a single Ghost Pass interaction.</p>
                 </div>
               </div>
             ) : (
@@ -1014,7 +1033,7 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
                           <BarChart3 className="text-cyan-400" size={16} />
                         )}
                         <span className="text-cyan-400">
-                          {loadingMore ? 'Loading...' : 'Load More Signals'}
+                          {loadingMore ? 'Loading...' : 'Load More SCUs'}
                         </span>
                       </div>
                     </motion.button>

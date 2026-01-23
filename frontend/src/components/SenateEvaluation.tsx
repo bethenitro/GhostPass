@@ -197,7 +197,7 @@ const SenateEvaluation: React.FC<SenateEvaluationProps> = ({ onBack }) => {
                 <Scale className="text-purple-400" size={28} />
                 <span>Senate Evaluation</span>
               </h1>
-              <p className="label-tactical">Governance decisions on validated signals</p>
+              <p className="label-tactical">Governance decisions on validated SCUs</p>
             </div>
           </div>
 
@@ -293,7 +293,7 @@ const SenateEvaluation: React.FC<SenateEvaluationProps> = ({ onBack }) => {
                 <div className="text-center py-12">
                   <CheckCircle className="text-slate-400 mx-auto mb-4" size={48} />
                   <p className="text-slate-400">No pending evaluations</p>
-                  <p className="text-sm text-slate-500 mt-2">All signals have been reviewed</p>
+                  <p className="text-sm text-slate-500 mt-2">All SCUs have been reviewed</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -364,7 +364,7 @@ const EvaluationCard: React.FC<EvaluationCardProps> = ({ evaluation, index, onRe
             <span className={`px-2 py-1 rounded text-xs font-semibold ${priorityColor.bg} ${priorityColor.text}`}>
               {evaluation.priority.toUpperCase()}
             </span>
-            <span className="text-sm text-slate-400">ID: {evaluation.signal_id}</span>
+            <span className="text-sm text-slate-400">SCU ID: {evaluation.signal_id}</span>
           </div>
 
           <div className="flex items-center space-x-4">
@@ -446,7 +446,7 @@ const DecisionCard: React.FC<DecisionCardProps> = ({ decision, index }) => {
           <p className="text-sm text-slate-300 mb-2">{decision.reason}</p>
 
           <div className="flex items-center space-x-4 text-xs text-slate-400">
-            <span>Signal: {decision.signal_id}</span>
+            <span>SCU: {decision.signal_id}</span>
             {decision.trust_score && (
               <span>Trust: {(decision.trust_score * 100).toFixed(0)}%</span>
             )}
@@ -500,22 +500,22 @@ const EvaluationWorkspace: React.FC<EvaluationWorkspaceProps> = ({
           </motion.button>
           <div>
             <h1 className="heading-primary text-2xl">Evaluation Workspace</h1>
-            <p className="label-tactical">Review signal and make governance decision</p>
+            <p className="label-tactical">Review SCU and make governance decision</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column: Signal Data */}
+          {/* Left Column: SCU Data */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Signal Overview */}
+            {/* SCU Overview */}
             <Card className="glass-card border-purple-500/30">
               <CardHeader>
-                <CardTitle className="heading-primary">Signal Overview</CardTitle>
+                <CardTitle className="heading-primary">SCU Overview</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="label-tactical">Signal ID</p>
+                    <p className="label-tactical">SCU ID</p>
                     <p className="data-mono text-sm">{evaluation.signal_id}</p>
                   </div>
                   <div>
@@ -575,10 +575,10 @@ const EvaluationWorkspace: React.FC<EvaluationWorkspaceProps> = ({
               </Card>
             )}
 
-            {/* Signal Data */}
+            {/* SCU Data */}
             <Card className="glass-card">
               <CardHeader>
-                <CardTitle className="heading-primary">Signal Data</CardTitle>
+                <CardTitle className="heading-primary">SCU Data</CardTitle>
               </CardHeader>
               <CardContent>
                 <pre className="p-4 bg-slate-950/50 rounded text-xs overflow-x-auto">

@@ -131,19 +131,19 @@ const TestSignalInjector: React.FC<TestSignalInjectorProps> = ({ onBack }) => {
       if (result) {
         setResponse({
           success: true,
-          message: `${sensoryType} signal sent successfully!`,
+          message: `${sensoryType} SCU sent successfully!`,
           data: result
         });
       } else {
         setResponse({
           success: false,
-          message: 'Failed to send signal'
+          message: 'Failed to send SCU'
         });
       }
     } catch (error: any) {
       setResponse({
         success: false,
-        message: error.message || 'Error sending signal'
+        message: error.message || 'Error sending SCU'
       });
     } finally {
       setLoading(false);
@@ -269,8 +269,11 @@ const TestSignalInjector: React.FC<TestSignalInjectorProps> = ({ onBack }) => {
                 <div className="text-sm">
                   <p className="font-semibold text-yellow-400 mb-1">SENSORY CARGO MONITOR TEST LAB</p>
                   <p className="text-slate-300">
-                    Send test signals and immediately see them appear in the Sensory Cargo Monitor. 
-                    Use Quick Test for rapid testing, or create custom signals for detailed validation.
+                    Send test SCUs (Sensory Cargo Units) and immediately see them appear in the Sensory Cargo Monitor. 
+                    Use Quick Test for rapid testing, or create custom SCUs for detailed validation.
+                    <span className="block mt-2 text-slate-400 text-xs">
+                      Note: Multiple SCUs can originate from a single Ghost Pass interaction.
+                    </span>
                   </p>
                 </div>
               </div>
@@ -349,7 +352,7 @@ const TestSignalInjector: React.FC<TestSignalInjectorProps> = ({ onBack }) => {
                   <span>Individual Sensory Tests</span>
                 </CardTitle>
                 <CardDescription className="label-tactical">
-                  Click any sensory type to instantly send a test signal
+                  Click any sensory type to instantly send a test SCU (Sensory Cargo Unit)
                 </CardDescription>
               </CardHeader>
               <CardContent>

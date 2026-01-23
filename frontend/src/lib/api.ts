@@ -496,7 +496,7 @@ export const auditApi = {
 };
 // Sensory System API - SENSORY CARGO MONITOR
 export const sensoryApi = {
-  // Get signals for monitoring
+  // Get SCUs for monitoring
   getSignals: async (limit: number = 50, offset: number = 0) => {
     const { data } = await api.get('/sensory-monitor/signals', {
       params: { limit, offset }
@@ -548,7 +548,7 @@ export const sensoryApi = {
     return data;
   },
 
-  // Send test signal (development only)
+  // Send test SCU (development only)
   sendTestSignal: async (signal: {
     schema_version: string;
     sensory_type: string;
@@ -574,7 +574,7 @@ export const sensoryApi = {
     return data;
   },
 
-  // Log audit entry for signal processing
+  // Log audit entry for SCU processing
   logAuditEntry: async (entry: {
     signal_id: string;
     sensory_type: string;
@@ -586,7 +586,7 @@ export const sensoryApi = {
     return data;
   },
 
-  // Get audit trail for a signal
+  // Get audit trail for an SCU
   getAuditTrail: async (signalId: string) => {
     const { data } = await api.get(`/sensory-monitor/audit/${signalId}`);
     return data;
