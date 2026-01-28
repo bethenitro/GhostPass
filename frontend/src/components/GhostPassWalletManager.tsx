@@ -190,6 +190,7 @@ const GhostPassWalletManager: React.FC<GhostPassWalletManagerProps> = ({
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const simulateInteraction = async (_method: 'NFC' | 'QR') => {
     if (!deviceBinding) {
       setError('Device must be bound before interactions');
@@ -216,7 +217,7 @@ const GhostPassWalletManager: React.FC<GhostPassWalletManagerProps> = ({
 
       if (result.status === 'SUCCESS') {
         const interaction: InteractionResult = {
-          method,
+          method: _method,
           timestamp: new Date().toISOString(),
           platformFee: `$${(platformFee / 100).toFixed(2)}`,
           status: 'APPROVED',
