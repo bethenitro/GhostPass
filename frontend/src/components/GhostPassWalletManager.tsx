@@ -190,58 +190,6 @@ const GhostPassWalletManager: React.FC<GhostPassWalletManagerProps> = ({
     }
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const simulateInteraction = async (_method: 'NFC' | 'QR') => {
-    if (!deviceBinding) {
-      setError('Device must be bound before interactions');
-      return;
-    }
-
-    setIsProcessing(true);
-    setError(null);
-    
-    try {
-      // Simulate processing time
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Calculate platform fee based on context
-      const context = 'entry'; // Default context
-      const platformFee = platformFeeConfig?.context_fees?.[context] || 25;
-      
-      // Process atomic transaction
-      const result = await walletApi.processAtomicTransaction(
-        0, // No item cost, just platform fee
-        'demo_gateway_001',
-        context
-      );
-
-      if (result.status === 'SUCCESS') {
-        const interaction: InteractionResult = {
-          method: _method,
-          timestamp: new Date().toISOString(),
-          platformFee: `$${(platformFee / 100).toFixed(2)}`,
-          status: 'APPROVED',
-          gateway: 'Demo Gateway',
-          context,
-          receipt: result.receipt
-        };
-        
-        setLastInteraction(interaction);
-        
-        // Update balance
-        if (onBalanceUpdate) {
-          onBalanceUpdate();
-        }
-      }
-      
-    } catch (error) {
-      console.error('Interaction failed:', error);
-      setError('Interaction failed. Please try again.');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
   const getProofIcon = (proofType: string) => {
     switch (proofType) {
       case 'age_verified': return <CheckCircle className="w-4 h-4" />;
