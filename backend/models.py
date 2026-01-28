@@ -140,15 +140,79 @@ class SessionStatusResponse(BaseModel):
     message: str
 
 # Scan Models
+class InteractionMethod(str, Enum):
+    QR = "QR"
+    NFC = "NFC"
+
 class ScanRequest(BaseModel):
     pass_id: UUID
     gateway_id: str = Field(..., min_length=1, description="Gateway ID where scan is occurring (required)")
     venue_id: str
+    interaction_method: Optional[InteractionMethod] = InteractionMethod.QR
+    device_fingerprint: Optional[str] = None
+    biometric_hash: Optional[str] = None
 
 class ScanResponse(BaseModel):
     status: Literal["APPROVED", "DENIED"]
     receipt_id: str
     message: Optional[str] = None
+    platform_fee_charged: Optional[int] = None  # Platform fee in cents
+    interaction_method: Optional[InteractionMethod] = None
+    message: Optional[str] = None
+
+# Device Wallet Models
+class DeviceWalletBindingRequest(BaseModel):
+    device_fingerprint: str = Field(..., min_length=10, description="Unique device identifier")
+    biometric_hash: str = Field(..., min_length=32, description="Hashed biometric data")
+
+class DeviceWalletBindingResponse(BaseModel):
+    wallet_binding_id: str
+    ghost_pass_token: str
+    device_bound: bool
+    created_at: datetime
+
+class CryptographicProof(BaseModel):
+    proof_id: UUID
+    proof_type: Literal["age_verified", "medical_credential", "access_class"]
+    verified: Optional[bool] = None  # For age_verified and medical_credential
+    access_class: Optional[Literal["GA", "VIP", "STAFF"]] = None  # For access_class
+    signature: str
+    timestamp: datetime
+
+class ProofCreationRequest(BaseModel):
+    proof_type: Literal["age_verified", "medical_credential", "access_class"]
+    proof_data: Dict[str, Any]
+
+class ProofVerificationRequest(BaseModel):
+    proof_id: str
+    signature: str
+
+class BiometricChallengeResponse(BaseModel):
+    status: str
+    challenge: str
+    expires_in: int
+
+class BiometricVerificationRequest(BaseModel):
+    challenge: str
+    biometric_hash: str
+
+class FeeDistributionConfig(BaseModel):
+    valid_percentage: int = Field(..., ge=0, le=100)
+    vendor_percentage: int = Field(..., ge=0, le=100)
+    pool_percentage: int = Field(..., ge=0, le=100)
+    promoter_percentage: int = Field(..., ge=0, le=100)
+
+class GhostPassInteraction(BaseModel):
+    interaction_id: UUID
+    wallet_binding_id: str
+    interaction_method: InteractionMethod
+    gateway_id: str
+    platform_fee_cents: int
+    vendor_payout_cents: int
+    total_charged_cents: int
+    context: str
+    status: Literal["APPROVED", "DENIED"]
+    created_at: datetime
 
 # Fee Models
 class FeeConfig(BaseModel):

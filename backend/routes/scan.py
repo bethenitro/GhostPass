@@ -10,6 +10,9 @@ import uuid
 router = APIRouter(prefix="/scan", tags=["Scan"])
 logger = logging.getLogger(__name__)
 
+# Import platform fee engine
+from routes.wallet import platform_fee_engine
+
 def verify_scanner_auth(authorization: str = Header(...)):
     """Verify scanner/gateway authentication"""
     if not authorization.startswith("Bearer "):
@@ -35,17 +38,16 @@ def validate_scan(
         gateway_response = db.table("gateway_points")\
             .select("*")\
             .eq("id", req.gateway_id)\
-            .single()\
             .execute()
         
-        if not gateway_response.data:
+        if not gateway_response.data or len(gateway_response.data) == 0:
             return ScanResponse(
                 status="DENIED",
                 receipt_id=req.gateway_id,
                 message="Invalid gateway location"
             )
         
-        gateway = gateway_response.data
+        gateway = gateway_response.data[0]
         gateway_name = gateway.get("name", "Unknown Location")
         gateway_type = gateway.get("type", "ENTRY_POINT")
         
@@ -80,17 +82,16 @@ def validate_scan(
             linked_area_response = db.table("gateway_points")\
                 .select("*")\
                 .eq("id", linked_area_id)\
-                .single()\
                 .execute()
             
-            if not linked_area_response.data:
+            if not linked_area_response.data or len(linked_area_response.data) == 0:
                 return ScanResponse(
                     status="DENIED",
                     receipt_id=req.gateway_id,
                     message="Table configuration error: linked area not found"
                 )
             
-            linked_area = linked_area_response.data
+            linked_area = linked_area_response.data[0]
             
             # Check if linked area is enabled
             if linked_area.get("status") != "ENABLED":
@@ -108,7 +109,28 @@ def validate_scan(
                     message=f"GhostPass not accepted in {linked_area.get('name', 'this area')}"
                 )
         
-        # 5. Vaporize expired sessions (RPC call with empty params)
+        # 6. Check for Ghost Pass revocation (REQUIRED BUILD ITEM)
+        # Check if this pass/session is revoked before processing
+        if not is_session_scan:
+            # For regular passes, check if the pass itself is revoked
+            try:
+                revocation_check = db.rpc("is_ghost_pass_revoked", {
+                    "p_ghost_pass_token": str(req.pass_id)
+                }).execute()
+                
+                # Handle the boolean response safely
+                if revocation_check.data is True:
+                    return ScanResponse(
+                        status="DENIED",
+                        receipt_id=req.gateway_id,
+                        message="Ghost Pass has been revoked"
+                    )
+            except Exception as rpc_error:
+                # Log the RPC error but don't fail the scan for this
+                logger.warning(f"Could not check revocation status for pass {req.pass_id}: {rpc_error}")
+                # Continue with scan - revocation check is not critical for basic scanning
+        
+        # 7. Vaporize expired sessions (RPC call with empty params)
         try:
             result = db.rpc("vaporize_expired_sessions", {}).execute()
             # The RPC function returns an integer count directly
@@ -119,7 +141,7 @@ def validate_scan(
             # Log the error but continue - vaporization is not critical for scanning
             logger.debug(f"Vaporize function call had an issue: {e}")
         
-        # 6. Check if this is a session scan (starts with ghostsession:)
+        # 8. Check if this is a session scan (starts with ghostsession:)
         is_session_scan = str(req.pass_id).startswith("ghostsession:")
         
         if is_session_scan:
@@ -130,17 +152,16 @@ def validate_scan(
                 .select("*")\
                 .eq("id", session_id)\
                 .eq("status", "ACTIVE")\
-                .single()\
                 .execute()
             
-            if not session_response.data:
+            if not session_response.data or len(session_response.data) == 0:
                 return ScanResponse(
                     status="DENIED",
                     receipt_id=req.gateway_id,
                     message="Session not found or vaporized"
                 )
             
-            session = session_response.data
+            session = session_response.data[0]
             
             # Check if session has vaporized
             vaporizes_at = parse_supabase_timestamp(session['vaporizes_at'])
@@ -180,17 +201,16 @@ def validate_scan(
             pass_response = db.table("ghost_passes")\
                 .select("*")\
                 .eq("id", str(req.pass_id))\
-                .single()\
                 .execute()
             
-            if not pass_response.data:
+            if not pass_response.data or len(pass_response.data) == 0:
                 return ScanResponse(
                     status="DENIED",
                     receipt_id=req.gateway_id,
                     message="Pass not found"
                 )
             
-            ghost_pass = pass_response.data
+            ghost_pass = pass_response.data[0]
             
             # 4. Check if pass is active and not expired
             expires_at = parse_supabase_timestamp(ghost_pass['expires_at'])
@@ -224,10 +244,9 @@ def validate_scan(
             fee_config_response = db.table("fee_configs")\
                 .select("*")\
                 .eq("venue_id", req.venue_id)\
-                .single()\
                 .execute()
             
-            if not fee_config_response.data:
+            if not fee_config_response.data or len(fee_config_response.data) == 0:
                 logger.warning(f"No fee config found for venue: {req.venue_id}")
                 # Use default split if no config found
                 fee_config = {
@@ -237,7 +256,7 @@ def validate_scan(
                     "promoter_pct": 5.0
                 }
             else:
-                fee_config = fee_config_response.data
+                fee_config = fee_config_response.data[0]
             
             # 6. Calculate and log fee splits
             # For demo, using a base amount of $1.00 per scan
@@ -254,11 +273,10 @@ def validate_scan(
             wallet_response = db.table("wallets")\
                 .select("id")\
                 .eq("user_id", user_id)\
-                .single()\
                 .execute()
             
-            if wallet_response.data:
-                wallet_id = wallet_response.data["id"]
+            if wallet_response.data and len(wallet_response.data) > 0:
+                wallet_id = wallet_response.data[0]["id"]
                 
                 # Get venue/vendor name (use venue_id as fallback)
                 venue_name = req.venue_id  # In production, would fetch from venues table
@@ -267,10 +285,9 @@ def validate_scan(
                 wallet_balance_response = db.table("wallets")\
                     .select("balance_cents")\
                     .eq("id", wallet_id)\
-                    .single()\
                     .execute()
                 
-                current_balance = wallet_balance_response.data["balance_cents"] if wallet_balance_response.data else 0
+                current_balance = wallet_balance_response.data[0]["balance_cents"] if wallet_balance_response.data and len(wallet_balance_response.data) > 0 else 0
                 
                 # Log fee transactions with vendor name and balance snapshots
                 fee_transactions = []
@@ -429,3 +446,225 @@ def get_venue_stats(
     except Exception as e:
         logger.error(f"Venue stats error: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch venue stats")
+@router.post("/nfc", response_model=ScanResponse)
+def validate_nfc_scan(
+    req: ScanRequest,
+    scanner_token: str = Depends(verify_scanner_auth),
+    db: Client = Depends(get_db)
+):
+    """
+    Validate NFC Ghost Pass scan with platform fee processing.
+    
+    REQUIRED BUILD ITEM - Dual Interaction Methods:
+    - NFC tap (preferred for speed)
+    - Same wallet, same balance, same audit trail as QR
+    - Platform fee charged automatically
+    """
+    try:
+        logger.info(f"NFC scan validation: pass_id={req.pass_id}, gateway_id={req.gateway_id}")
+        
+        # Use the same validation logic as QR but mark as NFC interaction
+        # First, validate the gateway and pass (reuse existing logic)
+        qr_response = validate_scan(req, scanner_token, db)
+        
+        if qr_response.status == "DENIED":
+            return qr_response
+        
+        # If QR validation passed, process as NFC with platform fee
+        # Get gateway context for fee calculation
+        gateway_response = db.table("gateway_points")\
+            .select("*")\
+            .eq("id", req.gateway_id)\
+            .execute()
+        
+        if not gateway_response.data or len(gateway_response.data) == 0:
+            return ScanResponse(
+                status="DENIED",
+                receipt_id=req.gateway_id,
+                message="Invalid gateway for NFC scan"
+            )
+        
+        gateway = gateway_response.data[0]
+        gateway_type = gateway.get("type", "ENTRY_POINT")
+        
+        # Determine context for platform fee
+        context = "entry"
+        if gateway_type == "INTERNAL_AREA":
+            context = "bar"
+        elif gateway_type == "TABLE_SEAT":
+            context = "general"
+        
+        # Calculate platform fee (NFC interactions charge platform fee)
+        fee_breakdown = platform_fee_engine.calculate_atomic_transaction(0, context)  # $0 item, just platform fee
+        platform_fee = fee_breakdown["platform_fee_cents"]
+        
+        # Get user from pass
+        is_session_scan = str(req.pass_id).startswith("ghostsession:")
+        
+        if is_session_scan:
+            session_id = str(req.pass_id).replace("ghostsession:", "")
+            session_response = db.table("sessions")\
+                .select("user_id")\
+                .eq("id", session_id)\
+                .execute()
+            
+            if not session_response.data or len(session_response.data) == 0:
+                return ScanResponse(
+                    status="DENIED",
+                    receipt_id=req.gateway_id,
+                    message="Session not found for NFC scan"
+                )
+            
+            user_id = session_response.data[0]["user_id"]
+        else:
+            pass_response = db.table("ghost_passes")\
+                .select("user_id")\
+                .eq("id", str(req.pass_id))\
+                .execute()
+            
+            if not pass_response.data or len(pass_response.data) == 0:
+                return ScanResponse(
+                    status="DENIED",
+                    receipt_id=req.gateway_id,
+                    message="Pass not found for NFC scan"
+                )
+            
+            user_id = pass_response.data[0]["user_id"]
+        
+        # Process platform fee if enabled
+        if platform_fee > 0:
+            # Get user's wallet
+            wallet_response = db.table("wallets")\
+                .select("*")\
+                .eq("user_id", user_id)\
+                .execute()
+            
+            if wallet_response.data and len(wallet_response.data) > 0:
+                wallet = wallet_response.data[0]
+                wallet_id = wallet["id"]
+                current_balance = wallet["balance_cents"]
+                
+                # Check if user has sufficient balance for platform fee
+                if current_balance >= platform_fee:
+                    # Deduct platform fee atomically
+                    new_balance = current_balance - platform_fee
+                    
+                    # Update wallet balance
+                    db.table("wallets")\
+                        .update({"balance_cents": new_balance, "updated_at": "NOW()"})\
+                        .eq("id", wallet_id)\
+                        .execute()
+                    
+                    # Log platform fee transaction
+                    db.table("transactions").insert({
+                        "wallet_id": wallet_id,
+                        "type": "FEE",
+                        "amount_cents": platform_fee,
+                        "balance_before_cents": current_balance,
+                        "balance_after_cents": new_balance,
+                        "vendor_name": "VALID Platform Fee",
+                        "gateway_id": req.gateway_id,
+                        "gateway_name": gateway.get("name", "NFC Gateway"),
+                        "gateway_type": gateway_type,
+                        "venue_id": req.venue_id,
+                        "interaction_method": "NFC",
+                        "platform_fee_cents": platform_fee,
+                        "context": context,
+                        "metadata": {
+                            "pass_id": str(req.pass_id),
+                            "interaction_type": "nfc_tap",
+                            "platform_fee_charged": True,
+                            "scan_timestamp": datetime.now(timezone.utc).isoformat()
+                        }
+                    }).execute()
+                    
+                    logger.info(f"NFC platform fee charged: ${platform_fee/100:.2f} from user {user_id}")
+                else:
+                    # Insufficient balance for platform fee - deny access
+                    return ScanResponse(
+                        status="DENIED",
+                        receipt_id=req.gateway_id,
+                        message=f"Insufficient balance for platform fee (${platform_fee/100:.2f} required)"
+                    )
+        
+        # Log NFC interaction
+        try:
+            interaction_id = str(uuid.uuid4())
+            db.rpc("log_ghost_pass_interaction", {
+                "p_interaction_id": interaction_id,
+                "p_wallet_binding_id": wallet.get("wallet_binding_id", "legacy"),
+                "p_ghost_pass_token": wallet.get("ghost_pass_token", "legacy"),
+                "p_interaction_method": "NFC",
+                "p_gateway_id": req.gateway_id,
+                "p_item_amount_cents": 0,
+                "p_platform_fee_cents": platform_fee,
+                "p_vendor_payout_cents": 0,
+                "p_total_charged_cents": platform_fee,
+                "p_context": context,
+                "p_device_fingerprint": "nfc_device",
+                "p_proofs_verified": 0,
+                "p_status": "APPROVED",
+                "p_metadata": {
+                    "pass_id": str(req.pass_id),
+                    "venue_id": req.venue_id,
+                    "gateway_name": gateway.get("name"),
+                    "is_session": is_session_scan
+                }
+            }).execute()
+        except Exception as e:
+            logger.warning(f"Failed to log NFC interaction: {e}")
+        
+        # Record NFC scan metric
+        try:
+            db.rpc("record_gateway_metric", {
+                "p_gateway_point_id": req.gateway_id,
+                "p_metric_type": "NFC_SCAN",
+                "p_amount_cents": platform_fee,
+                "p_metadata": {
+                    "pass_id": str(req.pass_id),
+                    "platform_fee_cents": platform_fee,
+                    "scan_timestamp": datetime.now(timezone.utc).isoformat(),
+                    "is_session": is_session_scan
+                }
+            }).execute()
+        except Exception as e:
+            logger.warning(f"Failed to record NFC scan metric: {e}")
+        
+        # Return success with fee information
+        message = "NFC scan approved"
+        if platform_fee > 0:
+            message += f" (Platform fee: ${platform_fee/100:.2f} charged)"
+        
+        return ScanResponse(
+            status="APPROVED",
+            receipt_id=req.gateway_id,
+            message=message
+        )
+        
+    except Exception as e:
+        logger.error(f"NFC scan validation error: {e}")
+        return ScanResponse(
+            status="DENIED",
+            receipt_id=req.gateway_id,
+            message="System error during NFC validation"
+        )
+
+@router.get("/platform-fee-status")
+def get_platform_fee_status(
+    scanner_token: str = Depends(verify_scanner_auth),
+    db: Client = Depends(get_db)
+):
+    """
+    Get current platform fee configuration for scanners.
+    Allows scanners to display fee information to users.
+    """
+    return {
+        "fee_enabled": platform_fee_engine.fee_enabled,
+        "context_fees": {
+            context: f"${fee_cents/100:.2f}" 
+            for context, fee_cents in platform_fee_engine.context_fees.items()
+        },
+        "nfc_preferred": True,
+        "qr_fallback": True,
+        "message": "Platform fee charged on every successful interaction"
+    }

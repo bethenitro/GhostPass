@@ -1,0 +1,337 @@
+{
+  "timestamp": "2024-01-28",
+  "connection_method": "existing_backend_logic",
+  "tables": {
+    "users": {
+      "exists": true,
+      "columns": [
+        "id",
+        "email",
+        "created_at",
+        "role"
+      ],
+      "sample_count": 1,
+      "sample_record": {
+        "id": "f0ea11d3-d746-4503-b2e9-3bdca489ce5d",
+        "email": "nfreetunes@gmail.com",
+        "created_at": "2026-01-12T16:45:08.732003+00:00",
+        "role": "ADMIN"
+      }
+    },
+    "wallets": {
+      "exists": true,
+      "columns": [
+        "id",
+        "user_id",
+        "balance_cents",
+        "updated_at",
+        "is_refund_eligible",
+        "device_fingerprint",
+        "biometric_hash",
+        "wallet_binding_id",
+        "ghost_pass_token",
+        "device_bound"
+      ],
+      "sample_count": 1,
+      "sample_record": {
+        "id": "502c3899-1d1d-4739-ab44-e315ce5ee703",
+        "user_id": "f0ea11d3-d746-4503-b2e9-3bdca489ce5d",
+        "balance_cents": 249999,
+        "updated_at": "2026-01-28T15:50:41.829443+00:00",
+        "is_refund_eligible": true,
+        "device_fingerprint": "device_h5r02lp44guhhaesinx5",
+        "biometric_hash": "bio_j20yx0akebhym2vd78an9unmgfenxpx6",
+        "wallet_binding_id": "4b4cc6c7071e82008cb5417fc4a8330b",
+        "ghost_pass_token": "27d09e9fda2eb7769c22237a96b527ee088962f236522c70bc187984c31296cb",
+        "device_bound": true
+      }
+    },
+    "transactions": {
+      "exists": true,
+      "columns": [
+        "id",
+        "wallet_id",
+        "type",
+        "amount_cents",
+        "gateway_id",
+        "venue_id",
+        "metadata",
+        "timestamp",
+        "balance_before_cents",
+        "balance_after_cents",
+        "vendor_name",
+        "gateway_name",
+        "gateway_type",
+        "refund_status",
+        "refund_reference_id",
+        "provider_tx_id",
+        "refund_requested_at",
+        "refund_completed_at",
+        "interaction_method",
+        "platform_fee_cents",
+        "vendor_payout_cents",
+        "context",
+        "device_fingerprint",
+        "vendor_id"
+      ],
+      "sample_count": 1,
+      "sample_record": {
+        "id": "936386c5-6174-49ed-9243-6229a721aa58",
+        "wallet_id": "502c3899-1d1d-4739-ab44-e315ce5ee703",
+        "type": "SPEND",
+        "amount_cents": -2000,
+        "gateway_id": null,
+        "venue_id": null,
+        "metadata": {
+          "pass_id": "8af84bef-063f-42e6-ad1d-1aaf8a24c436",
+          "expires_at": "2026-01-17T16:51:47.315047+00:00",
+          "duration_days": 3
+        },
+        "timestamp": "2026-01-14T16:51:47.315047+00:00",
+        "balance_before_cents": 100500,
+        "balance_after_cents": 98500,
+        "vendor_name": "GhostPass System",
+        "gateway_name": null,
+        "gateway_type": null,
+        "refund_status": "NONE",
+        "refund_reference_id": null,
+        "provider_tx_id": null,
+        "refund_requested_at": null,
+        "refund_completed_at": null,
+        "interaction_method": "QR",
+        "platform_fee_cents": 0,
+        "vendor_payout_cents": 0,
+        "context": "general",
+        "device_fingerprint": null,
+        "vendor_id": null
+      }
+    },
+    "ghost_passes": {
+      "exists": true,
+      "columns": [
+        "id",
+        "user_id",
+        "status",
+        "expires_at",
+        "created_at"
+      ],
+      "sample_count": 1,
+      "sample_record": {
+        "id": "2b63ed4d-9729-45d8-b00b-7230464f1e96",
+        "user_id": "f0ea11d3-d746-4503-b2e9-3bdca489ce5d",
+        "status": "ACTIVE",
+        "expires_at": "2026-01-15T17:02:23.275973+00:00",
+        "created_at": "2026-01-12T17:02:23.275973+00:00"
+      }
+    },
+    "fee_configs": {
+      "exists": true,
+      "columns": [
+        "id",
+        "venue_id",
+        "valid_pct",
+        "vendor_pct",
+        "pool_pct",
+        "promoter_pct"
+      ],
+      "sample_count": 1,
+      "sample_record": {
+        "id": "14b7b854-5342-40c3-8fe7-aaa69e7bf102",
+        "venue_id": "venue_001",
+        "valid_pct": 70.0,
+        "vendor_pct": 15.0,
+        "pool_pct": 10.0,
+        "promoter_pct": 5.0
+      }
+    },
+    "audit_logs": {
+      "exists": true,
+      "columns": [
+        "id",
+        "admin_user_id",
+        "action",
+        "resource_type",
+        "resource_id",
+        "old_value",
+        "new_value",
+        "timestamp",
+        "metadata"
+      ],
+      "sample_count": 1,
+      "sample_record": {
+        "id": "8a9d06ab-6750-46e6-8417-e50686123904",
+        "admin_user_id": "f0ea11d3-d746-4503-b2e9-3bdca489ce5d",
+        "action": "UPDATE_FEE_CONFIG",
+        "resource_type": "fee_config",
+        "resource_id": "default",
+        "old_value": null,
+        "new_value": {
+          "pool_pct": 30.0,
+          "venue_id": "default",
+          "valid_pct": 45.4,
+          "vendor_pct": 14.6,
+          "promoter_pct": 10.0
+        },
+        "timestamp": "2026-01-12T22:52:34.650337+00:00",
+        "metadata": {}
+      }
+    },
+    "system_configs": {
+      "exists": true,
+      "columns": [
+        "id",
+        "config_key",
+        "config_value",
+        "updated_by",
+        "updated_at"
+      ],
+      "sample_count": 1,
+      "sample_record": {
+        "id": "865c8411-e4cb-486c-99fe-579f00348a9f",
+        "config_key": "scan_fees",
+        "config_value": {
+          "default": 10
+        },
+        "updated_by": null,
+        "updated_at": "2026-01-12T22:31:26.03247+00:00"
+      }
+    },
+    "payout_requests": {
+      "exists": true,
+      "columns": [],
+      "sample_count": 0,
+      "sample_record": null
+    },
+    "sessions": {
+      "exists": true,
+      "columns": [
+        "id",
+        "user_id",
+        "session_type",
+        "status",
+        "created_at",
+        "vaporizes_at",
+        "venue_id",
+        "qr_code"
+      ],
+      "sample_count": 1,
+      "sample_record": {
+        "id": "1ec77541-b4ad-42dd-8aed-103884c092ad",
+        "user_id": "f0ea11d3-d746-4503-b2e9-3bdca489ce5d",
+        "session_type": "3_minutes",
+        "status": "VAPORIZED",
+        "created_at": "2026-01-14T16:28:28.316138+00:00",
+        "vaporizes_at": "2026-01-14T16:31:28.316138+00:00",
+        "venue_id": null,
+        "qr_code": "ghostsession:1ec77541-b4ad-42dd-8aed-103884c092ad"
+      }
+    },
+    "gateway_points": {
+      "exists": true,
+      "columns": [
+        "id",
+        "venue_id",
+        "name",
+        "status",
+        "type",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "number",
+        "accepts_ghostpass",
+        "linked_area_id",
+        "employee_name",
+        "employee_id",
+        "visual_identifier"
+      ],
+      "sample_count": 1,
+      "sample_record": {
+        "id": "c96922fc-b23d-4d9f-965d-971fad31edb7",
+        "venue_id": "venue_001",
+        "name": "t1",
+        "status": "ENABLED",
+        "type": "ENTRY_POINT",
+        "created_at": "2026-01-14T20:25:00.915406+00:00",
+        "updated_at": "2026-01-15T14:56:58.517147+00:00",
+        "created_by": "f0ea11d3-d746-4503-b2e9-3bdca489ce5d",
+        "number": null,
+        "accepts_ghostpass": true,
+        "linked_area_id": null,
+        "employee_name": "Unassigned",
+        "employee_id": "UNASSIGNED",
+        "visual_identifier": null
+      }
+    },
+    "ghost_pass_revocations": {
+      "exists": true,
+      "columns": [],
+      "sample_count": 0,
+      "sample_record": null
+    },
+    "cryptographic_proofs": {
+      "exists": true,
+      "columns": [],
+      "sample_count": 0,
+      "sample_record": null
+    },
+    "ghost_pass_interactions": {
+      "exists": true,
+      "columns": [],
+      "sample_count": 0,
+      "sample_record": null
+    },
+    "entry_point_audit_logs": {
+      "exists": true,
+      "columns": [
+        "id",
+        "action_type",
+        "entry_point_id",
+        "entry_point_type",
+        "entry_point_name",
+        "employee_name",
+        "employee_id",
+        "admin_user_id",
+        "admin_email",
+        "scanner_token",
+        "source_location",
+        "old_values",
+        "new_values",
+        "metadata",
+        "created_at"
+      ],
+      "sample_count": 1,
+      "sample_record": {
+        "id": "479f3699-4858-47a0-83d8-59e727033648",
+        "action_type": "CREATE",
+        "entry_point_id": "bdd01ea3-5868-4c0f-a1dd-9bb1f611c787",
+        "entry_point_type": "INTERNAL_AREA",
+        "entry_point_name": "DGDGHDRH",
+        "employee_name": "34563465",
+        "employee_id": "3464",
+        "admin_user_id": "f0ea11d3-d746-4503-b2e9-3bdca489ce5d",
+        "admin_email": null,
+        "scanner_token": null,
+        "source_location": "Command Center",
+        "old_values": null,
+        "new_values": {
+          "id": "bdd01ea3-5868-4c0f-a1dd-9bb1f611c787",
+          "name": "DGDGHDRH",
+          "type": "INTERNAL_AREA",
+          "number": 44,
+          "status": "ENABLED",
+          "venue_id": "venue_001",
+          "created_at": "2026-01-19T04:55:23.549522+00:00",
+          "created_by": "f0ea11d3-d746-4503-b2e9-3bdca489ce5d",
+          "updated_at": "2026-01-19T04:55:23.549522+00:00",
+          "employee_id": "3464",
+          "employee_name": "34563465",
+          "linked_area_id": null,
+          "accepts_ghostpass": true,
+          "visual_identifier": null
+        },
+        "metadata": {},
+        "created_at": "2026-01-19T04:55:23.549522+00:00"
+      }
+    }
+  }
+}

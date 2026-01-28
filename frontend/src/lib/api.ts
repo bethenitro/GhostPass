@@ -127,6 +127,46 @@ export const walletApi = {
     return data;
   },
 
+  // Device-bound wallet endpoints
+  bindDevice: async (deviceFingerprint: string, biometricHash: string): Promise<any> => {
+    const { data } = await api.post('/wallet/bind-device', {
+      device_fingerprint: deviceFingerprint,
+      biometric_hash: biometricHash,
+    });
+    return data;
+  },
+
+  verifyDeviceBinding: async (deviceFingerprint: string, biometricHash: string): Promise<any> => {
+    const { data } = await api.post('/wallet/verify-device-binding', {}, {
+      params: {
+        device_fingerprint: deviceFingerprint,
+        biometric_hash: biometricHash,
+      }
+    });
+    return data;
+  },
+
+  // Platform fee endpoints
+  processAtomicTransaction: async (
+    itemAmountCents: number,
+    gatewayId: string,
+    context: string = 'general'
+  ): Promise<any> => {
+    const { data } = await api.post('/wallet/atomic-transaction', {}, {
+      params: {
+        item_amount_cents: itemAmountCents,
+        gateway_id: gatewayId,
+        context,
+      }
+    });
+    return data;
+  },
+
+  getPlatformFeeConfig: async (): Promise<any> => {
+    const { data } = await api.get('/wallet/platform-fee-config');
+    return data;
+  },
+
   getTransactions: async (): Promise<Transaction[]> => {
     const { data } = await api.get('/wallet/transactions');
     return data;
@@ -147,6 +187,93 @@ export const walletApi = {
 
   getRefundHistory: async (): Promise<RefundHistoryItem[]> => {
     const { data } = await api.get('/wallet/refund/history');
+    return data;
+  },
+
+  // Cryptographic proof endpoints
+  createProof: async (proofType: string, proofData: any): Promise<any> => {
+    const { data } = await api.post('/wallet/create-proof', {
+      proof_type: proofType,
+      proof_data: proofData,
+    });
+    return data;
+  },
+
+  verifyProof: async (proofId: string, signature: string): Promise<any> => {
+    const { data } = await api.post('/wallet/verify-proof', {
+      proof_id: proofId,
+      signature: signature,
+    });
+    return data;
+  },
+
+  getUserProofs: async (): Promise<any> => {
+    const { data } = await api.get('/wallet/proofs');
+    return data;
+  },
+
+  // Biometric verification endpoints
+  generateBiometricChallenge: async (): Promise<any> => {
+    const { data } = await api.post('/wallet/biometric-challenge');
+    return data;
+  },
+
+  verifyBiometricResponse: async (challenge: string, biometricHash: string): Promise<any> => {
+    const { data } = await api.post('/wallet/biometric-verify', {
+      challenge: challenge,
+      biometric_hash: biometricHash,
+    });
+    return data;
+  },
+
+  // Ghost Pass revocation
+  revokeGhostPass: async (ghostPassToken: string, reason: string = 'Manual revocation'): Promise<any> => {
+    const { data } = await api.post('/wallet/revoke-ghost-pass', {
+      ghost_pass_token: ghostPassToken,
+      reason: reason,
+    });
+    return data;
+  },
+
+  // Admin fee distribution endpoints
+  getFeeDistribution: async (): Promise<any> => {
+    const { data } = await api.get('/wallet/admin/fee-distribution');
+    return data;
+  },
+
+  setFeeDistribution: async (
+    validPercentage: number,
+    vendorPercentage: number,
+    poolPercentage: number,
+    promoterPercentage: number
+  ): Promise<any> => {
+    const { data } = await api.post('/wallet/admin/fee-distribution', {}, {
+      params: {
+        valid_percentage: validPercentage,
+        vendor_percentage: vendorPercentage,
+        pool_percentage: poolPercentage,
+        promoter_percentage: promoterPercentage,
+      }
+    });
+    return data;
+  },
+
+  // Admin platform fee setting
+  setPlatformFee: async (feeCents: number, context: string = 'general'): Promise<any> => {
+    const { data } = await api.post('/wallet/admin/platform-fee', {}, {
+      params: {
+        fee_cents: feeCents,
+        context: context,
+      }
+    });
+    return data;
+  },
+
+  // Vendor payout processing
+  processVendorPayouts: async (vendorId?: string): Promise<any> => {
+    const { data } = await api.post('/wallet/admin/process-vendor-payouts', {
+      vendor_id: vendorId,
+    });
     return data;
   },
 };
@@ -616,6 +743,38 @@ export const environmentApi = {
   // Get authority policies
   getAuthorityPolicies: async () => {
     const { data } = await api.get('/environment/authority-policies');
+    return data;
+  }
+};
+// Scan API - QR and NFC validation
+export const scanApi = {
+  validateQRScan: async (passId: string, gatewayId: string, venueId: string): Promise<any> => {
+    const { data } = await api.post('/scan/validate', {
+      pass_id: passId,
+      gateway_id: gatewayId,
+      venue_id: venueId,
+      interaction_method: 'QR'
+    });
+    return data;
+  },
+
+  validateNFCScan: async (passId: string, gatewayId: string, venueId: string): Promise<any> => {
+    const { data } = await api.post('/scan/nfc', {
+      pass_id: passId,
+      gateway_id: gatewayId,
+      venue_id: venueId,
+      interaction_method: 'NFC'
+    });
+    return data;
+  },
+
+  getPlatformFeeStatus: async (): Promise<any> => {
+    const { data } = await api.get('/scan/platform-fee-status');
+    return data;
+  },
+
+  getVenueStats: async (venueId: string): Promise<any> => {
+    const { data } = await api.get(`/scan/venue/${venueId}/stats`);
     return data;
   }
 };

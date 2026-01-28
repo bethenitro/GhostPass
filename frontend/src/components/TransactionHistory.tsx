@@ -195,9 +195,21 @@ const TransactionHistory: React.FC = () => {
                       <p className="font-medium text-white text-sm sm:text-base truncate">
                         {getTransactionLabel(transaction)}
                       </p>
-                      <p className="text-white/60 text-xs sm:text-sm">
-                        {formatDate(transaction.timestamp)} • {formatTime(transaction.timestamp)}
-                      </p>
+                      <div className="flex items-center space-x-2 text-xs sm:text-sm text-white/60">
+                        <span>{formatDate(transaction.timestamp)} • {formatTime(transaction.timestamp)}</span>
+                        {transaction.interaction_method && (
+                          <>
+                            <span>•</span>
+                            <span className="text-cyan-400">{transaction.interaction_method}</span>
+                          </>
+                        )}
+                        {transaction.platform_fee_cents && transaction.platform_fee_cents > 0 && (
+                          <>
+                            <span>•</span>
+                            <span className="text-orange-400">Fee: ${(transaction.platform_fee_cents / 100).toFixed(2)}</span>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">

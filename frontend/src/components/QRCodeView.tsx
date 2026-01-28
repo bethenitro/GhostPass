@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import QRCodeLib from 'react-qr-code';
-import { Shield, AlertTriangle, Clock, Trash2 } from 'lucide-react';
+import { Shield, AlertTriangle, Clock, Trash2, Wifi, QrCode as QrCodeIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import SessionSelector from './SessionSelector';
 import { useSession } from '../hooks/useSession';
@@ -12,6 +12,7 @@ const QRCodeView: React.FC = () => {
   const [isVaporizing, setIsVaporizing] = useState(false);
   const [showVaporizeConfirm, setShowVaporizeConfirm] = useState(false);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
+  const [interactionMethod, setInteractionMethod] = useState<'QR' | 'NFC'>('QR');
 
   const { 
     activeSession, 
@@ -95,12 +96,55 @@ const QRCodeView: React.FC = () => {
             </div>
             <div className="relative flex justify-center">
               <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }} className="relative flex items-center justify-center" style={{ filter: 'drop-shadow(0 0 10px rgba(6,182,212,0.5))' }}>
-                <QRCode value={activeSession.qr_code || `ghostsession:${activeSession.id}`} size={128} fgColor="#06b6d4" bgColor="transparent" level="M" style={{height: "auto", maxWidth: "100%", width: "100%"}} />
+                {interactionMethod === 'QR' ? (
+                  <QRCode value={activeSession.qr_code || `ghostsession:${activeSession.id}`} size={128} fgColor="#06b6d4" bgColor="transparent" level="M" style={{height: "auto", maxWidth: "100%", width: "100%"}} />
+                ) : (
+                  <div className="w-32 h-32 flex items-center justify-center bg-cyan-500/10 border-2 border-cyan-500/30 rounded-xl">
+                    <div className="text-center">
+                      <Wifi className="text-cyan-400 mx-auto mb-2" size={32} />
+                      <div className="text-cyan-400 text-sm font-medium">NFC Ready</div>
+                      <div className="text-slate-400 text-xs">Tap to scan</div>
+                    </div>
+                  </div>
+                )}
               </motion.div>
             </div>
           </div>
+          
+          {/* Interaction Method Toggle */}
+          <div className="mt-4 flex justify-center">
+            <div className="bg-slate-700/30 rounded-lg p-1 flex space-x-1">
+              <button
+                onClick={() => setInteractionMethod('QR')}
+                className={cn(
+                  "px-3 py-2 rounded-md text-xs font-medium transition-all duration-200 flex items-center space-x-2",
+                  interactionMethod === 'QR'
+                    ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
+                    : "text-slate-400 hover:text-slate-300"
+                )}
+              >
+                <QrCodeIcon size={14} />
+                <span>QR Scan</span>
+              </button>
+              <button
+                onClick={() => setInteractionMethod('NFC')}
+                className={cn(
+                  "px-3 py-2 rounded-md text-xs font-medium transition-all duration-200 flex items-center space-x-2",
+                  interactionMethod === 'NFC'
+                    ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
+                    : "text-slate-400 hover:text-slate-300"
+                )}
+              >
+                <Wifi size={14} />
+                <span>NFC Tap</span>
+              </button>
+            </div>
+          </div>
+          
           <div className="mt-3 sm:mt-4 text-center">
-            <p className="text-slate-400 font-mono text-xs uppercase tracking-wider px-2">PRESENT CODE AT VENUE ENTRANCE</p>
+            <p className="text-slate-400 font-mono text-xs uppercase tracking-wider px-2">
+              {interactionMethod === 'QR' ? 'PRESENT CODE AT VENUE ENTRANCE' : 'TAP DEVICE AT NFC READER'}
+            </p>
             <div className="text-xs text-slate-500 font-mono break-all mt-2">SESSION ID: {activeSession.id}</div>
           </div>
         </div>

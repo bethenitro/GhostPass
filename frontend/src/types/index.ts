@@ -47,6 +47,11 @@ export interface Transaction {
   balance_after_cents?: number;
   vendor_name?: string;
   refund_status?: RefundStatus;
+  interaction_method?: 'QR' | 'NFC';
+  platform_fee_cents?: number;
+  vendor_payout_cents?: number;
+  context?: string;
+  device_fingerprint?: string;
 }
 
 export interface WalletBalance {
@@ -441,4 +446,76 @@ export interface DecisionRecord {
   reviewer_id: string;
   trust_score?: number;
   timestamp: string;
+}
+
+// Ghost Pass Wallet Types
+export interface DeviceWalletBinding {
+  wallet_binding_id: string;
+  ghost_pass_token: string;
+  device_bound: boolean;
+  device_fingerprint: string;
+  biometric_hash: string;
+  created_at: string;
+}
+
+export interface CryptographicProof {
+  proof_id: string;
+  proof_type: 'age_verified' | 'medical_credential' | 'access_class';
+  verified?: boolean;
+  credential_present?: boolean;
+  access_class?: 'GA' | 'VIP' | 'STAFF';
+  created_at: string;
+  expires_at?: string;
+  is_verified: boolean;
+}
+
+export interface GhostPassInteraction {
+  interaction_id: string;
+  wallet_binding_id: string;
+  ghost_pass_token: string;
+  interaction_method: 'NFC' | 'QR';
+  gateway_id: string;
+  item_amount_cents: number;
+  platform_fee_cents: number;
+  vendor_payout_cents: number;
+  total_charged_cents: number;
+  context: string;
+  device_fingerprint: string;
+  proofs_verified: number;
+  status: 'APPROVED' | 'DENIED';
+  created_at: string;
+  metadata: Record<string, any>;
+}
+
+export interface PlatformFeeConfig {
+  fee_enabled: boolean;
+  default_fee_cents: number;
+  context_fees: {
+    entry: number;
+    bar: number;
+    merch: number;
+    general: number;
+  };
+  distribution_config: {
+    valid_platform_percentage: number;
+    vendor_percentage: number;
+    pool_percentage: number;
+    promoter_percentage: number;
+  };
+}
+
+export interface BiometricChallenge {
+  challenge: string;
+  expires_in: number;
+  device_fingerprint: string;
+}
+
+export interface GhostPassRevocation {
+  revocation_id: string;
+  ghost_pass_token: string;
+  revocation_type: 'TOKEN' | 'DEVICE' | 'USER';
+  reason: string;
+  revoked_by: string;
+  revoked_at: string;
+  metadata: Record<string, any>;
 }
