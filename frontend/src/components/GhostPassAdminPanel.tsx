@@ -8,31 +8,11 @@ interface GhostPassAdminPanelProps {
   onClose: () => void;
 }
 
-interface FeeDistribution {
-  valid_platform: string;
-  vendor: string;
-  pool: string;
-  promoter: string;
-}
-
-interface PlatformFeeConfig {
-  fee_enabled: boolean;
-  default_fee_cents: number;
-  context_fees: {
-    entry: number;
-    bar: number;
-    merch: number;
-    general: number;
-  };
-}
-
 const GhostPassAdminPanel: React.FC<GhostPassAdminPanelProps> = ({ onClose }) => {
-  const [activeTab, setActiveTab] = useState<'fees' | 'distribution' | 'payouts'>('fees');
-  const [feeConfig, setFeeConfig] = useState<PlatformFeeConfig | null>(null);
-  const [feeDistribution, setFeeDistribution] = useState<FeeDistribution | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [activeTab, setActiveTab] = useState<'fees' | 'distribution' | 'payouts'>('fees');
 
   // Fee configuration state
   const [entryFee, setEntryFee] = useState(25);
@@ -56,7 +36,6 @@ const GhostPassAdminPanel: React.FC<GhostPassAdminPanelProps> = ({ onClose }) =>
       
       // Fetch platform fee config
       const feeConfigData = await walletApi.getPlatformFeeConfig();
-      setFeeConfig(feeConfigData);
       
       if (feeConfigData.context_fees) {
         setEntryFee(feeConfigData.context_fees.entry || 25);
@@ -67,7 +46,6 @@ const GhostPassAdminPanel: React.FC<GhostPassAdminPanelProps> = ({ onClose }) =>
 
       // Fetch fee distribution
       const distributionData = await walletApi.getFeeDistribution();
-      setFeeDistribution(distributionData.distribution);
       
       if (distributionData.distribution) {
         // Parse percentages from strings like "40%"

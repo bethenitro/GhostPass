@@ -6,7 +6,6 @@ import {
   Ban, 
   CheckCircle, 
   Clock,
-  User,
   Key
 } from 'lucide-react';
 import { walletApi } from '../lib/api';

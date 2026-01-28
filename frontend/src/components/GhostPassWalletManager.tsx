@@ -2,20 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Shield, 
-  Smartphone, 
-  QrCode, 
-  Wifi, 
-  Zap, 
   Lock, 
   Key, 
   Eye, 
   EyeOff,
   CheckCircle, 
   AlertTriangle, 
-  Settings,
-  DollarSign,
-  Clock,
-  RefreshCw
+  Settings
 } from 'lucide-react';
 import { walletApi } from '../lib/api';
 import { cn } from '@/lib/utils';
@@ -59,7 +52,6 @@ const GhostPassWalletManager: React.FC<GhostPassWalletManagerProps> = ({
   onBalanceUpdate
 }) => {
   // State management
-  const [selectedMethod, setSelectedMethod] = useState<'NFC' | 'QR'>('NFC');
   const [isProcessing, setIsProcessing] = useState(false);
   const [deviceBinding, setDeviceBinding] = useState<DeviceBinding | null>(null);
   const [proofs, setProofs] = useState<CryptographicProof[]>([]);
@@ -198,7 +190,7 @@ const GhostPassWalletManager: React.FC<GhostPassWalletManagerProps> = ({
     }
   };
 
-  const simulateInteraction = async (method: 'NFC' | 'QR') => {
+  const simulateInteraction = async (_method: 'NFC' | 'QR') => {
     if (!deviceBinding) {
       setError('Device must be bound before interactions');
       return;
