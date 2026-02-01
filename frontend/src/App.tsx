@@ -13,6 +13,7 @@ import TransactionHistory from './components/TransactionHistory';
 import CommandCenterPage from './components/CommandCenterPage';
 import GatewayManagerPage from './components/GatewayManagerPage';
 import AuditTrail from './components/AuditTrail';
+import GhostPassModesTester from './components/GhostPassModesTester';
 import { ghostPassApi } from './lib/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -62,6 +63,7 @@ const AppContent: React.FC = () => {
   const isCommandCenterRoute = currentRoute === '#/command-center';
   const isSensoryMonitorRoute = currentRoute === '#/sensory-monitor';
   const isTestSignalInjectorRoute = currentRoute === '#/test-signal-injector';
+  const isGhostPassTesterRoute = currentRoute === '#/ghost-pass-tester';
 
   const purchaseMutation = useMutation({
     mutationFn: (duration: number) => ghostPassApi.purchase(duration),
@@ -169,6 +171,11 @@ const AppContent: React.FC = () => {
   // Show Test Signal Injector page if on test-signal-injector route
   if (isTestSignalInjectorRoute) {
     return <TestSignalInjector onBack={handleBackToMain} />;
+  }
+
+  // Show Ghost Pass Tester page if on ghost-pass-tester route
+  if (isGhostPassTesterRoute) {
+    return <GhostPassModesTester />;
   }
 
   // Show Dashboard Selector first

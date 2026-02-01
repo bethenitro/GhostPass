@@ -1,0 +1,73 @@
+# The Senate Governance Engine Configuration
+# PATENT COMPLIANT: Role-based, not vendor-based governance
+# 
+# CORE DOCTRINE COMPLIANCE:
+# 1. Role-based, not vendor-based: Senate "seats" are roles, any LLM can occupy a role
+# 2. Procedural governance, not voting math: No averaging, no majority shortcuts, escalation > confidence
+# 3. Human is ON THE RAIL, not in the loop: Humans do not approve actions live, veto is async/absolute
+# 4. Hallucinations are neutralized: Invalid output = ABSTAIN, failed calls = ABSTAIN
+# 5. Zero persistence: Raw prompts never stored, hashes + verdicts only
+
+# SENATORS: Role-based seats that any LLM can occupy
+senators:
+  - role_id: "senator_security"
+    llm:
+      provider: "mock"
+      model_name: "mock-gpt-4"
+      timeout_seconds: 30
+      max_retries: 2
+    timeout_seconds: 30
+    max_retries: 2
+
+  - role_id: "senator_compliance"
+    llm:
+      provider: "mock"
+      model_name: "mock-claude-3"
+      timeout_seconds: 30
+      max_retries: 2
+    timeout_seconds: 30
+    max_retries: 2
+
+  - role_id: "senator_operations"
+    llm:
+      provider: "mock"
+      model_name: "mock-llama-2"
+      timeout_seconds: 30
+      max_retries: 2
+    timeout_seconds: 30
+    max_retries: 2
+
+executive_secretary:
+  provider: "mock"
+  model_name: "mock-gpt-4"
+  timeout_seconds: 45
+  max_retries: 2
+
+judge:
+  provider: "mock"
+  model_name: "mock-claude-opus"
+  timeout_seconds: 60
+  max_retries: 3
+
+# Risk flags that trigger Judge escalation regardless of vote consensus
+protected_risk_flags:
+  - "security_vulnerability"
+  - "data_breach_risk"
+  - "compliance_violation"
+  - "financial_fraud"
+  - "privacy_violation"
+  - "malicious_code"
+  - "unauthorized_access"
+
+# System parameters
+default_timeout: 30
+safety_bias_threshold: 0.5
+max_concurrent_requests: 100
+audit_retention_days: 365
+
+# HARDENING PARAMETERS
+# Minimum valid quorum - at least this many non-abstained senators required for Senate decision
+minimum_quorum: 2
+
+# Minimum confidence threshold for APPROVE decisions - below this triggers escalation/DENY
+min_approve_confidence: 60

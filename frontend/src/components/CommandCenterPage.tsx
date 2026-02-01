@@ -343,6 +343,14 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                     <MapPin size={16} />
                     <span>Open Gateway Manager</span>
                   </button>
+                  <button
+                    onClick={() => window.location.hash = '#/ghost-pass-tester'}
+                    className="inline-flex items-center space-x-2 px-4 py-2 bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-colors"
+                    title="Test Ghost Pass dual modes"
+                  >
+                    <Shield size={16} />
+                    <span>Ghost Pass Tester</span>
+                  </button>
                 </div>
               </div>
 
