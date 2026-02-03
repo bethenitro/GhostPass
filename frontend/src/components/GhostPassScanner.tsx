@@ -69,7 +69,6 @@ const GhostPassScanner: React.FC = () => {
   const [venueId] = useState('venue_001');
   const [deviceFingerprint, setDeviceFingerprint] = useState('');
   const [isScanning, setIsScanning] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
   const processingRef = React.useRef(false);
   
   const scannerElementId = 'qr-scanner-container';
@@ -213,7 +212,6 @@ const GhostPassScanner: React.FC = () => {
     setScanResult(null);
     setEntryPermission(null);
     setErrorMessage('');
-    setIsProcessing(false);
     processingRef.current = false;
     await stopCamera();
   };
@@ -221,7 +219,6 @@ const GhostPassScanner: React.FC = () => {
   const handleStartScan = () => {
     // Reset processing state before starting
     processingRef.current = false;
-    setIsProcessing(false);
     startCamera();
   };
 
@@ -257,7 +254,6 @@ const GhostPassScanner: React.FC = () => {
     await stopCamera();
     
     setScanState('processing');
-    setIsProcessing(true);
     setErrorMessage('');
 
     try {
@@ -324,7 +320,6 @@ const GhostPassScanner: React.FC = () => {
       setErrorMessage('Scan processing failed');
       setScanState('error');
     } finally {
-      setIsProcessing(false);
       processingRef.current = false;
     }
   };
