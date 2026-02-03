@@ -14,6 +14,7 @@ import CommandCenterPage from './components/CommandCenterPage';
 import GatewayManagerPage from './components/GatewayManagerPage';
 import AuditTrail from './components/AuditTrail';
 import GhostPassModesTester from './components/GhostPassModesTester';
+import GhostPassScanner from './components/GhostPassScanner';
 import { ghostPassApi } from './lib/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -64,6 +65,7 @@ const AppContent: React.FC = () => {
   const isSensoryMonitorRoute = currentRoute === '#/sensory-monitor';
   const isTestSignalInjectorRoute = currentRoute === '#/test-signal-injector';
   const isGhostPassTesterRoute = currentRoute === '#/ghost-pass-tester';
+  const isGhostPassScannerRoute = currentRoute === '#/ghost-pass-scanner';
 
   const purchaseMutation = useMutation({
     mutationFn: (duration: number) => ghostPassApi.purchase(duration),
@@ -178,6 +180,11 @@ const AppContent: React.FC = () => {
     return <GhostPassModesTester />;
   }
 
+  // Show Ghost Pass Scanner page if on ghost-pass-scanner route
+  if (isGhostPassScannerRoute) {
+    return <GhostPassScanner />;
+  }
+
   // Show Dashboard Selector first
   if (selectedDashboard === 'selector') {
     return (
@@ -198,7 +205,15 @@ const AppContent: React.FC = () => {
       case 'wallet':
         return <WalletDashboard onPurchase={handlePurchase} isPurchasing={purchaseMutation.isPending} purchasingDuration={purchasingDuration ?? undefined} />;
       case 'scan':
-        return <QRCodeView />;
+        return <div className="text-center py-8">
+          <p className="text-gray-400 mb-4">Use the dedicated scanner for Ghost Pass entry</p>
+          <button
+            onClick={() => window.location.hash = '#/ghost-pass-scanner'}
+            className="bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+          >
+            Open Ghost Pass Scanner
+          </button>
+        </div>;
       case 'trust':
         return <TrustCenter />;
       case 'history':

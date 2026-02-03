@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from routes import auth, wallet, ghostpass, scan, vendor, admin, session, gateway, audit, conduit, sensory_monitor, senate, environment, ghost_pass_modes
+from routes import auth, wallet, ghostpass, scan, vendor, admin, session, gateway, audit, conduit, sensory_monitor, senate, environment, ghost_pass_modes, wallet_access, entry_tracking
 import logging
 
 # Configure logging
@@ -38,6 +38,8 @@ app.include_router(auth.router)
 app.include_router(wallet.router)
 app.include_router(ghostpass.router)
 app.include_router(ghost_pass_modes.router)  # New Ghost Pass modes API
+app.include_router(wallet_access.router)     # New wallet access API
+app.include_router(entry_tracking.router)   # New entry tracking API
 app.include_router(scan.router)
 app.include_router(session.router)
 app.include_router(vendor.router)

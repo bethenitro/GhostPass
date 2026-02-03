@@ -7,11 +7,24 @@ from datetime import datetime, timezone
 import logging
 import uuid
 
+# Import entry tracking system
+from ghost_pass_entry_tracking import GhostPassEntryTracker
+from ghost_pass_wallet_access import wallet_access_manager
+
 router = APIRouter(prefix="/scan", tags=["Scan"])
 logger = logging.getLogger(__name__)
 
 # Import platform fee engine
 from routes.wallet import platform_fee_engine
+
+# Initialize entry tracker
+entry_tracker = None
+
+def get_entry_tracker():
+    global entry_tracker
+    if entry_tracker is None:
+        entry_tracker = GhostPassEntryTracker(get_db())
+    return entry_tracker
 
 def verify_scanner_auth(authorization: str = Header(...)):
     """Verify scanner/gateway authentication"""
@@ -27,7 +40,7 @@ def verify_scanner_auth(authorization: str = Header(...)):
     return token
 
 @router.post("/validate", response_model=ScanResponse)
-def validate_scan(
+async def validate_scan(
     req: ScanRequest,
     scanner_token: str = Depends(verify_scanner_auth),
     db: Client = Depends(get_db)
@@ -406,11 +419,98 @@ def validate_scan(
         except Exception as e:
             logger.warning(f"Failed to log scan audit: {e}")
         
+        # 9. ENTRY TRACKING INTEGRATION - Check entry permission and record entry
+        if gateway_type == "ENTRY_POINT":
+            try:
+                tracker = get_entry_tracker()
+                
+                # Get wallet for entry tracking
+                wallet_response = db.table("wallets")\
+                    .select("id, wallet_binding_id")\
+                    .eq("user_id", user_id)\
+                    .execute()
+                
+                if wallet_response.data and len(wallet_response.data) > 0:
+                    wallet_data = wallet_response.data[0]
+                    wallet_id = wallet_data["id"]
+                    wallet_binding_id = wallet_data["wallet_binding_id"]
+                    
+                    # Check entry permission
+                    entry_permission = tracker.check_entry_permission(
+                        wallet_binding_id=wallet_binding_id,
+                        venue_id=req.venue_id,
+                        event_id=None  # Could be extracted from gateway or request
+                    )
+                    
+                    if not entry_permission["allowed"]:
+                        return ScanResponse(
+                            status="DENIED",
+                            receipt_id=req.gateway_id,
+                            message=entry_permission["message"]
+                        )
+                    
+                    # Record entry event for audit trail
+                    entry_event = tracker.record_entry_event(
+                        wallet_id=str(wallet_id),
+                        wallet_binding_id=wallet_binding_id,
+                        venue_id=req.venue_id,
+                        entry_permission=entry_permission,
+                        gateway_id=req.gateway_id,
+                        gateway_name=gateway_name,
+                        device_fingerprint=None,  # Could be extracted from request
+                        interaction_method="QR",
+                        event_id=None,
+                        metadata={
+                            "pass_id": str(req.pass_id),
+                            "gateway_type": gateway_type,
+                            "scan_timestamp": current_time.isoformat()
+                        }
+                    )
+                    
+                    logger.info(f"Entry event recorded: {entry_event.id} for wallet {wallet_binding_id}")
+                    
+                    # Handle wallet surfacing for first-time users
+                    if entry_permission["entry_type"] == "initial":
+                        try:
+                            # Create wallet session for automatic surfacing
+                            wallet_session = wallet_access_manager.create_wallet_session(
+                                wallet_binding_id=wallet_binding_id,
+                                device_fingerprint=f"scan_{req.gateway_id}_{int(current_time.timestamp())}",
+                                venue_id=req.venue_id
+                            )
+                            
+                            logger.info(f"Created wallet session {wallet_session.session_id} for first-time user")
+                            
+                        except Exception as wallet_error:
+                            logger.warning(f"Failed to create wallet session: {wallet_error}")
+                            # Don't fail the scan for wallet session creation issues
+                    
+                    # Add entry fees to the response message
+                    if entry_permission.get("fees"):
+                        fees = entry_permission["fees"]
+                        if fees["total_fees_cents"] > 0:
+                            fee_message = f" Entry fees: ${fees['total_fees_cents']/100:.2f}"
+                            if fees["venue_reentry_fee_cents"] > 0:
+                                fee_message += f" (Venue: ${fees['venue_reentry_fee_cents']/100:.2f}, Platform: ${fees['valid_reentry_scan_fee_cents']/100:.2f})"
+                        else:
+                            fee_message = ""
+                    else:
+                        fee_message = ""
+                        
+                else:
+                    logger.warning(f"No wallet found for user {user_id} during entry tracking")
+                    
+            except Exception as entry_error:
+                logger.error(f"Entry tracking failed: {entry_error}")
+                # Don't fail the scan for entry tracking issues in production
+                # In development, you might want to fail here for debugging
+                pass
+        
         # 10. Return approval for traditional passes
         return ScanResponse(
             status="APPROVED",
             receipt_id=req.gateway_id,
-            message=f"Pass valid until {expires_at.strftime('%Y-%m-%d %H:%M:%S UTC')}"
+            message=f"Pass valid until {expires_at.strftime('%Y-%m-%d %H:%M:%S UTC')}{fee_message if 'fee_message' in locals() else ''}"
         )
         
     except Exception as e:

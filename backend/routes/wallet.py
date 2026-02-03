@@ -920,10 +920,15 @@ def revoke_ghost_pass(
         raise HTTPException(status_code=500, detail=f"Revocation failed: {str(e)}")
 
 
+from pydantic import BaseModel
+
+class CreateProofRequest(BaseModel):
+    proof_type: str
+    proof_data: dict
+
 @router.post("/create-proof")
 def create_cryptographic_proof(
-    proof_type: str,
-    proof_data: dict,
+    request: CreateProofRequest,
     user = Depends(get_current_user),
     db: Client = Depends(get_db)
 ):
@@ -946,8 +951,8 @@ def create_cryptographic_proof(
         device_fingerprint = wallet["device_fingerprint"]
         
         # Create proof based on type
-        if proof_type == ProofType.AGE_VERIFIED.value:
-            is_verified = proof_data.get("verified", False)
+        if request.proof_type == ProofType.AGE_VERIFIED.value:
+            is_verified = request.proof_data.get("verified", False)
             proof = cryptographic_proof_engine.create_age_verification_proof(is_verified, device_fingerprint)
         
         elif proof_type == ProofType.MEDICAL_CREDENTIAL.value:
