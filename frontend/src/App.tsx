@@ -7,6 +7,7 @@ import SensoryCargoMonitor from './components/SensoryCargoMonitor';
 import TestSignalInjector from './components/TestSignalInjector';
 import Layout from './components/Layout';
 import WalletDashboard from './components/WalletDashboard';
+import QRCodeView from './components/QRCodeView';
 import TrustCenter from './components/TrustCenter';
 import TransactionHistory from './components/TransactionHistory';
 import CommandCenterPage from './components/CommandCenterPage';
@@ -204,15 +205,7 @@ const AppContent: React.FC = () => {
       case 'wallet':
         return <WalletDashboard onPurchase={handlePurchase} isPurchasing={purchaseMutation.isPending} purchasingDuration={purchasingDuration ?? undefined} />;
       case 'scan':
-        return <div className="text-center py-8">
-          <p className="text-gray-400 mb-4">Use the dedicated scanner for Ghost Pass entry</p>
-          <button
-            onClick={() => window.location.hash = '#/ghost-pass-scanner'}
-            className="bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
-          >
-            Open Ghost Pass Scanner
-          </button>
-        </div>;
+        return <QRCodeView />;
       case 'trust':
         return <TrustCenter />;
       case 'history':
