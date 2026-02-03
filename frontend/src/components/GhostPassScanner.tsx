@@ -69,6 +69,8 @@ const GhostPassScanner: React.FC = () => {
   const [venueId] = useState('venue_001');
   const [deviceFingerprint, setDeviceFingerprint] = useState('');
   const [isScanning, setIsScanning] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const processingRef = React.useRef(false);
   
   const scannerElementId = 'qr-scanner-container';
 
@@ -146,9 +148,12 @@ const GhostPassScanner: React.FC = () => {
           aspectRatio: 1.0 // Square aspect ratio
         },
         (decodedText: string, _decodedResult: any) => {
-          // QR Code successfully scanned
-          console.log('QR Code detected:', decodedText);
-          processScan(decodedText);
+          // QR Code successfully scanned - prevent multiple processing
+          if (!processingRef.current) {
+            processingRef.current = true;
+            console.log('QR Code detected:', decodedText);
+            processScan(decodedText);
+          }
         },
         (_errorMessage: string) => {
           // Scanning error (ignore most of these as they're normal)
@@ -208,10 +213,15 @@ const GhostPassScanner: React.FC = () => {
     setScanResult(null);
     setEntryPermission(null);
     setErrorMessage('');
+    setIsProcessing(false);
+    processingRef.current = false;
     await stopCamera();
   };
 
   const handleStartScan = () => {
+    // Reset processing state before starting
+    processingRef.current = false;
+    setIsProcessing(false);
     startCamera();
   };
 
@@ -243,7 +253,11 @@ const GhostPassScanner: React.FC = () => {
   };
 
   const processScan = async (qrData: string) => {
+    // Stop camera immediately to prevent multiple scans
+    await stopCamera();
+    
     setScanState('processing');
+    setIsProcessing(true);
     setErrorMessage('');
 
     try {
@@ -309,6 +323,9 @@ const GhostPassScanner: React.FC = () => {
       console.error('Scan failed:', error);
       setErrorMessage('Scan processing failed');
       setScanState('error');
+    } finally {
+      setIsProcessing(false);
+      processingRef.current = false;
     }
   };
 
