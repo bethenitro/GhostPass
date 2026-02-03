@@ -1,7 +1,7 @@
 /**
  * Ghost Pass Scanner Component
  * 
- * Comprehensive scanning interface that integrates:
+ * Uses html5-qrcode library for reliable QR code scanning with:
  * - Real QR code scanning for entry
  * - Automatic wallet surfacing after first scan
  * - Entry tracking and re-entry management
@@ -10,7 +10,7 @@
  * - Dual fee structure handling
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   QrCode, 
@@ -21,14 +21,12 @@ import {
   X, 
   Sun,
   Clock,
-  Shield,
-  Flashlight
+  Shield
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import GhostPassAutoSurface from './GhostPassAutoSurface';
 
-// QR Code scanning library - install with: npm install jsqr @types/jsqr
-// import jsQR from 'jsqr';
+// HTML5 QR Code scanner
+import { Html5Qrcode, Html5QrcodeScannerState } from 'html5-qrcode';
 
 interface ScanResult {
   status: 'APPROVED' | 'DENIED';
@@ -66,16 +64,13 @@ const GhostPassScanner: React.FC = () => {
   const [entryPermission, setEntryPermission] = useState<EntryPermission | null>(null);
   const [showAutoSurface, setShowAutoSurface] = useState(false);
   const [brightnessControlled, setBrightnessControlled] = useState(false);
-  const [flashEnabled, setFlashEnabled] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [walletBindingId, setWalletBindingId] = useState('');
   const [venueId] = useState('venue_001');
   const [deviceFingerprint, setDeviceFingerprint] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+  const scannerElementId = 'qr-scanner-container';
 
   // Generate device fingerprint on mount
   useEffect(() => {
@@ -104,6 +99,9 @@ const GhostPassScanner: React.FC = () => {
           const data = await response.json();
           // Assuming wallet binding ID is available in wallet data
           setWalletBindingId(data.wallet_binding_id || `wallet_${Date.now()}`);
+        } else {
+          // If API call fails, generate a fallback wallet ID
+          setWalletBindingId(`wallet_${Date.now()}`);
         }
       } catch (error) {
         console.error('Failed to get wallet info:', error);
@@ -114,91 +112,72 @@ const GhostPassScanner: React.FC = () => {
     getWalletInfo();
   }, []);
 
+  // Scanner instance ref
+  const scannerRef = React.useRef<Html5Qrcode | null>(null);
+
+  // Cleanup scanner on unmount
+  useEffect(() => {
+    return () => {
+      if (scannerRef.current && scannerRef.current.getState() === Html5QrcodeScannerState.SCANNING) {
+        scannerRef.current.stop().catch(console.error);
+      }
+    };
+  }, []);
+
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: 'environment', // Use back camera
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        }
-      });
-      
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-      }
+      setScanState('scanning');
+      setIsScanning(true);
       
       // Apply brightness control for scanning
       await applyBrightnessControl();
       
-      // Start QR code scanning
-      startQRScanning();
+      // Initialize scanner only when needed
+      if (!scannerRef.current) {
+        scannerRef.current = new Html5Qrcode(scannerElementId);
+      }
+      
+      // Start scanning with back camera
+      await scannerRef.current.start(
+        { facingMode: "environment" }, // Use back camera
+        {
+          fps: 10, // Frame per second for scanning
+          qrbox: { width: 250, height: 250 }, // Scanning area
+          aspectRatio: 1.0 // Square aspect ratio
+        },
+        (decodedText: string, decodedResult: any) => {
+          // QR Code successfully scanned
+          console.log('QR Code detected:', decodedText);
+          processScan(decodedText);
+        },
+        (errorMessage: string) => {
+          // Scanning error (ignore most of these as they're normal)
+          // console.log('Scan error:', errorMessage);
+        }
+      );
       
     } catch (error) {
       console.error('Camera access failed:', error);
-      setErrorMessage('Camera access required for scanning');
+      setErrorMessage('Camera access required for scanning. Please allow camera permissions.');
       setScanState('error');
+      setIsScanning(false);
     }
   };
 
-  const startQRScanning = () => {
-    if (!videoRef.current || !canvasRef.current) return;
-    
-    setIsScanning(true);
-    const scanStartTime = Date.now();
-    
-    const scanQRCode = () => {
-      if (!videoRef.current || !canvasRef.current || !isScanning) return;
+  const stopCamera = async () => {
+    try {
+      setIsScanning(false);
       
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      const context = canvas.getContext('2d');
-      
-      if (video.readyState === video.HAVE_ENOUGH_DATA) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        context?.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
-        const imageData = context?.getImageData(0, 0, canvas.width, canvas.height);
-        
-        if (imageData) {
-          // TODO: Install jsQR library for real QR scanning
-          // const code = jsQR(imageData.data, imageData.width, imageData.height);
-          
-          // For now, simulate QR detection after 3 seconds of scanning
-          if (Date.now() - scanStartTime > 3000) {
-            console.log('Simulated QR Code detected');
-            setIsScanning(false);
-            processScan('simulated_qr_code_data');
-            return;
-          }
-        }
+      // Stop the scanner if it's running
+      if (scannerRef.current && scannerRef.current.getState() === Html5QrcodeScannerState.SCANNING) {
+        await scannerRef.current.stop();
       }
       
-      // Continue scanning
-      if (isScanning) {
-        requestAnimationFrame(scanQRCode);
-      }
-    };
-    
-    scanQRCode();
-  };
-
-  const stopCamera = () => {
-    setIsScanning(false);
-    
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
+      restoreBrightness();
+      
+    } catch (error) {
+      console.error('Failed to stop camera:', error);
     }
-    
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-    
-    restoreBrightness();
   };
 
   const applyBrightnessControl = async () => {
@@ -224,22 +203,16 @@ const GhostPassScanner: React.FC = () => {
     setBrightnessControlled(false);
   };
 
-  const toggleFlash = async () => {
-    if (streamRef.current) {
-      const track = streamRef.current.getVideoTracks()[0];
-      const capabilities = track.getCapabilities();
-      
-      if ('torch' in capabilities) {
-        try {
-          await track.applyConstraints({
-            advanced: [{ torch: !flashEnabled } as any]
-          });
-          setFlashEnabled(!flashEnabled);
-        } catch (error) {
-          console.warn('Flash control not available:', error);
-        }
-      }
-    }
+  const resetScan = async () => {
+    setScanState('idle');
+    setScanResult(null);
+    setEntryPermission(null);
+    setErrorMessage('');
+    await stopCamera();
+  };
+
+  const handleStartScan = () => {
+    startCamera();
   };
 
   const checkEntryPermission = async () => {
@@ -339,29 +312,8 @@ const GhostPassScanner: React.FC = () => {
     }
   };
 
-  const simulateScan = async (qrData: string = 'ghost_pass_demo') => {
-    await processScan(qrData);
-  };
 
-  const resetScan = () => {
-    setScanState('idle');
-    setScanResult(null);
-    setEntryPermission(null);
-    setErrorMessage('');
-    stopCamera();
-  };
 
-  const handleStartScan = () => {
-    setScanState('scanning');
-    startCamera();
-  };
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      stopCamera();
-    };
-  }, []);
 
   const renderScanState = () => {
     switch (scanState) {
@@ -408,59 +360,29 @@ const GhostPassScanner: React.FC = () => {
       case 'scanning':
         return (
           <div className="space-y-4">
+            {/* HTML5-QRCode Scanner Container */}
             <div className="relative">
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                className="w-full h-64 bg-black rounded-lg object-cover"
+              <div 
+                id={scannerElementId}
+                className="w-full rounded-lg overflow-hidden"
+                style={{ minHeight: '300px' }}
               />
-              <canvas ref={canvasRef} className="hidden" />
               
-              {/* Scanning overlay */}
-              <div className="absolute inset-0 border-2 border-cyan-400 rounded-lg">
-                <div className="absolute inset-4 border border-cyan-400/50 rounded">
-                  {isScanning && (
-                    <motion.div
-                      animate={{ y: [0, 200, 0] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                      className="w-full h-0.5 bg-cyan-400 shadow-lg shadow-cyan-400/50"
-                    />
-                  )}
-                </div>
-                
-                {/* Scanning status */}
-                <div className="absolute top-2 left-2 right-2">
-                  <div className="bg-black/70 rounded px-2 py-1 text-xs text-cyan-400">
-                    {isScanning ? 'Scanning for QR codes...' : 'Position QR code in frame'}
-                  </div>
+              {/* Scanning status overlay */}
+              <div className="absolute top-2 left-2 right-2 z-10">
+                <div className="bg-black/70 rounded px-3 py-2 text-sm text-cyan-400 text-center">
+                  {isScanning ? 'Scanning for QR codes...' : 'Initializing camera...'}
                 </div>
               </div>
 
               {/* Controls */}
-              <div className="absolute bottom-4 left-4 right-4 flex justify-between">
-                <button
-                  onClick={toggleFlash}
-                  className={cn(
-                    "p-2 rounded-full",
-                    flashEnabled ? "bg-yellow-600" : "bg-gray-800/80"
-                  )}
-                >
-                  <Flashlight className="w-5 h-5 text-white" />
-                </button>
-                
-                <button
-                  onClick={() => simulateScan()}
-                  className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 rounded-lg text-white font-medium"
-                >
-                  Simulate Scan
-                </button>
-                
+              <div className="absolute bottom-4 left-4 right-4 flex justify-center z-10">
                 <button
                   onClick={resetScan}
-                  className="p-2 bg-gray-800/80 rounded-full"
+                  className="px-6 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-white font-medium flex items-center space-x-2"
                 >
-                  <X className="w-5 h-5 text-white" />
+                  <X className="w-4 h-4" />
+                  <span>Stop Scanning</span>
                 </button>
               </div>
             </div>
@@ -471,6 +393,11 @@ const GhostPassScanner: React.FC = () => {
                 Brightness optimized for scanning
               </div>
             )}
+            
+            <div className="text-center text-gray-400 text-sm">
+              <p>Point your camera at a QR code to scan</p>
+              <p>Make sure the QR code is well-lit and in focus</p>
+            </div>
           </div>
         );
 
