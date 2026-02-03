@@ -145,12 +145,12 @@ const GhostPassScanner: React.FC = () => {
           qrbox: { width: 250, height: 250 }, // Scanning area
           aspectRatio: 1.0 // Square aspect ratio
         },
-        (decodedText: string, decodedResult: any) => {
+        (decodedText: string, _decodedResult: any) => {
           // QR Code successfully scanned
           console.log('QR Code detected:', decodedText);
           processScan(decodedText);
         },
-        (errorMessage: string) => {
+        (_errorMessage: string) => {
           // Scanning error (ignore most of these as they're normal)
           // console.log('Scan error:', errorMessage);
         }
