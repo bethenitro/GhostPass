@@ -227,7 +227,6 @@ const GhostPassAutoSurface: React.FC<AutoSurfaceProps> = ({
         const choiceResult = await installPromptEvent.userChoice;
         
         if (choiceResult.outcome === 'accepted') {
-          setShowInstallPrompt(false);
           setSurfaceState('complete');
           onSurfaceComplete?.(walletSession?.session_id || '');
         } else {
