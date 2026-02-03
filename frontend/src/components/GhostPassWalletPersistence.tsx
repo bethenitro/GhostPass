@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
   Smartphone, 
   Sun, 
@@ -7,8 +7,7 @@ import {
   Shield, 
   Clock,
   CheckCircle,
-  AlertTriangle,
-  Settings
+  AlertTriangle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 

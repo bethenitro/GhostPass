@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { QrCode, Wifi, Shield, AlertTriangle, CheckCircle, Zap, Lock, Key, Eye, Settings } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { QrCode, Wifi, Shield, AlertTriangle, CheckCircle, Zap, Lock, Key, Eye } from 'lucide-react';
 import GhostPassWalletPersistence from './GhostPassWalletPersistence';
 import GhostPassEntryManager from './GhostPassEntryManager';
 

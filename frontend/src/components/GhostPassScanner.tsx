@@ -11,7 +11,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
   QrCode, 
   Scan, 
@@ -19,15 +19,10 @@ import {
   AlertTriangle, 
   CheckCircle, 
   X, 
-  Sun, 
-  Moon,
-  Zap,
-  DollarSign,
+  Sun,
   Clock,
   Shield,
-  Camera,
-  Flashlight,
-  RotateCcw
+  Flashlight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import GhostPassAutoSurface from './GhostPassAutoSurface';
@@ -71,7 +66,7 @@ const GhostPassScanner: React.FC = () => {
   const [flashEnabled, setFlashEnabled] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [walletBindingId, setWalletBindingId] = useState('');
-  const [venueId, setVenueId] = useState('venue_001');
+  const [venueId] = useState('venue_001');
   const [deviceFingerprint, setDeviceFingerprint] = useState('');
   
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -181,7 +176,7 @@ const GhostPassScanner: React.FC = () => {
       const track = streamRef.current.getVideoTracks()[0];
       const capabilities = track.getCapabilities();
       
-      if (capabilities.torch) {
+      if ('torch' in capabilities) {
         try {
           await track.applyConstraints({
             advanced: [{ torch: !flashEnabled } as any]

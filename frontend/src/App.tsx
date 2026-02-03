@@ -7,7 +7,6 @@ import SensoryCargoMonitor from './components/SensoryCargoMonitor';
 import TestSignalInjector from './components/TestSignalInjector';
 import Layout from './components/Layout';
 import WalletDashboard from './components/WalletDashboard';
-import QRCodeView from './components/QRCodeView';
 import TrustCenter from './components/TrustCenter';
 import TransactionHistory from './components/TransactionHistory';
 import CommandCenterPage from './components/CommandCenterPage';

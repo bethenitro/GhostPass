@@ -13,20 +13,16 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
   Smartphone, 
   Plus, 
   Sun, 
-  QrCode, 
   CheckCircle, 
   AlertTriangle,
-  X,
   Download,
-  Home,
   Zap
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface AutoSurfaceProps {
   walletBindingId: string;
@@ -78,7 +74,6 @@ const GhostPassAutoSurface: React.FC<AutoSurfaceProps> = ({
 }) => {
   const [surfaceState, setSurfaceState] = useState<'checking' | 'surfacing' | 'installing' | 'complete' | 'error'>('checking');
   const [walletSession, setWalletSession] = useState<WalletSession | null>(null);
-  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [installPromptEvent, setInstallPromptEvent] = useState<PWAInstallPrompt | null>(null);
   const [brightnessControlled, setBrightnessControlled] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -152,7 +147,6 @@ const GhostPassAutoSurface: React.FC<AutoSurfaceProps> = ({
 
         // Show PWA install prompt if forced
         if (data.force_surface && data.wallet_access?.install_prompt?.show) {
-          setShowInstallPrompt(true);
           setSurfaceState('installing');
         } else {
           setSurfaceState('complete');
@@ -276,7 +270,6 @@ const GhostPassAutoSurface: React.FC<AutoSurfaceProps> = ({
 
   const handleSkipInstall = () => {
     setInstallSkipped(true);
-    setShowInstallPrompt(false);
     setSurfaceState('complete');
     onSurfaceComplete?.(walletSession?.session_id || '');
   };
@@ -390,39 +383,32 @@ const GhostPassAutoSurface: React.FC<AutoSurfaceProps> = ({
   };
 
   return (
-    <AnimatePresence>
+    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       {surfaceState !== 'complete' && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          className="bg-gray-900 border border-gray-700 rounded-xl p-8 max-w-md w-full"
         >
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            className="bg-gray-900 border border-gray-700 rounded-xl p-8 max-w-md w-full"
-          >
-            {renderSurfacingState()}
-            
-            {/* Brightness indicator */}
-            {brightnessControlled && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-6 p-3 bg-yellow-900/20 border border-yellow-600/30 rounded-lg"
-              >
-                <div className="flex items-center text-yellow-400 text-sm">
-                  <Sun className="w-4 h-4 mr-2" />
-                  Screen brightness optimized for QR scanning
-                </div>
-              </motion.div>
-            )}
-          </motion.div>
+          {renderSurfacingState()}
+          
+          {/* Brightness indicator */}
+          {brightnessControlled && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-6 p-3 bg-yellow-900/20 border border-yellow-600/30 rounded-lg"
+            >
+              <div className="flex items-center text-yellow-400 text-sm">
+                <Sun className="w-4 h-4 mr-2" />
+                Screen brightness optimized for QR scanning
+              </div>
+            </motion.div>
+          )}
         </motion.div>
       )}
-    </AnimatePresence>
+    </div>
   );
 };
 
