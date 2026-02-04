@@ -887,7 +887,6 @@ const GhostPassScanner: React.FC = () => {
               // Check for existing wallet session
               const walletSession = localStorage.getItem('ghost_pass_wallet_session');
               if (walletSession) {
-                const session = JSON.parse(walletSession);
                 // Open main app in new tab - wallet tab is default
                 window.open(`${window.location.origin}/`, '_blank', 'noopener,noreferrer');
               } else {
