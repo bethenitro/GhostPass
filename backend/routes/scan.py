@@ -219,6 +219,7 @@ async def validate_scan(
                 .execute()
             
             if not pass_response.data or len(pass_response.data) == 0:
+                logger.warning(f"Ghost pass not found in database: {req.pass_id}")
                 return ScanResponse(
                     status="DENIED",
                     receipt_id=req.gateway_id,
@@ -226,19 +227,22 @@ async def validate_scan(
                 )
             
             ghost_pass = pass_response.data[0]
+            logger.info(f"Found ghost pass: {ghost_pass.get('id')} with status: {ghost_pass.get('status')}")
             
             # 4. Check if pass is active and not expired
             expires_at = parse_supabase_timestamp(ghost_pass['expires_at'])
             current_time = datetime.now(timezone.utc)
             
             if ghost_pass['status'] != 'ACTIVE':
+                logger.warning(f"Ghost pass {req.pass_id} has status: {ghost_pass['status']}")
                 return ScanResponse(
                     status="DENIED",
                     receipt_id=req.gateway_id,
-                    message="Pass is not active"
+                    message=f"Pass is {ghost_pass['status'].lower()}"
                 )
             
             if expires_at < current_time:
+                logger.warning(f"Ghost pass {req.pass_id} expired at {expires_at}, current time: {current_time}")
                 # Mark as expired
                 db.table("ghost_passes")\
                     .update({"status": "EXPIRED"})\
