@@ -116,7 +116,7 @@ const GhostPassAutoSurface: React.FC<AutoSurfaceProps> = ({
 
       // Call the existing backend API endpoint
       const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const response = await fetch(`${API_BASE_URL}/api/wallet/first-scan-success`, {
+      const response = await fetch(`${API_BASE_URL}/wallet-access/surface-wallet`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -146,13 +146,17 @@ const GhostPassAutoSurface: React.FC<AutoSurfaceProps> = ({
         // Use backend response
         sessionId = data.wallet_access.session_id;
         walletSession = data.wallet_access;
+      } else if (data.status === 'RETURNING_ACCESS' && data.wallet_access) {
+        // Handle returning user
+        sessionId = data.wallet_access.session_id;
+        walletSession = data.wallet_access;
       } else {
         // Fall back to creating session locally if backend doesn't return expected format
         sessionId = `session_${Date.now()}`;
         walletSession = {
           session_id: sessionId,
           wallet_binding_id: walletBindingId,
-          force_surface: true,
+          force_surface: data.force_surface || true,
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
           pwa_manifest: {},
           install_prompt: {
