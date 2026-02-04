@@ -363,7 +363,16 @@ const GhostPassScanner: React.FC = () => {
         }
 
       } else {
-        setScanResult(result);
+        // Handle specific error messages
+        let errorMessage = result.message || 'Scan failed';
+        if (errorMessage.includes('Invalid gateway location')) {
+          errorMessage = 'Scanner not configured. Please contact administrator to set up gateway entry.';
+        }
+        
+        setScanResult({
+          ...result,
+          message: errorMessage
+        });
         setScanState('error');
       }
 
