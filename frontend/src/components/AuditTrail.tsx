@@ -6,7 +6,6 @@ import type {
   EntryPointAuditLog, 
   EntryPointActionType, 
   AuditSummaryStats,
-  RecentScansResponse,
   EntryPointAuditFilter 
 } from '../types';
 
@@ -19,7 +18,6 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
   const rootClass = `min-h-screen bg-slate-950 ${className}`.trim();
   const [auditLogs, setAuditLogs] = useState<EntryPointAuditLog[]>([]);
   const [summaryStats, setSummaryStats] = useState<AuditSummaryStats | null>(null);
-  const [recentScans, setRecentScans] = useState<RecentScansResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -50,12 +48,8 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
 
       // Load summary stats (only on initial load)
       if (filters.offset === 0) {
-        const [stats, scans] = await Promise.all([
-          auditApi.getAuditSummary(30),
-          auditApi.getRecentScans(24, 20)
-        ]);
+        const stats = await auditApi.getAuditSummary(30);
         setSummaryStats(stats);
-        setRecentScans(scans);
       }
     } catch (err) {
       console.error('Error loading audit data:', err);
@@ -253,27 +247,6 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
             <div className="glass-panel border-red-500/20 p-4">
               <div className="text-2xl font-bold text-purple-400">{summaryStats.unique_employees}</div>
               <div className="text-sm text-slate-400">Active Employees</div>
-            </div>
-          </div>
-        )}
-
-        {/* Recent Scans Summary */}
-        {recentScans && recentScans.total_scans > 0 && (
-          <div className="glass-panel border-red-500/20 p-4 mb-6">
-            <h3 className="text-lg font-semibold text-red-400 mb-3 flex items-center space-x-2">
-              <Activity size={18} />
-              <span>Recent Scan Activity (24h)</span>
-            </h3>
-            <div className="text-sm text-slate-400 mb-3">
-              {recentScans.total_scans} scans in the last {recentScans.period_hours} hours
-            </div>
-            <div className="space-y-2 max-h-32 overflow-y-auto">
-              {recentScans.scans.slice(0, 5).map((scan) => (
-                <div key={scan.id} className="flex justify-between items-center text-sm">
-                  <span className="font-medium text-white">{scan.entry_point_name}</span>
-                  <span className="text-slate-400">{formatTimestamp(scan.created_at)}</span>
-                </div>
-              ))}
             </div>
           </div>
         )}
