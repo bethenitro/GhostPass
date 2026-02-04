@@ -122,6 +122,9 @@ async def validate_scan(
                     message=f"GhostPass not accepted in {linked_area.get('name', 'this area')}"
                 )
         
+        # 5. Check if this is a session scan (starts with ghostsession:)
+        is_session_scan = str(req.pass_id).startswith("ghostsession:")
+        
         # 6. Check for Ghost Pass revocation (REQUIRED BUILD ITEM)
         # Check if this pass/session is revoked before processing
         if not is_session_scan:
@@ -154,8 +157,7 @@ async def validate_scan(
             # Log the error but continue - vaporization is not critical for scanning
             logger.debug(f"Vaporize function call had an issue: {e}")
         
-        # 8. Check if this is a session scan (starts with ghostsession:)
-        is_session_scan = str(req.pass_id).startswith("ghostsession:")
+        # 8. Handle session or pass validation
         
         if is_session_scan:
             # Handle session validation
