@@ -298,7 +298,29 @@ const GhostPassScanner: React.FC = () => {
         return;
       }
 
-      // Process the actual scan with the QR data
+      // Extract UUID from QR data if it has a prefix
+      let passId = qrData;
+      if (qrData.includes(':')) {
+        // Handle formats like "ghostsession:uuid" or "ghostpass:uuid"
+        const parts = qrData.split(':');
+        if (parts.length >= 2) {
+          passId = parts[parts.length - 1]; // Get the last part (UUID)
+        }
+      }
+
+      // Validate that we have a proper UUID format
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(passId)) {
+        setScanResult({
+          status: 'DENIED',
+          message: 'Invalid QR code format',
+          receipt_id: venueId
+        });
+        setScanState('error');
+        return;
+      }
+
+      // Process the actual scan with the extracted UUID
       const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
       const scanResponse = await fetch(`${API_BASE_URL}/scan/validate`, {
         method: 'POST',
@@ -307,7 +329,7 @@ const GhostPassScanner: React.FC = () => {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         },
         body: JSON.stringify({
-          pass_id: qrData,
+          pass_id: passId, // Use extracted UUID
           gateway_id: 'scanner_demo',
           venue_id: venueId
         })
