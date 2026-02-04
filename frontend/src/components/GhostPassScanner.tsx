@@ -69,6 +69,7 @@ const GhostPassScanner: React.FC = () => {
   const [venueId] = useState('venue_001');
   const [deviceFingerprint, setDeviceFingerprint] = useState('');
   const [isScanning, setIsScanning] = useState(false);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const processingRef = React.useRef(false);
   
   const scannerElementId = 'qr-scanner-container';
@@ -223,6 +224,7 @@ const GhostPassScanner: React.FC = () => {
   };
 
   const checkEntryPermission = async () => {
+    setIsCheckingStatus(true);
     try {
       const response = await fetch('/api/entry-tracking/check-permission', {
         method: 'POST',
@@ -241,11 +243,35 @@ const GhostPassScanner: React.FC = () => {
         setEntryPermission(permission);
         return permission;
       } else {
-        throw new Error('Failed to check entry permission');
+        const errorData = await response.text();
+        console.error('Entry permission check failed:', response.status, errorData);
+        
+        // Set a default permission structure for debugging
+        const fallbackPermission = {
+          allowed: false,
+          entry_type: 'initial' as const,
+          entry_number: 1,
+          message: `API Error: ${response.status} - ${errorData || 'Unknown error'}`,
+          reason: 'api_error'
+        };
+        setEntryPermission(fallbackPermission);
+        return fallbackPermission;
       }
     } catch (error) {
       console.error('Entry permission check failed:', error);
-      return null;
+      
+      // Set a fallback permission for network errors
+      const fallbackPermission = {
+        allowed: false,
+        entry_type: 'initial' as const,
+        entry_number: 1,
+        message: `Network Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        reason: 'network_error'
+      };
+      setEntryPermission(fallbackPermission);
+      return fallbackPermission;
+    } finally {
+      setIsCheckingStatus(false);
     }
   };
 
@@ -532,10 +558,11 @@ const GhostPassScanner: React.FC = () => {
               </button>
               
               <button
-                onClick={() => checkEntryPermission()}
-                className="w-full bg-gray-700 hover:bg-gray-600 text-gray-300 font-medium py-2 px-6 rounded-lg transition-colors"
+                onClick={checkEntryPermission}
+                disabled={isCheckingStatus}
+                className="w-full bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-gray-300 font-medium py-2 px-6 rounded-lg transition-colors"
               >
-                Check Entry Status
+                {isCheckingStatus ? 'Checking Status...' : 'Check Entry Status'}
               </button>
             </div>
           </div>
@@ -582,11 +609,14 @@ const GhostPassScanner: React.FC = () => {
         {/* Quick Actions */}
         <div className="grid grid-cols-2 gap-3">
           <button
-            onClick={() => checkEntryPermission()}
-            className="flex items-center justify-center space-x-2 bg-gray-800 hover:bg-gray-700 text-gray-300 py-3 px-4 rounded-lg transition-colors"
+            onClick={checkEntryPermission}
+            disabled={isCheckingStatus}
+            className="flex items-center justify-center space-x-2 bg-gray-800 hover:bg-gray-700 disabled:bg-gray-900 disabled:cursor-not-allowed text-gray-300 py-3 px-4 rounded-lg transition-colors"
           >
-            <Clock className="w-4 h-4" />
-            <span className="text-sm">Check Status</span>
+            <Clock className={`w-4 h-4 ${isCheckingStatus ? 'animate-spin' : ''}`} />
+            <span className="text-sm">
+              {isCheckingStatus ? 'Checking...' : 'Check Status'}
+            </span>
           </button>
           
           <button
