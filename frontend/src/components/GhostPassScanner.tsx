@@ -888,11 +888,11 @@ const GhostPassScanner: React.FC = () => {
               const walletSession = localStorage.getItem('ghost_pass_wallet_session');
               if (walletSession) {
                 const session = JSON.parse(walletSession);
-                // Open wallet directly if session exists
-                window.open(`/wallet?session=${session.session_id}`, '_blank', 'noopener,noreferrer');
+                // Open main app in new tab - wallet tab is default
+                window.open(`${window.location.origin}/`, '_blank', 'noopener,noreferrer');
               } else {
-                // Navigate to wallet page
-                window.location.hash = '#/wallet';
+                // Navigate to main app in current window
+                window.location.href = `${window.location.origin}/`;
               }
             }}
             className="flex items-center justify-center space-x-2 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700 text-slate-300 py-3 sm:py-4 px-4 sm:px-6 rounded-xl transition-all duration-300 backdrop-blur-sm"

@@ -145,24 +145,36 @@ const GhostPassAutoSurface: React.FC<AutoSurfaceProps> = ({
       if (data.status === 'FIRST_SCAN_SUCCESS' && data.wallet_access) {
         // Use backend response
         sessionId = data.wallet_access.session_id;
-        walletSession = data.wallet_access;
+        walletSession = {
+          ...data.wallet_access,
+          // BOARDING PASS BEHAVIOR: Force surface for first scan
+          force_surface: true,
+          wallet_url: data.wallet_access.wallet_url || `${window.location.origin}/`,
+          boarding_pass_mode: true
+        };
       } else if (data.status === 'RETURNING_ACCESS' && data.wallet_access) {
         // Handle returning user
         sessionId = data.wallet_access.session_id;
-        walletSession = data.wallet_access;
+        walletSession = {
+          ...data.wallet_access,
+          // Don't force surface for returning users
+          force_surface: false,
+          wallet_url: data.wallet_access.wallet_url || `${window.location.origin}/`,
+          boarding_pass_mode: true
+        };
       } else {
         // Fall back to creating session locally if backend doesn't return expected format
         sessionId = `session_${Date.now()}`;
         walletSession = {
           session_id: sessionId,
           wallet_binding_id: walletBindingId,
-          force_surface: data.force_surface || true,
+          force_surface: true, // BOARDING PASS: Always force surface for first scan
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
           pwa_manifest: {},
           install_prompt: {
-            show: !!installPromptEvent,
-            title: "Add Ghost Pass Wallet",
-            message: "Keep your wallet instantly accessible",
+            show: true, // Always show install prompt for boarding pass behavior
+            title: `${eventName} - Ghost Pass Wallet`,
+            message: `Keep your ${eventName} wallet instantly accessible throughout the event`,
             install_button_text: "Add to Home Screen",
             skip_button_text: "Not Now"
           },
@@ -171,7 +183,7 @@ const GhostPassAutoSurface: React.FC<AutoSurfaceProps> = ({
             qr_brightness_level: 150,
             restore_on_close: true
           },
-          wallet_url: `${window.location.origin}/#/wallet?session=${sessionId}`,
+          wallet_url: `${window.location.origin}/`,
           boarding_pass_mode: true
         };
       }
@@ -184,32 +196,42 @@ const GhostPassAutoSurface: React.FC<AutoSurfaceProps> = ({
         await applyBrightnessControl(walletSession.brightness_control.qr_brightness_level);
       }
 
-      // Store wallet session in localStorage for persistence
+      // Store wallet session in localStorage for persistence (BOARDING PASS BEHAVIOR)
       localStorage.setItem('ghost_pass_wallet_session', JSON.stringify({
         session_id: sessionId,
         wallet_binding_id: walletBindingId,
         event_name: eventName,
         venue_name: venueName,
         surfaced_at: new Date().toISOString(),
-        expires_at: walletSession.expires_at
+        expires_at: walletSession.expires_at,
+        boarding_pass_mode: true,
+        force_surface: walletSession.force_surface
       }));
 
-      // Show PWA install prompt if available
-      if (walletSession.install_prompt?.show && installPromptEvent) {
-        setSurfaceState('installing');
+      // BOARDING PASS BEHAVIOR: Force wallet to surface immediately for first scan
+      if (walletSession.force_surface) {
+        // Show PWA install prompt for persistent access
+        if (installPromptEvent) {
+          setSurfaceState('installing');
+        } else {
+          // If no PWA prompt available, force wallet to open immediately
+          setSurfaceState('complete');
+          
+          // FORCE WALLET TO SURFACE - BOARDING PASS BEHAVIOR
+          setTimeout(() => {
+            console.log('🎫 BOARDING PASS MODE: Forcing wallet to surface immediately');
+            // Navigate to wallet in current window (forced surfacing)
+            window.location.href = walletSession.wallet_url;
+          }, 1000);
+        }
       } else {
-        // Skip install and go directly to wallet
+        // Returning user - just complete
         setSurfaceState('complete');
         
         // Auto-close after showing success for 2 seconds
         setTimeout(() => {
           onSurfaceComplete?.(sessionId);
         }, 2000);
-        
-        // Open wallet in new tab/window for immediate access
-        setTimeout(() => {
-          window.open(walletSession.wallet_url, '_blank', 'noopener,noreferrer');
-        }, 1500);
       }
 
     } catch (error) {
@@ -277,18 +299,40 @@ const GhostPassAutoSurface: React.FC<AutoSurfaceProps> = ({
         const choiceResult = await installPromptEvent.userChoice;
         
         if (choiceResult.outcome === 'accepted') {
+          console.log('🎫 PWA installed - boarding pass mode activated');
           setSurfaceState('complete');
-          onSurfaceComplete?.(walletSession?.session_id || '');
+          
+          // After PWA install, force wallet to surface
+          setTimeout(() => {
+            console.log('🎫 BOARDING PASS MODE: Forcing wallet to surface after PWA install');
+            window.location.href = walletSession?.wallet_url || `${window.location.origin}/`;
+          }, 500);
         } else {
+          // User declined PWA install, but still force wallet to surface (boarding pass behavior)
+          console.log('🎫 PWA declined, but forcing wallet surface anyway (boarding pass mode)');
           setInstallSkipped(true);
+          setSurfaceState('complete');
+          
+          setTimeout(() => {
+            console.log('🎫 BOARDING PASS MODE: Forcing wallet to surface despite PWA decline');
+            window.location.href = walletSession?.wallet_url || `${window.location.origin}/`;
+          }, 1000);
         }
       } else {
-        // Fallback: Show manual install instructions
+        // Fallback: Show manual install instructions but still force wallet
         showManualInstallInstructions();
+        setTimeout(() => {
+          console.log('🎫 BOARDING PASS MODE: Forcing wallet to surface after manual instructions');
+          window.location.href = walletSession?.wallet_url || `${window.location.origin}/`;
+        }, 2000);
       }
     } catch (error) {
       console.error('PWA install error:', error);
-      showManualInstallInstructions();
+      // Even if PWA install fails, force wallet to surface (boarding pass behavior)
+      console.log('🎫 BOARDING PASS MODE: Forcing wallet to surface despite PWA error');
+      setTimeout(() => {
+        window.location.href = walletSession?.wallet_url || `${window.location.origin}/`;
+      }, 1000);
     }
   };
 
@@ -318,9 +362,15 @@ const GhostPassAutoSurface: React.FC<AutoSurfaceProps> = ({
   };
 
   const handleSkipInstall = () => {
+    console.log('🎫 User skipped PWA install, but forcing wallet surface anyway (boarding pass mode)');
     setInstallSkipped(true);
     setSurfaceState('complete');
-    onSurfaceComplete?.(walletSession?.session_id || '');
+    
+    // Even if user skips PWA install, force wallet to surface (boarding pass behavior)
+    setTimeout(() => {
+      console.log('🎫 BOARDING PASS MODE: Forcing wallet to surface after skip');
+      window.location.href = walletSession?.wallet_url || `${window.location.origin}/`;
+    }, 1000);
   };
 
   const renderSurfacingState = () => {
@@ -350,8 +400,9 @@ const GhostPassAutoSurface: React.FC<AutoSurfaceProps> = ({
             >
               <Smartphone className="w-full h-full text-cyan-400" />
             </motion.div>
-            <h3 className="text-xl font-bold text-white mb-2">Wallet Surfacing</h3>
-            <p className="text-gray-400">Your Ghost Pass wallet is now active</p>
+            <h3 className="text-xl font-bold text-white mb-2">🎫 Boarding Pass Mode</h3>
+            <p className="text-gray-400">Your Ghost Pass wallet is surfacing automatically</p>
+            <p className="text-sm text-cyan-400 mt-2">This will remain accessible throughout {eventName}</p>
             {brightnessControlled && (
               <div className="mt-4 flex items-center justify-center text-sm text-yellow-400">
                 <Sun className="w-4 h-4 mr-2" />
@@ -367,8 +418,9 @@ const GhostPassAutoSurface: React.FC<AutoSurfaceProps> = ({
             <div className="w-16 h-16 mx-auto mb-4 bg-cyan-600 rounded-full flex items-center justify-center">
               <Download className="w-8 h-8 text-white" />
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">Add to Home Screen</h3>
-            <p className="text-gray-400 mb-6">Keep your wallet instantly accessible throughout {eventName}</p>
+            <h3 className="text-xl font-bold text-white mb-2">🎫 Add Boarding Pass</h3>
+            <p className="text-gray-400 mb-6">Add your {eventName} wallet to home screen for instant access throughout the event</p>
+            <p className="text-sm text-cyan-400 mb-4">This ensures your wallet stays accessible even if you close the browser</p>
             
             <div className="space-y-3">
               <button
@@ -383,9 +435,13 @@ const GhostPassAutoSurface: React.FC<AutoSurfaceProps> = ({
                 onClick={handleSkipInstall}
                 className="w-full bg-gray-700 hover:bg-gray-600 text-gray-300 font-medium py-2 px-6 rounded-lg transition-colors"
               >
-                Not Now
+                Continue Without Installing
               </button>
             </div>
+            
+            <p className="text-xs text-gray-500 mt-4">
+              Your wallet will open automatically regardless of your choice
+            </p>
           </div>
         );
 
@@ -399,11 +455,12 @@ const GhostPassAutoSurface: React.FC<AutoSurfaceProps> = ({
             >
               <CheckCircle className="w-8 h-8 text-white" />
             </motion.div>
-            <h3 className="text-xl font-bold text-white mb-2">Wallet Ready</h3>
-            <p className="text-gray-400">Your Ghost Pass wallet is now accessible</p>
+            <h3 className="text-xl font-bold text-white mb-2">🎫 Boarding Pass Active</h3>
+            <p className="text-gray-400">Your {eventName} wallet is now surfacing...</p>
+            <p className="text-sm text-cyan-400 mt-2">Opening automatically in 3... 2... 1...</p>
             {installSkipped && (
               <p className="text-sm text-yellow-400 mt-2">
-                You can add to home screen later from your browser menu
+                You can still add to home screen later from your browser menu
               </p>
             )}
           </div>
