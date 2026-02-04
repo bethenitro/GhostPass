@@ -11,18 +11,20 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  QrCode, 
-  Scan, 
   Wallet, 
   AlertTriangle, 
   CheckCircle, 
   X, 
   Sun,
-  Clock,
-  Shield
+  Shield,
+  Zap,
+  Camera,
+  Target,
+  Activity
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import GhostPassAutoSurface from './GhostPassAutoSurface';
 
 // HTML5 QR Code scanner
@@ -122,9 +124,24 @@ const GhostPassScanner: React.FC = () => {
   // Cleanup scanner on unmount
   useEffect(() => {
     return () => {
-      if (scannerRef.current && scannerRef.current.getState() === Html5QrcodeScannerState.SCANNING) {
-        scannerRef.current.stop().catch(console.error);
-      }
+      const cleanup = async () => {
+        try {
+          if (scannerRef.current) {
+            const currentState = scannerRef.current.getState();
+            if (currentState === Html5QrcodeScannerState.SCANNING) {
+              await scannerRef.current.stop();
+            }
+            // Clear the scanner reference
+            scannerRef.current = null;
+          }
+          restoreBrightness();
+        } catch (error) {
+          console.error('Cleanup error:', error);
+          restoreBrightness();
+        }
+      };
+      
+      cleanup();
     };
   }, []);
 
@@ -132,6 +149,25 @@ const GhostPassScanner: React.FC = () => {
     try {
       setScanState('scanning');
       setIsScanning(true);
+      setErrorMessage('');
+      
+      // Check for camera permissions first
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+          // Request camera permission explicitly
+          const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: "environment" } 
+          });
+          // Stop the test stream immediately
+          stream.getTracks().forEach(track => track.stop());
+        } catch (permissionError) {
+          console.error('Camera permission denied:', permissionError);
+          setErrorMessage('Camera permission required. Please allow camera access and try again.');
+          setScanState('error');
+          setIsScanning(false);
+          return;
+        }
+      }
       
       // Apply brightness control for scanning
       await applyBrightnessControl();
@@ -141,13 +177,19 @@ const GhostPassScanner: React.FC = () => {
         scannerRef.current = new Html5Qrcode(scannerElementId);
       }
       
+      // Check if scanner is already running
+      if (scannerRef.current.getState() === Html5QrcodeScannerState.SCANNING) {
+        await scannerRef.current.stop();
+      }
+      
       // Start scanning with back camera
       await scannerRef.current.start(
         { facingMode: "environment" }, // Use back camera
         {
           fps: 10, // Frame per second for scanning
           qrbox: { width: 250, height: 250 }, // Scanning area
-          aspectRatio: 1.0 // Square aspect ratio
+          aspectRatio: 1.0, // Square aspect ratio
+          disableFlip: false // Allow camera flip if needed
         },
         (decodedText: string, _decodedResult: any) => {
           // QR Code successfully scanned - prevent multiple processing
@@ -159,15 +201,35 @@ const GhostPassScanner: React.FC = () => {
         },
         (_errorMessage: string) => {
           // Scanning error (ignore most of these as they're normal)
-          // console.log('Scan error:', errorMessage);
+          // Only log significant errors
+          if (_errorMessage.includes('NotAllowedError') || _errorMessage.includes('NotFoundError')) {
+            console.error('Camera error:', _errorMessage);
+          }
         }
       );
       
     } catch (error) {
       console.error('Camera access failed:', error);
-      setErrorMessage('Camera access required for scanning. Please allow camera permissions.');
+      let errorMsg = 'Camera access failed. ';
+      
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          errorMsg += 'Please allow camera permissions and try again.';
+        } else if (error.name === 'NotFoundError') {
+          errorMsg += 'No camera found on this device.';
+        } else if (error.name === 'NotSupportedError') {
+          errorMsg += 'Camera not supported on this device.';
+        } else {
+          errorMsg += 'Please check camera permissions and try again.';
+        }
+      } else {
+        errorMsg += 'Please check camera permissions and try again.';
+      }
+      
+      setErrorMessage(errorMsg);
       setScanState('error');
       setIsScanning(false);
+      restoreBrightness();
     }
   };
 
@@ -176,14 +238,20 @@ const GhostPassScanner: React.FC = () => {
       setIsScanning(false);
       
       // Stop the scanner if it's running
-      if (scannerRef.current && scannerRef.current.getState() === Html5QrcodeScannerState.SCANNING) {
-        await scannerRef.current.stop();
+      if (scannerRef.current) {
+        const currentState = scannerRef.current.getState();
+        if (currentState === Html5QrcodeScannerState.SCANNING) {
+          await scannerRef.current.stop();
+        }
       }
       
+      // Restore brightness and cleanup
       restoreBrightness();
       
     } catch (error) {
       console.error('Failed to stop camera:', error);
+      // Force cleanup even if stop fails
+      restoreBrightness();
     }
   };
 
@@ -392,40 +460,96 @@ const GhostPassScanner: React.FC = () => {
     switch (scanState) {
       case 'idle':
         return (
-          <div className="text-center space-y-6">
+          <div className="space-y-6">
+            {/* Hero Scan Button */}
             <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="w-32 h-32 mx-auto bg-gradient-to-br from-cyan-600 to-blue-600 rounded-full flex items-center justify-center cursor-pointer"
-              onClick={handleStartScan}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center"
             >
-              <QrCode className="w-16 h-16 text-white" />
-            </motion.div>
-            
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-2">Ghost Pass Scanner</h2>
-              <p className="text-gray-400">Tap to start scanning</p>
-            </div>
-
-            {entryPermission && (
-              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
-                <h3 className="text-lg font-semibold text-white mb-2">Entry Status</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Entry Type:</span>
-                    <span className="text-cyan-400 capitalize">{entryPermission.entry_type}</span>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="relative mx-auto mb-6 cursor-pointer group"
+                onClick={handleStartScan}
+              >
+                {/* Outer glow ring */}
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-500/20 to-blue-500/20 blur-xl group-hover:blur-2xl transition-all duration-500" />
+                
+                {/* Main scan button */}
+                <div className="relative w-40 h-40 bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-xl border border-cyan-500/30 rounded-full flex items-center justify-center group-hover:border-cyan-400/50 transition-all duration-300">
+                  {/* Inner glow */}
+                  <div className="absolute inset-4 rounded-full bg-gradient-to-br from-cyan-500/10 to-blue-500/10" />
+                  
+                  {/* Scan icon */}
+                  <motion.div
+                    animate={{ 
+                      scale: [1, 1.1, 1],
+                      rotate: [0, 5, -5, 0]
+                    }}
+                    transition={{ 
+                      duration: 3,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                    className="relative z-10"
+                  >
+                    <Target className="w-16 h-16 text-cyan-400 group-hover:text-cyan-300 transition-colors" />
+                  </motion.div>
+                  
+                  {/* Corner brackets */}
+                  <div className="absolute inset-0 pointer-events-none">
+                    <div className="absolute top-4 left-4 w-6 h-6 border-l-2 border-t-2 border-cyan-500/60 rounded-tl-lg" />
+                    <div className="absolute top-4 right-4 w-6 h-6 border-r-2 border-t-2 border-cyan-500/60 rounded-tr-lg" />
+                    <div className="absolute bottom-4 left-4 w-6 h-6 border-l-2 border-b-2 border-cyan-500/60 rounded-bl-lg" />
+                    <div className="absolute bottom-4 right-4 w-6 h-6 border-r-2 border-b-2 border-cyan-500/60 rounded-br-lg" />
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Entry Number:</span>
-                    <span className="text-white">#{entryPermission.entry_number}</span>
+                </div>
+              </motion.div>
+              
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold text-white">GHOST PASS SCANNER</h2>
+                <p className="text-cyan-400 font-medium">TAP TO INITIATE SCAN</p>
+                <p className="text-slate-400 text-sm">Secure venue entry validation</p>
+              </div>
+            </motion.div>
+
+            {/* Entry Status Card */}
+            {entryPermission && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-xl p-4"
+              >
+                <div className="flex items-center space-x-3 mb-3">
+                  <div className={cn(
+                    "w-3 h-3 rounded-full animate-pulse",
+                    entryPermission.allowed ? "bg-emerald-400" : "bg-red-400"
+                  )} />
+                  <h3 className="text-lg font-semibold text-white">Entry Status</h3>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-slate-400 block">Entry Type</span>
+                    <span className="text-cyan-400 font-medium capitalize">
+                      {entryPermission.entry_type.replace('_', ' ')}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block">Entry #</span>
+                    <span className="text-white font-medium">#{entryPermission.entry_number}</span>
                   </div>
                   {entryPermission.fees && entryPermission.fees.total_fees_cents > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Total Fees:</span>
-                      <span className="text-green-400">${(entryPermission.fees.total_fees_cents / 100).toFixed(2)}</span>
+                    <div className="col-span-2">
+                      <span className="text-slate-400 block">Total Fees</span>
+                      <span className="text-emerald-400 font-bold text-lg">
+                        ${(entryPermission.fees.total_fees_cents / 100).toFixed(2)}
+                      </span>
                     </div>
                   )}
                 </div>
-              </div>
+              </motion.div>
             )}
           </div>
         );
@@ -433,60 +557,114 @@ const GhostPassScanner: React.FC = () => {
       case 'scanning':
         return (
           <div className="space-y-4">
-            {/* HTML5-QRCode Scanner Container */}
+            {/* Scanner Container with simple styling */}
             <div className="relative">
-              <div 
-                id={scannerElementId}
-                className="w-full rounded-lg overflow-hidden"
-                style={{ minHeight: '300px' }}
-              />
-              
-              {/* Scanning status overlay */}
-              <div className="absolute top-2 left-2 right-2 z-10">
-                <div className="bg-black/70 rounded px-3 py-2 text-sm text-cyan-400 text-center">
-                  {isScanning ? 'Scanning for QR codes...' : 'Initializing camera...'}
-                </div>
-              </div>
+              <div className="relative bg-slate-900/50 backdrop-blur-xl border border-cyan-500/30 rounded-xl overflow-hidden">
+                {/* Scanner element */}
+                <div 
+                  id={scannerElementId}
+                  className="w-full rounded-xl overflow-hidden"
+                  style={{ minHeight: '320px' }}
+                />
+                
+                {/* Simple scanning overlay */}
+                <div className="absolute inset-0 pointer-events-none">
+                  {/* Top status bar */}
+                  <div className="absolute top-4 left-4 right-4 z-10">
+                    <div className="bg-slate-900/80 backdrop-blur-sm border border-cyan-500/30 rounded-lg px-4 py-2">
+                      <div className="flex items-center justify-center space-x-2">
+                        <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
+                        <span className="text-cyan-400 text-sm font-medium">
+                          {isScanning ? 'SCANNING FOR QR CODES' : 'INITIALIZING CAMERA'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
 
-              {/* Controls */}
-              <div className="absolute bottom-4 left-4 right-4 flex justify-center z-10">
-                <button
-                  onClick={resetScan}
-                  className="px-6 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-white font-medium flex items-center space-x-2"
-                >
-                  <X className="w-4 h-4" />
-                  <span>Stop Scanning</span>
-                </button>
+                  {/* Simple corner guides */}
+                  <div className="absolute inset-8">
+                    <div className="absolute top-0 left-0 w-6 h-6 border-l-2 border-t-2 border-cyan-400 rounded-tl-lg" />
+                    <div className="absolute top-0 right-0 w-6 h-6 border-r-2 border-t-2 border-cyan-400 rounded-tr-lg" />
+                    <div className="absolute bottom-0 left-0 w-6 h-6 border-l-2 border-b-2 border-cyan-400 rounded-bl-lg" />
+                    <div className="absolute bottom-0 right-0 w-6 h-6 border-r-2 border-b-2 border-cyan-400 rounded-br-lg" />
+                  </div>
+                </div>
+
+                {/* Bottom controls */}
+                <div className="absolute bottom-4 left-4 right-4 flex justify-center z-10">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={resetScan}
+                    className="flex items-center space-x-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 backdrop-blur-sm rounded-lg px-6 py-3 text-red-400 font-medium transition-all duration-300"
+                  >
+                    <X className="w-4 h-4" />
+                    <span>STOP SCAN</span>
+                  </motion.button>
+                </div>
               </div>
             </div>
 
+            {/* Brightness indicator */}
             {brightnessControlled && (
-              <div className="flex items-center justify-center text-yellow-400 text-sm">
-                <Sun className="w-4 h-4 mr-2" />
-                Brightness optimized for scanning
+              <div className="flex items-center justify-center space-x-2 text-yellow-400 text-sm bg-yellow-500/10 border border-yellow-500/30 rounded-lg py-2 px-4">
+                <Sun className="w-4 h-4" />
+                <span>Brightness optimized for scanning</span>
               </div>
             )}
             
-            <div className="text-center text-gray-400 text-sm">
-              <p>Point your camera at a QR code to scan</p>
-              <p>Make sure the QR code is well-lit and in focus</p>
+            {/* Simple instructions */}
+            <div className="bg-slate-800/30 border border-slate-700 rounded-lg p-4">
+              <div className="flex items-start space-x-3">
+                <Camera className="w-5 h-5 text-cyan-400 mt-0.5 flex-shrink-0" />
+                <div className="space-y-1">
+                  <p className="text-white font-medium">Scanning Instructions</p>
+                  <ul className="text-slate-400 text-sm space-y-1">
+                    <li>• Point camera at QR code</li>
+                    <li>• Ensure good lighting</li>
+                    <li>• Hold steady for best results</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
         );
 
       case 'processing':
         return (
-          <div className="text-center space-y-4">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              className="w-16 h-16 mx-auto"
-            >
-              <Scan className="w-full h-full text-cyan-400" />
-            </motion.div>
-            <div>
-              <h3 className="text-xl font-bold text-white mb-2">Processing Scan</h3>
-              <p className="text-gray-400">Validating entry permissions...</p>
+          <div className="text-center space-y-6">
+            {/* Processing animation */}
+            <div className="relative">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                className="w-24 h-24 mx-auto"
+              >
+                <div className="w-full h-full border-4 border-cyan-500/20 border-t-cyan-400 rounded-full" />
+              </motion.div>
+              
+              <motion.div
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+                className="absolute inset-0 flex items-center justify-center"
+              >
+                <Zap className="w-8 h-8 text-cyan-400" />
+              </motion.div>
+            </div>
+            
+            <div className="space-y-2">
+              <h3 className="text-xl font-bold text-white">PROCESSING SCAN</h3>
+              <p className="text-cyan-400">Validating entry permissions...</p>
+              <div className="flex items-center justify-center space-x-1">
+                {[0, 1, 2].map((i) => (
+                  <motion.div
+                    key={i}
+                    animate={{ opacity: [0.3, 1, 0.3] }}
+                    transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2 }}
+                    className="w-2 h-2 bg-cyan-400 rounded-full"
+                  />
+                ))}
+              </div>
             </div>
           </div>
         );
@@ -494,111 +672,150 @@ const GhostPassScanner: React.FC = () => {
       case 'success':
         return (
           <div className="text-center space-y-6">
+            {/* Success animation */}
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="w-16 h-16 mx-auto bg-green-600 rounded-full flex items-center justify-center"
+              transition={{ type: "spring", stiffness: 200, damping: 15 }}
+              className="relative"
             >
-              <CheckCircle className="w-8 h-8 text-white" />
+              <div className="w-24 h-24 mx-auto bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center shadow-2xl shadow-emerald-500/50">
+                <CheckCircle className="w-12 h-12 text-white" />
+              </div>
+              
+              {/* Success pulse rings */}
+              <motion.div
+                animate={{ scale: [1, 2], opacity: [0.5, 0] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="absolute inset-0 bg-emerald-400/20 rounded-full"
+              />
             </motion.div>
             
-            <div>
-              <h3 className="text-xl font-bold text-green-400 mb-2">Entry Approved</h3>
-              <p className="text-gray-400">{scanResult?.message}</p>
+            <div className="space-y-2">
+              <h3 className="text-2xl font-bold text-emerald-400">ENTRY APPROVED</h3>
+              <p className="text-slate-300">{scanResult?.message}</p>
             </div>
 
+            {/* Entry details card */}
             {scanResult?.entry_info && (
-              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4 space-y-3">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-slate-800/50 backdrop-blur-xl border border-emerald-500/30 rounded-xl p-6 space-y-4"
+              >
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-400">Entry Type:</span>
-                  <span className="text-cyan-400 capitalize font-medium">
-                    {scanResult.entry_info.entry_type === 'initial' ? 'Initial Entry' : 'Re-Entry'}
-                  </span>
+                  <span className="text-slate-400">Entry Type</span>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-emerald-400 rounded-full" />
+                    <span className="text-emerald-400 font-semibold capitalize">
+                      {scanResult.entry_info.entry_type === 'initial' ? 'Initial Entry' : 'Re-Entry'}
+                    </span>
+                  </div>
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-400">Entry Number:</span>
-                  <span className="text-white font-medium">#{scanResult.entry_info.entry_number}</span>
+                  <span className="text-slate-400">Entry Number</span>
+                  <span className="text-white font-bold text-lg">#{scanResult.entry_info.entry_number}</span>
                 </div>
 
                 {scanResult.entry_info.fees.total_fees_cents > 0 && (
-                  <div className="border-t border-gray-700 pt-3 space-y-2">
-                    <h4 className="text-white font-medium">Fees Charged:</h4>
+                  <div className="border-t border-slate-700 pt-4 space-y-3">
+                    <h4 className="text-white font-semibold flex items-center space-x-2">
+                      <Activity className="w-4 h-4 text-emerald-400" />
+                      <span>Fees Processed</span>
+                    </h4>
                     
-                    {scanResult.entry_info.fees.initial_entry_fee_cents > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Initial Entry:</span>
-                        <span className="text-white">${(scanResult.entry_info.fees.initial_entry_fee_cents / 100).toFixed(2)}</span>
+                    <div className="space-y-2">
+                      {scanResult.entry_info.fees.initial_entry_fee_cents > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-400">Initial Entry</span>
+                          <span className="text-white font-medium">${(scanResult.entry_info.fees.initial_entry_fee_cents / 100).toFixed(2)}</span>
+                        </div>
+                      )}
+                      
+                      {scanResult.entry_info.fees.venue_reentry_fee_cents > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-400">Venue Re-entry</span>
+                          <span className="text-white font-medium">${(scanResult.entry_info.fees.venue_reentry_fee_cents / 100).toFixed(2)}</span>
+                        </div>
+                      )}
+                      
+                      {scanResult.entry_info.fees.valid_reentry_scan_fee_cents > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-400">Platform Fee</span>
+                          <span className="text-white font-medium">${(scanResult.entry_info.fees.valid_reentry_scan_fee_cents / 100).toFixed(2)}</span>
+                        </div>
+                      )}
+                      
+                      <div className="flex justify-between font-bold text-lg border-t border-slate-700 pt-2">
+                        <span className="text-white">Total Charged</span>
+                        <span className="text-emerald-400">${(scanResult.entry_info.fees.total_fees_cents / 100).toFixed(2)}</span>
                       </div>
-                    )}
-                    
-                    {scanResult.entry_info.fees.venue_reentry_fee_cents > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Venue Re-entry:</span>
-                        <span className="text-white">${(scanResult.entry_info.fees.venue_reentry_fee_cents / 100).toFixed(2)}</span>
-                      </div>
-                    )}
-                    
-                    {scanResult.entry_info.fees.valid_reentry_scan_fee_cents > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Platform Fee:</span>
-                        <span className="text-white">${(scanResult.entry_info.fees.valid_reentry_scan_fee_cents / 100).toFixed(2)}</span>
-                      </div>
-                    )}
-                    
-                    <div className="flex justify-between font-medium border-t border-gray-700 pt-2">
-                      <span className="text-white">Total:</span>
-                      <span className="text-green-400">${(scanResult.entry_info.fees.total_fees_cents / 100).toFixed(2)}</span>
                     </div>
                   </div>
                 )}
-              </div>
+              </motion.div>
             )}
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={resetScan}
-              className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+              className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 shadow-lg shadow-cyan-500/25"
             >
-              Scan Another
-            </button>
+              SCAN ANOTHER PASS
+            </motion.button>
           </div>
         );
 
       case 'error':
         return (
           <div className="text-center space-y-6">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="w-16 h-16 mx-auto bg-red-600 rounded-full flex items-center justify-center"
-            >
-              <AlertTriangle className="w-8 h-8 text-white" />
-            </motion.div>
+            {/* Error icon - no animation */}
+            <div className="w-24 h-24 mx-auto bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center shadow-2xl shadow-red-500/50">
+              <AlertTriangle className="w-12 h-12 text-white" />
+            </div>
             
-            <div>
-              <h3 className="text-xl font-bold text-red-400 mb-2">
-                {scanResult?.status === 'DENIED' ? 'Entry Denied' : 'Scan Failed'}
+            <div className="space-y-2">
+              <h3 className="text-2xl font-bold text-red-400">
+                {scanResult?.status === 'DENIED' ? 'ENTRY DENIED' : 'SCAN FAILED'}
               </h3>
-              <p className="text-gray-400">
-                {scanResult?.message || errorMessage || 'Please try again'}
+              <p className="text-slate-300 max-w-sm mx-auto">
+                {scanResult?.message || errorMessage || 'Please try scanning again'}
               </p>
             </div>
 
+            {/* Action buttons */}
             <div className="space-y-3">
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={resetScan}
-                className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+                className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 shadow-lg shadow-cyan-500/25"
               >
-                Try Again
-              </button>
+                TRY AGAIN
+              </motion.button>
               
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={checkEntryPermission}
                 disabled={isCheckingStatus}
-                className="w-full bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-gray-300 font-medium py-2 px-6 rounded-lg transition-colors"
+                className="w-full bg-slate-700/50 hover:bg-slate-600/50 disabled:bg-slate-800/50 disabled:cursor-not-allowed border border-slate-600 text-slate-300 font-medium py-3 px-6 rounded-xl transition-all duration-300"
               >
-                {isCheckingStatus ? 'Checking Status...' : 'Check Entry Status'}
-              </button>
+                {isCheckingStatus ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full"
+                    />
+                    <span>CHECKING STATUS...</span>
+                  </div>
+                ) : (
+                  'CHECK ENTRY STATUS'
+                )}
+              </motion.button>
             </div>
           </div>
         );
@@ -609,85 +826,118 @@ const GhostPassScanner: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4">
+    <div className="min-h-screen bg-slate-950 text-white">
       <div className="max-w-md mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-cyan-600 to-blue-600 rounded-full flex items-center justify-center">
-              <Shield className="w-6 h-6 text-white" />
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center py-8"
+        >
+          <div className="flex items-center justify-center mb-6">
+            <div className="relative">
+              <div className="w-16 h-16 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-xl flex items-center justify-center border border-cyan-500/30">
+                <Shield className="w-8 h-8 text-cyan-400" />
+              </div>
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full animate-pulse" />
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Ghost Pass Entry</h1>
-          <p className="text-gray-400">Secure venue access scanning</p>
-        </div>
+          <h1 className="text-3xl font-bold text-white mb-2">GHOST PASS</h1>
+          <p className="text-cyan-400 font-medium">ENTRY SCANNER</p>
+          <div className="w-24 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent mx-auto mt-4" />
+        </motion.div>
 
-        {/* Venue Info */}
-        <div className="bg-gray-800/30 border border-gray-700 rounded-lg p-4 mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-400">Venue:</span>
-            <span className="text-white font-medium">Test Venue</span>
+        {/* Venue Info Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-xl p-4 mb-6 mx-4"
+        >
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse" />
+            <h3 className="text-lg font-semibold text-white">Scanner Status</h3>
           </div>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-400">Gateway:</span>
-            <span className="text-cyan-400 font-mono text-sm">
-              {gatewayId.slice(0, 8)}...
-            </span>
+          
+          <div className="grid grid-cols-1 gap-3 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400">Venue</span>
+              <span className="text-white font-medium">Test Venue</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400">Gateway</span>
+              <span className="text-cyan-400 font-mono text-xs">
+                {gatewayId.slice(0, 8)}...{gatewayId.slice(-4)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400">Wallet</span>
+              <span className="text-cyan-400 font-mono text-xs">
+                {walletBindingId.slice(0, 12)}...
+              </span>
+            </div>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-gray-400">Wallet:</span>
-            <span className="text-cyan-400 font-mono text-sm">
-              {walletBindingId.slice(0, 16)}...
-            </span>
-          </div>
-        </div>
+        </motion.div>
 
         {/* Main Scan Interface */}
-        <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-6 mb-6">
-          {renderScanState()}
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-slate-900/50 backdrop-blur-xl border border-slate-700 rounded-xl p-6 mb-6 mx-4"
+        >
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={scanState}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+            >
+              {renderScanState()}
+            </motion.div>
+          </AnimatePresence>
+        </motion.div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            onClick={checkEntryPermission}
-            disabled={isCheckingStatus}
-            className="flex items-center justify-center space-x-2 bg-gray-800 hover:bg-gray-700 disabled:bg-gray-900 disabled:cursor-not-allowed text-gray-300 py-3 px-4 rounded-lg transition-colors"
-          >
-            <Clock className={`w-4 h-4 ${isCheckingStatus ? 'animate-spin' : ''}`} />
-            <span className="text-sm">
-              {isCheckingStatus ? 'Checking...' : 'Check Status'}
-            </span>
-          </button>
-          
-          <button
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="flex justify-center mx-4 mb-8"
+        >
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => window.location.hash = '#/wallet'}
-            className="flex items-center justify-center space-x-2 bg-gray-800 hover:bg-gray-700 text-gray-300 py-3 px-4 rounded-lg transition-colors"
+            className="flex items-center justify-center space-x-2 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700 text-slate-300 py-4 px-6 rounded-xl transition-all duration-300 backdrop-blur-sm"
           >
             <Wallet className="w-4 h-4" />
-            <span className="text-sm">View Wallet</span>
-          </button>
-        </div>
+            <span className="text-sm font-medium">View Wallet</span>
+          </motion.button>
+        </motion.div>
       </div>
 
       {/* Auto Surface Component */}
-      {showAutoSurface && (
-        <GhostPassAutoSurface
-          walletBindingId={walletBindingId}
-          deviceFingerprint={deviceFingerprint}
-          venueId={venueId}
-          eventName="Test Event"
-          venueName="Test Venue"
-          onSurfaceComplete={(sessionId) => {
-            console.log('✅ Wallet surfaced with session:', sessionId);
-            setShowAutoSurface(false);
-          }}
-          onError={(error) => {
-            console.error('❌ Wallet surface error:', error);
-            setShowAutoSurface(false);
-          }}
-        />
-      )}
+      <AnimatePresence>
+        {showAutoSurface && (
+          <GhostPassAutoSurface
+            walletBindingId={walletBindingId}
+            deviceFingerprint={deviceFingerprint}
+            venueId={venueId}
+            eventName="Test Event"
+            venueName="Test Venue"
+            onSurfaceComplete={(sessionId) => {
+              console.log('✅ Wallet surfaced with session:', sessionId);
+              setShowAutoSurface(false);
+            }}
+            onError={(error) => {
+              console.error('❌ Wallet surface error:', error);
+              setShowAutoSurface(false);
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

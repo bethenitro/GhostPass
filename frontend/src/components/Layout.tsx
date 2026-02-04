@@ -29,9 +29,11 @@ const Layout: React.FC<LayoutProps> = ({
   ];
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-slate-950 text-white">
-      {/* Session Pill - Shows when session is active */}
-      <SessionPill />
+    <div className="min-h-screen flex flex-col md:flex-row bg-slate-950 text-white relative">
+      {/* Session Pill - Shows when session is active (Desktop only) */}
+      <div className="hidden md:block">
+        <SessionPill />
+      </div>
 
       {/* Mobile Top Navigation */}
       <nav className="md:hidden fixed top-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-b border-slate-700 z-50">
@@ -56,10 +58,17 @@ const Layout: React.FC<LayoutProps> = ({
               <h1 className="text-lg font-bold text-white">GHOSTPASS</h1>
             </div>
           </div>
+          
+          {/* Mobile Session Pill - Integrated as part of navbar */}
+          <div className="md:hidden">
+            <SessionPill className="!relative !top-0 !right-0 !w-auto !max-w-[100px] !z-auto !shadow-none" />
+          </div>
         </div>
-        
-        {/* Mobile Tab Bar */}
-        <div className="flex border-t border-slate-700">
+      </nav>
+
+      {/* Mobile Bottom Navigation - Fixed at bottom */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-slate-700 z-50">
+        <div className="flex">
           {tabs.map(({ id, icon: Icon, label }) => (
             <button
               key={id}
@@ -136,8 +145,8 @@ const Layout: React.FC<LayoutProps> = ({
       </nav>
 
       {/* Main Content */}
-      <main className="flex-1 pt-32 md:pt-0 md:ml-20 lg:ml-64 overflow-y-auto">
-        <div className="container mx-auto max-w-sm sm:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl px-4 py-6">
+      <main className="flex-1 pt-28 pb-24 md:pt-0 md:pb-0 md:ml-20 lg:ml-64 overflow-y-auto">
+        <div className="container mx-auto max-w-sm sm:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl px-4 py-4">
           {children}
         </div>
       </main>
