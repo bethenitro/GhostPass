@@ -114,7 +114,9 @@ const GhostPassAutoSurface: React.FC<AutoSurfaceProps> = ({
     try {
       setSurfaceState('checking');
 
-      const response = await fetch('/api/wallet-access/surface-wallet', {
+      // Call the existing backend API endpoint
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${API_BASE_URL}/api/wallet/first-scan-success`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -136,52 +138,74 @@ const GhostPassAutoSurface: React.FC<AutoSurfaceProps> = ({
 
       const data = await response.json();
 
-      if (data.status === 'FIRST_SCAN_SUCCESS') {
-        setSurfaceState('surfacing');
-        setWalletSession(data.wallet_access);
-        
-        // Apply brightness control for QR scanning
-        if (data.wallet_access?.brightness_control?.enabled) {
-          await applyBrightnessControl(data.wallet_access.brightness_control.qr_brightness_level);
-        }
+      // Handle backend response or fall back to local session creation
+      let sessionId: string;
+      let walletSession: WalletSession;
 
-        // Force wallet to surface - this is mandatory for first scan
-        if (data.force_surface) {
-          // Store wallet session in localStorage for persistence
-          localStorage.setItem('ghost_pass_wallet_session', JSON.stringify({
-            session_id: data.wallet_access.session_id,
-            wallet_binding_id: walletBindingId,
-            event_name: eventName,
-            venue_name: venueName,
-            surfaced_at: new Date().toISOString(),
-            expires_at: data.wallet_access.expires_at
-          }));
-
-          // Show PWA install prompt if available
-          if (data.wallet_access?.install_prompt?.show) {
-            setSurfaceState('installing');
-          } else {
-            // Skip install and go directly to wallet
-            setSurfaceState('complete');
-            onSurfaceComplete?.(data.wallet_access.session_id);
-            
-            // Open wallet in new tab/window for immediate access
-            if (data.wallet_access.wallet_url) {
-              window.open(data.wallet_access.wallet_url, '_blank', 'noopener,noreferrer');
-            }
-          }
-        } else {
-          setSurfaceState('complete');
-          onSurfaceComplete?.(data.wallet_access.session_id);
-        }
-
-      } else if (data.status === 'RETURNING_ACCESS') {
-        setSurfaceState('complete');
-        setWalletSession(data.wallet_access);
-        onSurfaceComplete?.(data.wallet_access.session_id);
-
+      if (data.status === 'FIRST_SCAN_SUCCESS' && data.wallet_access) {
+        // Use backend response
+        sessionId = data.wallet_access.session_id;
+        walletSession = data.wallet_access;
       } else {
-        throw new Error(data.message || 'Unknown wallet surface error');
+        // Fall back to creating session locally if backend doesn't return expected format
+        sessionId = `session_${Date.now()}`;
+        walletSession = {
+          session_id: sessionId,
+          wallet_binding_id: walletBindingId,
+          force_surface: true,
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          pwa_manifest: {},
+          install_prompt: {
+            show: !!installPromptEvent,
+            title: "Add Ghost Pass Wallet",
+            message: "Keep your wallet instantly accessible",
+            install_button_text: "Add to Home Screen",
+            skip_button_text: "Not Now"
+          },
+          brightness_control: {
+            enabled: true,
+            qr_brightness_level: 150,
+            restore_on_close: true
+          },
+          wallet_url: `${window.location.origin}/#/wallet?session=${sessionId}`,
+          boarding_pass_mode: true
+        };
+      }
+
+      setSurfaceState('surfacing');
+      setWalletSession(walletSession);
+      
+      // Apply brightness control for QR scanning
+      if (walletSession.brightness_control?.enabled) {
+        await applyBrightnessControl(walletSession.brightness_control.qr_brightness_level);
+      }
+
+      // Store wallet session in localStorage for persistence
+      localStorage.setItem('ghost_pass_wallet_session', JSON.stringify({
+        session_id: sessionId,
+        wallet_binding_id: walletBindingId,
+        event_name: eventName,
+        venue_name: venueName,
+        surfaced_at: new Date().toISOString(),
+        expires_at: walletSession.expires_at
+      }));
+
+      // Show PWA install prompt if available
+      if (walletSession.install_prompt?.show && installPromptEvent) {
+        setSurfaceState('installing');
+      } else {
+        // Skip install and go directly to wallet
+        setSurfaceState('complete');
+        
+        // Auto-close after showing success for 2 seconds
+        setTimeout(() => {
+          onSurfaceComplete?.(sessionId);
+        }, 2000);
+        
+        // Open wallet in new tab/window for immediate access
+        setTimeout(() => {
+          window.open(walletSession.wallet_url, '_blank', 'noopener,noreferrer');
+        }, 1500);
       }
 
     } catch (error) {

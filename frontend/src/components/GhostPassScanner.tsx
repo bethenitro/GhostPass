@@ -916,11 +916,17 @@ const GhostPassScanner: React.FC = () => {
             venueName="Test Venue"
             onSurfaceComplete={(sessionId) => {
               console.log('✅ Wallet surfaced with session:', sessionId);
-              setShowAutoSurface(false);
+              // Keep the auto surface visible for a moment before closing
+              setTimeout(() => {
+                setShowAutoSurface(false);
+              }, 500);
             }}
             onError={(error) => {
               console.error('❌ Wallet surface error:', error);
-              setShowAutoSurface(false);
+              // Close auto surface on error
+              setTimeout(() => {
+                setShowAutoSurface(false);
+              }, 2000);
             }}
           />
         )}
