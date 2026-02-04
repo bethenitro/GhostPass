@@ -67,6 +67,7 @@ const GhostPassScanner: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [walletBindingId, setWalletBindingId] = useState('');
   const [venueId] = useState('venue_001');
+  const [gatewayId] = useState('00000000-0000-0000-0000-000000000001'); // Valid UUID for scanner demo
   const [deviceFingerprint, setDeviceFingerprint] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
@@ -330,7 +331,7 @@ const GhostPassScanner: React.FC = () => {
         },
         body: JSON.stringify({
           pass_id: passId, // Use extracted UUID
-          gateway_id: 'scanner_demo',
+          gateway_id: gatewayId, // Use valid UUID
           venue_id: venueId
         })
       });
@@ -617,6 +618,12 @@ const GhostPassScanner: React.FC = () => {
           <div className="flex items-center justify-between mb-2">
             <span className="text-gray-400">Venue:</span>
             <span className="text-white font-medium">Test Venue</span>
+          </div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-gray-400">Gateway:</span>
+            <span className="text-cyan-400 font-mono text-sm">
+              {gatewayId.slice(0, 8)}...
+            </span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-gray-400">Wallet:</span>
