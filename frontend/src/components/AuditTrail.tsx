@@ -271,7 +271,7 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
               {recentScans.scans.slice(0, 5).map((scan) => (
                 <div key={scan.id} className="flex justify-between items-center text-sm">
                   <span className="font-medium text-white">{scan.entry_point_name}</span>
-                  <span className="text-slate-400">{formatTimestamp(scan.created_at)}</span>
+                  <span className="text-slate-400">{formatTimestamp(scan.timestamp)}</span>
                 </div>
               ))}
             </div>

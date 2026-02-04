@@ -258,7 +258,7 @@ async def get_recent_scans(
                 "entry_point_name": log["entry_point_name"],
                 "entry_point_type": log["entry_point_type"],
                 "employee_name": log["employee_name"],
-                "timestamp": log["timestamp"],
+                "timestamp": log["created_at"],  # Use created_at instead of timestamp
                 "metadata": log["metadata"]
             })
         
@@ -285,7 +285,7 @@ async def cleanup_old_audit_logs(
         # Delete old logs
         result = db.table("entry_point_audit_logs")\
             .delete()\
-            .lt("timestamp", cutoff_date.isoformat())\
+            .lt("created_at", cutoff_date.isoformat())\
             .execute()
         
         # Log the cleanup action

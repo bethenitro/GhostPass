@@ -145,9 +145,31 @@ const GhostPassAutoSurface: React.FC<AutoSurfaceProps> = ({
           await applyBrightnessControl(data.wallet_access.brightness_control.qr_brightness_level);
         }
 
-        // Show PWA install prompt if forced
-        if (data.force_surface && data.wallet_access?.install_prompt?.show) {
-          setSurfaceState('installing');
+        // Force wallet to surface - this is mandatory for first scan
+        if (data.force_surface) {
+          // Store wallet session in localStorage for persistence
+          localStorage.setItem('ghost_pass_wallet_session', JSON.stringify({
+            session_id: data.wallet_access.session_id,
+            wallet_binding_id: walletBindingId,
+            event_name: eventName,
+            venue_name: venueName,
+            surfaced_at: new Date().toISOString(),
+            expires_at: data.wallet_access.expires_at
+          }));
+
+          // Show PWA install prompt if available
+          if (data.wallet_access?.install_prompt?.show) {
+            setSurfaceState('installing');
+          } else {
+            // Skip install and go directly to wallet
+            setSurfaceState('complete');
+            onSurfaceComplete?.(data.wallet_access.session_id);
+            
+            // Open wallet in new tab/window for immediate access
+            if (data.wallet_access.wallet_url) {
+              window.open(data.wallet_access.wallet_url, '_blank', 'noopener,noreferrer');
+            }
+          }
         } else {
           setSurfaceState('complete');
           onSurfaceComplete?.(data.wallet_access.session_id);
