@@ -521,7 +521,59 @@ const GhostPassScanner: React.FC = () => {
     }
   };
 
-  // Handle QR code image paste from clipboard - removed for production
+  // Handle QR code image paste from clipboard (silent feature)
+  const handlePaste = async (event: ClipboardEvent) => {
+    if (scanState !== 'idle') return;
+
+    const items = event.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      
+      // Check if the item is an image
+      if (item.type.indexOf('image') !== -1) {
+        event.preventDefault();
+        
+        const file = item.getAsFile();
+        if (!file) continue;
+
+        try {
+          setScanState('processing');
+          setErrorMessage('');
+
+          // Create a temporary scanner instance for file scanning
+          const html5QrCode = new Html5Qrcode('qr-file-reader');
+          
+          // Scan the pasted image
+          const qrData = await html5QrCode.scanFile(file, true);
+          
+          console.log('QR Code detected from pasted image:', qrData);
+          
+          // Process the scanned data
+          await processScan(qrData);
+          
+        } catch (error) {
+          console.error('Paste scan failed:', error);
+          setErrorMessage('Failed to read QR code from pasted image. Please ensure the image contains a valid QR code.');
+          setScanState('error');
+        }
+        
+        break; // Only process the first image
+      }
+    }
+  };
+
+  // Add paste event listener
+  useEffect(() => {
+    const pasteHandler = (e: ClipboardEvent) => handlePaste(e);
+    
+    window.addEventListener('paste', pasteHandler);
+    
+    return () => {
+      window.removeEventListener('paste', pasteHandler);
+    };
+  }, [scanState]);
 
 
 
