@@ -73,11 +73,9 @@ const GhostPassScanner: React.FC = () => {
   const [deviceFingerprint, setDeviceFingerprint] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
-  const [pasteListenerActive, setPasteListenerActive] = useState(false);
   const processingRef = React.useRef(false);
   
   const scannerElementId = 'qr-scanner-container';
-  const isDevelopment = import.meta.env.DEV;
 
   // Generate device fingerprint on mount
   useEffect(() => {
@@ -464,44 +462,8 @@ const GhostPassScanner: React.FC = () => {
       // Check if response is JSON
       const contentType = scanResponse.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
-        // Not JSON - likely API endpoint doesn't exist or returned HTML
-        if (isDevelopment) {
-          console.warn('Scan validation API not available, using mock approval');
-          // Mock successful scan for development
-          setScanResult({
-            status: 'APPROVED',
-            message: 'Entry approved (mock data)',
-            receipt_id: venueId,
-            entry_info: {
-              entry_type: permission.entry_type,
-              entry_number: permission.entry_number,
-              fees: permission.fees || {
-                initial_entry_fee_cents: 0,
-                venue_reentry_fee_cents: 0,
-                valid_reentry_scan_fee_cents: 0,
-                total_fees_cents: 0
-              }
-            }
-          });
-          setScanState('success');
-
-          // Check if this is first scan for wallet surfacing
-          const isFirstScan = permission.entry_type === 'initial';
-          if (isFirstScan) {
-            // Force wallet surfacing immediately after successful scan
-            setTimeout(() => {
-              setShowAutoSurface(true);
-            }, 1000); // Show after success animation
-          } else {
-            // Returning user - navigate to wallet after successful scan
-            setTimeout(() => {
-              window.location.href = `${window.location.origin}/#/wallet`;
-            }, 2000);
-          }
-          return;
-        } else {
-          throw new Error('Scan validation API returned invalid response');
-        }
+        // Not JSON - API endpoint doesn't exist or returned HTML
+        throw new Error('Scan validation API returned invalid response');
       }
 
       const result = await scanResponse.json();
@@ -526,17 +488,11 @@ const GhostPassScanner: React.FC = () => {
         const isFirstScan = permission.entry_type === 'initial';
         if (isFirstScan) {
           // Force wallet surfacing immediately after successful scan
-          if (import.meta.env.DEV) {
-            console.log('🎫 [Scanner] First scan detected - showing auto-surface');
-          }
           setTimeout(() => {
             setShowAutoSurface(true);
           }, 1000); // Show after success animation
         } else {
           // Returning user - navigate to wallet after successful scan
-          if (import.meta.env.DEV) {
-            console.log('🔄 [Scanner] Returning user - navigating to wallet');
-          }
           setTimeout(() => {
             window.location.href = `${window.location.origin}/#/wallet`;
           }, 2000);
@@ -565,63 +521,7 @@ const GhostPassScanner: React.FC = () => {
     }
   };
 
-  // Handle QR code image paste from clipboard (development only)
-  const handlePaste = async (event: ClipboardEvent) => {
-    if (!isDevelopment || scanState !== 'idle') return;
-
-    const items = event.clipboardData?.items;
-    if (!items) return;
-
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      
-      // Check if the item is an image
-      if (item.type.indexOf('image') !== -1) {
-        event.preventDefault();
-        
-        const file = item.getAsFile();
-        if (!file) continue;
-
-        try {
-          setScanState('processing');
-          setErrorMessage('');
-
-          // Create a temporary scanner instance for file scanning
-          const html5QrCode = new Html5Qrcode('qr-file-reader');
-          
-          // Scan the pasted image
-          const qrData = await html5QrCode.scanFile(file, true);
-          
-          console.log('QR Code detected from pasted image:', qrData);
-          
-          // Process the scanned data
-          await processScan(qrData);
-          
-        } catch (error) {
-          console.error('Paste scan failed:', error);
-          setErrorMessage('Failed to read QR code from pasted image. Please ensure the image contains a valid QR code.');
-          setScanState('error');
-        }
-        
-        break; // Only process the first image
-      }
-    }
-  };
-
-  // Add paste event listener in development mode
-  useEffect(() => {
-    if (!isDevelopment) return;
-
-    const pasteHandler = (e: ClipboardEvent) => handlePaste(e);
-    
-    window.addEventListener('paste', pasteHandler);
-    setPasteListenerActive(true);
-    
-    return () => {
-      window.removeEventListener('paste', pasteHandler);
-      setPasteListenerActive(false);
-    };
-  }, [isDevelopment, scanState]);
+  // Handle QR code image paste from clipboard - removed for production
 
 
 
@@ -718,30 +618,7 @@ const GhostPassScanner: React.FC = () => {
               </motion.div>
             )}
 
-            {/* Development: Paste QR Code Image */}
-            {isDevelopment && pasteListenerActive && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4"
-              >
-                <div className="flex items-center space-x-2 mb-2">
-                  <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
-                  <h3 className="text-sm font-semibold text-amber-400">Development Mode Active</h3>
-                </div>
-                <p className="text-slate-300 text-xs mb-2">
-                  Paste a QR code image to test scanning
-                </p>
-                <div className="bg-slate-900/50 border border-slate-700 rounded-lg p-3">
-                  <div className="flex items-center space-x-2 text-xs text-slate-400">
-                    <kbd className="px-2 py-1 bg-slate-800 border border-slate-600 rounded text-cyan-400 font-mono">Ctrl</kbd>
-                    <span>+</span>
-                    <kbd className="px-2 py-1 bg-slate-800 border border-slate-600 rounded text-cyan-400 font-mono">V</kbd>
-                    <span className="ml-2">to paste QR code image</span>
-                  </div>
-                </div>
-              </motion.div>
-            )}
+            {/* Development: Paste QR Code Image - removed for production */}
           </div>
         );
 
@@ -1059,25 +936,7 @@ const GhostPassScanner: React.FC = () => {
             )}
           </div>
           
-          {/* Dev Only: Reset Button */}
-          {isDevelopment && (
-            <div className="mt-3 pt-3 border-t border-slate-700">
-              <button
-                onClick={() => {
-                  if (confirm('Clear wallet session and recovery code? This will simulate a first-time user.')) {
-                    localStorage.removeItem('ghost_pass_wallet_session');
-                    localStorage.removeItem('wallet_recovery_code');
-                    localStorage.removeItem('device_fingerprint');
-                    localStorage.removeItem('biometric_hash');
-                    window.location.reload();
-                  }
-                }}
-                className="w-full px-3 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 text-xs font-medium transition-colors"
-              >
-                🧪 Reset Wallet (Dev Only)
-              </button>
-            </div>
-          )}
+          {/* Dev Only: Reset Button - removed for production */}
         </motion.div>
 
         {/* Main Scan Interface */}
