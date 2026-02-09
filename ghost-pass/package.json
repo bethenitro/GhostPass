@@ -8,8 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "generate-vapid": "node scripts/generate-vapid-keys.js",
-    "vercel-build": "npm run build"
+    "generate-vapid": "node scripts/generate-vapid-keys.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.90.1",
