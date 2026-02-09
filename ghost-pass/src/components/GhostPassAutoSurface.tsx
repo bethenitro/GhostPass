@@ -216,28 +216,11 @@ const GhostPassAutoSurface: React.FC<AutoSurfaceProps> = ({
 
       // BOARDING PASS BEHAVIOR: Force wallet to surface immediately for first scan
       if (walletSession.force_surface) {
-        // Show PWA install prompt for persistent access
-        if (installPromptEvent) {
-          if (import.meta.env.DEV) {
-            console.log('🎫 [AutoSurface] PWA prompt available - showing install screen');
-          }
-          setSurfaceState('installing');
-        } else {
-          // If no PWA prompt available, force wallet to open immediately
-          if (import.meta.env.DEV) {
-            console.log('🎫 [AutoSurface] No PWA prompt - forcing wallet to surface');
-          }
-          setSurfaceState('complete');
-          
-          // FORCE WALLET TO SURFACE - BOARDING PASS BEHAVIOR
-          setTimeout(() => {
-            if (import.meta.env.DEV) {
-              console.log('🎫 BOARDING PASS MODE: Forcing wallet to surface immediately');
-            }
-            // Navigate to wallet in current window (forced surfacing)
-            window.location.href = walletSession.wallet_url;
-          }, 1000);
+        // Always show install screen for first-time users
+        if (import.meta.env.DEV) {
+          console.log('🎫 [AutoSurface] Showing install screen for first-time user');
         }
+        setSurfaceState('installing');
       } else {
         // Returning user - just complete
         setSurfaceState('complete');

@@ -101,6 +101,12 @@ const TrustCenter: React.FC = () => {
         const amount = parseFloat(stripeSource.amount);
         const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
         
+        console.log('Creating Stripe checkout session with:', {
+          amount: Math.round(amount * 100),
+          wallet_binding_id: localStorage.getItem('wallet_binding_id'),
+          has_device_fingerprint: !!localStorage.getItem('device_fingerprint')
+        });
+        
         const response = await fetch(`${API_BASE_URL}/stripe/create-checkout-session`, {
           method: 'POST',
           headers: {
@@ -116,31 +122,55 @@ const TrustCenter: React.FC = () => {
           }),
         });
 
+        console.log('Stripe API response status:', response.status);
+
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          console.error('Stripe checkout failed:', errorData);
+          console.error('Stripe checkout failed with status', response.status, ':', errorData);
           
-          if (errorData.error?.includes('wallet_binding_id')) {
-            showToast('Please set up your wallet first by scanning a QR code at the venue', 'warning', 6000);
+          if (errorData.error) {
+            if (errorData.error.includes('wallet_binding_id')) {
+              showToast('Wallet ID is missing. Please scan a QR code at the venue first.', 'warning', 6000);
+            } else if (errorData.error.includes('Amount')) {
+              showToast(`Invalid amount: ${errorData.error}`, 'error');
+            } else if (errorData.error.includes('Stripe is not configured')) {
+              showToast('Payment system is not configured. Please contact support.', 'error');
+            } else if (errorData.error.includes('STRIPE_SECRET_KEY')) {
+              showToast('Payment system configuration error. Please contact support.', 'error');
+            } else {
+              showToast(`Payment error: ${errorData.error}`, 'error', 7000);
+            }
           } else {
-            showToast('Payment setup failed. Please try again or contact support.', 'error');
+            showToast(`Payment setup failed (${response.status}). Please try again or contact support.`, 'error');
           }
           setIsProcessing(false);
           return;
         }
 
         const data = await response.json();
+        console.log('Stripe checkout session created:', data);
         
         // Redirect to Stripe Checkout
         if (data.url) {
+          console.log('Redirecting to Stripe checkout:', data.url);
           window.location.href = data.url;
         } else {
-          showToast('Payment setup failed. Please try again.', 'error');
+          console.error('No checkout URL in response:', data);
+          showToast('Payment setup failed - no checkout URL received.', 'error');
           setIsProcessing(false);
         }
       } catch (error) {
-        console.error('Stripe checkout error:', error);
-        showToast('Payment setup failed. Please check your connection and try again.', 'error');
+        console.error('Stripe checkout error (caught exception):', error);
+        if (error instanceof Error) {
+          console.error('Error details:', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+          });
+          showToast(`Payment error: ${error.message}`, 'error', 7000);
+        } else {
+          showToast('Payment setup failed. Please check your connection and try again.', 'error');
+        }
         setIsProcessing(false);
       }
     } else {
