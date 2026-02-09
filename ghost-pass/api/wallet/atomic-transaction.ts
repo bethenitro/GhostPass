@@ -78,7 +78,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       balance_before_cents: wallet.balance_cents,
       balance_after_cents: newBalance,
       vendor_name: 'Platform Transaction',
-      metadata: { gateway_id, context, ...feeDistribution }
+      metadata: { gatewayId, context, ...feeDistribution }
     });
 
     res.status(200).json({

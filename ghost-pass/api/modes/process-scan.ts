@@ -47,7 +47,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       body: JSON.stringify({ context, wallet_binding_id, ghost_pass_token }),
     });
 
-    const accessCheck = await checkResponse.json();
+    const accessCheck = await checkResponse.json() as {
+      access_granted: boolean;
+      mode: string;
+      message?: string;
+      requires_pass_purchase?: boolean;
+      pass_options?: any[];
+      requires_payment?: boolean;
+      payment_amount_cents?: number;
+    };
 
     if (!accessCheck.access_granted) {
       // Access denied
@@ -67,7 +75,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (accessCheck.requires_payment) {
       // Mode A: Pay-per-scan - charge the fee
-      amountCharged = accessCheck.payment_amount_cents;
+      amountCharged = accessCheck.payment_amount_cents || 0;
 
       // Get wallet
       const { data: wallet, error: walletError } = await supabase
