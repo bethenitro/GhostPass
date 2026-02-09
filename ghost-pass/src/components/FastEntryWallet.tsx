@@ -24,7 +24,7 @@ interface FastEntryWalletProps {
 }
 
 const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
-  walletBindingId = '',
+  walletBindingId: walletBindingIdProp = '',
   venueName = 'Venue',
   eventName = 'Event',
   entryFee = 500 // Default $5.00
@@ -37,6 +37,16 @@ const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
   const [selectedQuickAmount, setSelectedQuickAmount] = useState<number | null>(null);
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  
+  // Get wallet binding ID from prop or localStorage
+  const walletBindingId = walletBindingIdProp || localStorage.getItem('wallet_binding_id') || '';
+  
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      console.log('💳 [FastEntryWallet] Wallet binding ID:', walletBindingId);
+      console.log('💳 [FastEntryWallet] From localStorage:', localStorage.getItem('wallet_binding_id'));
+    }
+  }, [walletBindingId]);
 
   const { data: balance } = useQuery({
     queryKey: ['wallet-balance'],
