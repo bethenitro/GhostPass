@@ -7,11 +7,6 @@
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-interface PushSubscriptionData {
-  subscription: PushSubscription;
-  wallet_binding_id: string;
-}
-
 /**
  * Check if push notifications are supported
  */
@@ -67,7 +62,7 @@ const getVapidPublicKey = async (): Promise<string> => {
 /**
  * Convert VAPID key from base64 to Uint8Array
  */
-const urlBase64ToUint8Array = (base64String: string): Uint8Array => {
+const urlBase64ToUint8Array = (base64String: string): Uint8Array<ArrayBuffer> => {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
   const base64 = (base64String + padding)
     .replace(/\-/g, '+')

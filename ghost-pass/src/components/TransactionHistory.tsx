@@ -19,7 +19,8 @@ const TransactionHistory: React.FC = () => {
     if (Array.isArray(transactionsData)) return transactionsData;
     // If API returns an object with transactions property
     if (typeof transactionsData === 'object' && 'transactions' in transactionsData) {
-      return Array.isArray(transactionsData.transactions) ? transactionsData.transactions : [];
+      const data = transactionsData as { transactions: unknown };
+      return Array.isArray(data.transactions) ? data.transactions as Transaction[] : [];
     }
     return [];
   }, [transactionsData]);
@@ -41,7 +42,7 @@ const TransactionHistory: React.FC = () => {
 
       // Create properly formatted CSV content
       const csvHeader = 'Date,Time,Type,Description,Amount (USD),Payment Method,Location,Location Type,Venue ID,Transaction ID\n';
-      const csvRows = transactions.map(t => {
+      const csvRows = transactions.map((t: Transaction) => {
         const date = escapeCSV(formatDate(t.timestamp));
         const time = escapeCSV(formatTime(t.timestamp));
         const type = escapeCSV(t.type);
@@ -185,7 +186,7 @@ const TransactionHistory: React.FC = () => {
             <p className="text-white/60">No transactions yet</p>
           </motion.div>
         ) : (
-          transactions.map((transaction, index) => {
+          transactions.map((transaction: Transaction, index: number) => {
             const Icon = getTransactionIcon(transaction.type);
             const colorClass = getTransactionColor(transaction.type);
 

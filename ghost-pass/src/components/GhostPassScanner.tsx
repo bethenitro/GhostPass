@@ -96,7 +96,6 @@ const GhostPassScanner: React.FC = () => {
   useEffect(() => {
     const getWalletInfo = async () => {
       try {
-        const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
         const deviceFingerprint = localStorage.getItem('device_fingerprint');
         
         if (!deviceFingerprint) {

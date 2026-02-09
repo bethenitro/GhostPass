@@ -65,7 +65,6 @@ interface PWAInstallPrompt extends Event {
 const GhostPassAutoSurface: React.FC<AutoSurfaceProps> = ({
   walletBindingId,
   deviceFingerprint,
-  eventId,
   venueId,
   eventName = "Event",
   venueName = "Venue",

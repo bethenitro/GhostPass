@@ -58,6 +58,7 @@ export interface WalletBalance {
   balance_cents: number;
   balance_dollars: number;
   updated_at: string;
+  wallet_binding_id?: string;
 }
 
 export interface FundingSource {
