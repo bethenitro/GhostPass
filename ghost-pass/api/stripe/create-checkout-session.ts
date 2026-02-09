@@ -30,6 +30,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    // Check if Stripe key is configured
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error('STRIPE_SECRET_KEY environment variable is not set');
+      return res.status(500).json({ 
+        error: 'Stripe is not configured. Please contact support.',
+        details: 'Missing STRIPE_SECRET_KEY environment variable'
+      });
+    }
+
     const {
       amount, // Amount in cents
       wallet_binding_id,
@@ -37,6 +46,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       success_url,
       cancel_url,
     } = req.body;
+
+    // Log request for debugging
+    console.log('Stripe checkout request:', {
+      amount,
+      wallet_binding_id: wallet_binding_id ? 'present' : 'missing',
+      success_url: success_url ? 'present' : 'missing',
+      cancel_url: cancel_url ? 'present' : 'missing',
+    });
 
     // Validation
     if (!amount || amount < 50) {

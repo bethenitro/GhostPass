@@ -114,7 +114,9 @@ const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
         });
 
         if (!response.ok) {
-          throw new Error('Failed to create checkout session');
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+          console.error('Stripe checkout failed:', errorData);
+          throw new Error('Payment setup failed');
         }
 
         const data = await response.json();
@@ -122,11 +124,13 @@ const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
         // Redirect to Stripe Checkout
         if (data.url) {
           window.location.href = data.url;
+        } else {
+          throw new Error('Payment setup failed');
         }
       } catch (error) {
         console.error('Stripe checkout error:', error);
-        // Fall back to old method
-        fundMutation.mutate(amount);
+        alert('Payment setup failed. Please try again or contact support.');
+        return;
       }
     } else {
       // Use existing payment method

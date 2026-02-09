@@ -115,7 +115,9 @@ const TrustCenter: React.FC = () => {
         });
 
         if (!response.ok) {
-          throw new Error('Failed to create checkout session');
+          const errorData = await response.json().catch(() => ({}));
+          console.error('Stripe checkout failed:', errorData);
+          throw new Error('Payment setup failed');
         }
 
         const data = await response.json();
@@ -123,9 +125,12 @@ const TrustCenter: React.FC = () => {
         // Redirect to Stripe Checkout
         if (data.url) {
           window.location.href = data.url;
+        } else {
+          throw new Error('Payment setup failed');
         }
       } catch (error) {
         console.error('Stripe checkout error:', error);
+        alert('Payment setup failed. Please try again or contact support.');
         setIsProcessing(false);
       }
     } else {
