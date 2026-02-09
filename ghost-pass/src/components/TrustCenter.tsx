@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CreditCard, Smartphone, Zap, ArrowRight, Wallet, DollarSign, Bitcoin, Check, X, ArrowLeft } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { walletApi } from '../lib/api';
+import { useToast } from './ui/toast';
 
 interface SourceAmount {
   sourceId: string;
@@ -17,6 +18,7 @@ const TrustCenter: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
 
   // Mock funding sources data - in real app this would come from API
   const fundingSources = [
@@ -117,7 +119,14 @@ const TrustCenter: React.FC = () => {
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
           console.error('Stripe checkout failed:', errorData);
-          throw new Error('Payment setup failed');
+          
+          if (errorData.error?.includes('wallet_binding_id')) {
+            showToast('Please set up your wallet first by scanning a QR code at the venue', 'warning', 6000);
+          } else {
+            showToast('Payment setup failed. Please try again or contact support.', 'error');
+          }
+          setIsProcessing(false);
+          return;
         }
 
         const data = await response.json();
@@ -126,11 +135,12 @@ const TrustCenter: React.FC = () => {
         if (data.url) {
           window.location.href = data.url;
         } else {
-          throw new Error('Payment setup failed');
+          showToast('Payment setup failed. Please try again.', 'error');
+          setIsProcessing(false);
         }
       } catch (error) {
         console.error('Stripe checkout error:', error);
-        alert('Payment setup failed. Please try again or contact support.');
+        showToast('Payment setup failed. Please check your connection and try again.', 'error');
         setIsProcessing(false);
       }
     } else {

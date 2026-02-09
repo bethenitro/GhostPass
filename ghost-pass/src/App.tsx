@@ -12,6 +12,7 @@ import TicketPurchase from './components/TicketPurchase';
 import GhostPassModesTester from './components/GhostPassModesTester';
 import { ghostPassApi } from './lib/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ToastProvider } from './components/ui/toast';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -267,7 +268,9 @@ function App() {
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       <QueryClientProvider client={queryClient}>
-        <AppContent />
+        <ToastProvider>
+          <AppContent />
+        </ToastProvider>
       </QueryClientProvider>
     </div>
   );

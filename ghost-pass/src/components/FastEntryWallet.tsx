@@ -13,6 +13,7 @@ import { walletApi } from '../lib/api';
 import { cn } from '@/lib/utils';
 import PushNotificationSettings from './PushNotificationSettings';
 import WalletRecoveryCode from './WalletRecoveryCode';
+import { useToast } from './ui/toast';
 
 interface FastEntryWalletProps {
   walletBindingId?: string;
@@ -35,6 +36,7 @@ const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
   const [recoveryData, setRecoveryData] = useState<{ wallet_binding_id: string; recovery_code: string } | null>(null);
   const [selectedQuickAmount, setSelectedQuickAmount] = useState<number | null>(null);
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
 
   const { data: balance } = useQuery({
     queryKey: ['wallet-balance'],
@@ -97,6 +99,12 @@ const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
     // For Stripe payment method, create checkout session
     if (selectedPaymentMethod === 'stripe') {
       try {
+        // Check if wallet is set up
+        if (!walletBindingId && !localStorage.getItem('wallet_binding_id')) {
+          showToast('Please set up your wallet first by scanning a QR code at the venue', 'warning', 6000);
+          return;
+        }
+
         const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
         const response = await fetch(`${API_BASE_URL}/stripe/create-checkout-session`, {
           method: 'POST',
@@ -116,7 +124,14 @@ const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
           console.error('Stripe checkout failed:', errorData);
-          throw new Error('Payment setup failed');
+          
+          // Show specific error messages
+          if (errorData.error?.includes('wallet_binding_id')) {
+            showToast('Please set up your wallet first by scanning a QR code at the venue', 'warning', 6000);
+          } else {
+            showToast('Payment setup failed. Please try again or contact support.', 'error');
+          }
+          return;
         }
 
         const data = await response.json();
@@ -125,11 +140,11 @@ const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
         if (data.url) {
           window.location.href = data.url;
         } else {
-          throw new Error('Payment setup failed');
+          showToast('Payment setup failed. Please try again.', 'error');
         }
       } catch (error) {
         console.error('Stripe checkout error:', error);
-        alert('Payment setup failed. Please try again or contact support.');
+        showToast('Payment setup failed. Please check your connection and try again.', 'error');
         return;
       }
     } else {
