@@ -1,0 +1,415 @@
+/** @import must precede all other statements */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ABYSSAL GLASS THEME VARIABLES */
+    --background: 240 10% 3.9%;
+    --foreground: 240 10% 100%;
+    --card: 240 10% 10.4%;
+    --card-foreground: 240 10% 100%;
+    --popover: 240 10% 10.4%;
+    --popover-foreground: 240 10% 100%;
+    --primary: 188 100% 50%; /* Cyan-500 #06b6d4 */
+    --primary-foreground: 240 10% 3.9%;
+    --secondary: 350 100% 60%;
+    --secondary-foreground: 240 10% 3.9%;
+    --muted: 240 6% 26%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 280 100% 60%;
+    --accent-foreground: 240 10% 3.9%;
+    --destructive: 0 84.2% 60.2%; /* Red-500 #ef4444 */
+    --destructive-foreground: 240 10% 97.3%;
+    --success: 160 84% 39%; /* Emerald-500 #10b981 */
+    --border: 240 6% 15%;
+    --input: 240 6% 10.4%;
+    --ring: 188 100% 50%;
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    background: #020617; /* Deep Slate Black - NOT pure black */
+    background-image: 
+      radial-gradient(ellipse at top center, rgba(15, 23, 42, 0.3) 0%, transparent 50%),
+      radial-gradient(ellipse at bottom center, rgba(15, 23, 42, 0.2) 0%, transparent 50%);
+    color: white;
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+}
+
+@layer components {
+  /* GLASS PANEL SYSTEM */
+  .glass-panel {
+    @apply rounded-xl border border-white/10 backdrop-blur-xl;
+    background: rgba(15, 23, 42, 0.6);
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
+      0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  .glass-card {
+    @apply glass-panel p-6 transition-all duration-300;
+  }
+
+  /* WALLET CARD (HERO) */
+  .wallet-hero {
+    @apply glass-panel p-8 border-b border-b-cyan-500/50;
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
+      0 0 20px -5px rgba(6, 182, 212, 0.2);
+  }
+
+  .balance-display {
+    font-family: 'JetBrains Mono', 'Space Mono', monospace;
+    @apply text-6xl font-bold text-cyan-400 tabular-nums;
+    filter: drop-shadow(0 0 10px rgba(6, 182, 212, 0.5));
+    text-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+  }
+
+  .status-badge {
+    @apply px-3 py-1 rounded-full text-sm font-medium border;
+  }
+
+  .status-badge-active {
+    @apply status-badge bg-emerald-500/10 text-emerald-400 border-emerald-500/20;
+  }
+
+  .status-badge-expired {
+    @apply status-badge bg-red-500/10 text-red-400 border-red-500/20;
+  }
+
+  /* HOLOGRAPHIC TICKETS (Purchase Options) */
+  .holo-ticket {
+    @apply glass-panel p-6 cursor-pointer transition-all duration-300;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .holo-ticket:hover {
+    @apply bg-cyan-500/10 border-cyan-500/50 scale-[1.02];
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
+      0 0 25px -5px rgba(6, 182, 212, 0.4);
+  }
+
+  .holo-ticket-selected {
+    @apply bg-cyan-500/20 border-cyan-400;
+    filter: drop-shadow(0 0 15px rgba(6, 182, 212, 0.6));
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
+      0 0 30px -5px rgba(6, 182, 212, 0.6);
+  }
+
+  .price-tag {
+    font-family: 'JetBrains Mono', 'Space Mono', monospace;
+    @apply text-2xl font-bold text-cyan-400 tabular-nums;
+    text-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+  }
+
+  /* TYPOGRAPHY SYSTEM */
+  .heading-primary {
+    font-family: 'Inter', sans-serif;
+    @apply text-2xl font-semibold tracking-tight text-white;
+  }
+
+  .data-mono {
+    font-family: 'JetBrains Mono', 'Space Mono', monospace;
+    @apply text-cyan-400 font-medium tabular-nums;
+  }
+
+  .label-tactical {
+    font-family: 'Inter', sans-serif;
+    @apply text-xs uppercase tracking-widest text-slate-400 font-medium;
+  }
+
+  /* TRANSACTION LEDGER */
+  .ledger-table {
+    @apply w-full;
+  }
+
+  .ledger-row {
+    @apply border-b border-white/5 transition-colors duration-200;
+  }
+
+  .ledger-row:hover {
+    @apply bg-white/5;
+  }
+
+  .amount-negative {
+    @apply text-red-400 font-mono;
+  }
+
+  .amount-positive {
+    @apply text-emerald-400 font-mono;
+  }
+
+  /* TACTICAL INPUTS */
+  .tactical-input {
+    @apply bg-slate-950/50 border border-white/10 text-white px-4 py-3 rounded-lg;
+    @apply focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 transition-all duration-200;
+  }
+
+  .tactical-input::placeholder {
+    @apply text-slate-500;
+  }
+
+  /* SELECT DROPDOWN STYLING */
+  .tactical-input select,
+  select.tactical-input {
+    @apply bg-slate-950/50 border border-white/10 text-white px-4 py-3 rounded-lg;
+    @apply focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 transition-all duration-200;
+    @apply cursor-pointer appearance-none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2322d3ee'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+  }
+
+  .tactical-input option,
+  select.tactical-input option {
+    @apply bg-slate-900 text-white py-2;
+  }
+
+  /* QR SCANNER FRAME */
+  .scanner-frame {
+    @apply relative p-8 glass-panel;
+    background: rgba(15, 23, 42, 0.8);
+  }
+
+  .scanner-corners::before {
+    content: '';
+    @apply absolute top-4 left-4 w-6 h-6 border-2 border-cyan-400 border-r-0 border-b-0;
+  }
+
+  .scanner-corners::after {
+    content: '';
+    @apply absolute bottom-4 right-4 w-6 h-6 border-2 border-cyan-400 border-l-0 border-t-0;
+  }
+
+  .scan-line {
+    @apply absolute left-0 right-0 h-0.5 bg-cyan-400;
+    box-shadow: 0 0 10px rgba(6, 182, 212, 0.8);
+    animation: scanLine 2s ease-in-out infinite;
+  }
+
+  @keyframes scanLine {
+    0%, 100% { top: 20%; opacity: 0; }
+    50% { top: 80%; opacity: 1; }
+  }
+
+  /* GLITCH OVERLAY */
+  .glitch-overlay {
+    @apply absolute inset-0 flex items-center justify-center;
+    background: 
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 2px,
+        rgba(239, 68, 68, 0.1) 2px,
+        rgba(239, 68, 68, 0.1) 4px
+      );
+    animation: glitch 0.3s infinite;
+  }
+
+  @keyframes glitch {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-2px); }
+    40% { transform: translateX(2px); }
+    60% { transform: translateX(-1px); }
+    80% { transform: translateX(1px); }
+  }
+
+  /* NEON GLOW UTILITIES */
+  .neon-glow-cyan {
+    filter: drop-shadow(0 0 10px rgba(6, 182, 212, 0.5)) drop-shadow(0 0 20px rgba(6, 182, 212, 0.3));
+  }
+
+  .neon-glow-red {
+    filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.5)) drop-shadow(0 0 20px rgba(239, 68, 68, 0.3));
+  }
+
+  .neon-glow-emerald {
+    filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.5)) drop-shadow(0 0 20px rgba(16, 185, 129, 0.3));
+  }
+
+  /* BUTTON SYSTEM */
+  .btn-tactical {
+    @apply glass-panel px-6 py-3 font-medium transition-all duration-300 cursor-pointer text-white;
+    @apply hover:border-white/20 active:scale-[0.98];
+    min-height: 44px; /* Minimum touch target size */
+  }
+
+  .btn-primary {
+    @apply btn-tactical bg-cyan-500/20 border-cyan-500/50 text-cyan-400;
+    @apply hover:bg-cyan-500/30 hover:border-cyan-400;
+    filter: drop-shadow(0 0 15px rgba(6, 182, 212, 0.3));
+  }
+
+  .btn-primary:hover {
+    filter: drop-shadow(0 0 25px rgba(6, 182, 212, 0.5));
+  }
+
+  .btn-danger {
+    @apply btn-tactical bg-red-500/20 border-red-500/50 text-red-400;
+    @apply hover:bg-red-500/30 hover:border-red-400;
+  }
+
+  /* MOBILE OPTIMIZATIONS */
+  .glass-button {
+    @apply glass-panel px-4 py-2 font-medium transition-all duration-300 cursor-pointer text-white;
+    @apply hover:border-white/20 active:scale-[0.98];
+    min-height: 44px; /* Minimum touch target size */
+  }
+
+  /* Touch-friendly interactive elements */
+  button, [role="button"], input[type="button"], input[type="submit"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Improved text readability on mobile */
+  @media (max-width: 640px) {
+    .balance-display {
+      @apply text-4xl;
+    }
+    
+    .price-tag {
+      @apply text-xl;
+    }
+  }
+
+  /* LOADING STATES */
+  .loading-spinner {
+    @apply w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin;
+  }
+
+  /* TEXT SHADOWS FOR NEON ELEMENTS */
+  .text-neon-cyan {
+    @apply text-cyan-400;
+    text-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+  }
+
+  .text-neon-red {
+    @apply text-red-400;
+    text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+  }
+
+  .text-neon-emerald {
+    @apply text-emerald-400;
+    text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+  }
+
+  /* ADMIN MODE - RED SLIDER STYLES */
+  .slider-red::-webkit-slider-thumb {
+    appearance: none;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #ef4444;
+    cursor: pointer;
+    border: 2px solid #dc2626;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+  }
+
+  .slider-red::-moz-range-thumb {
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #ef4444;
+    cursor: pointer;
+    border: 2px solid #dc2626;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+  }
+
+  .slider-red::-webkit-slider-track {
+    background: linear-gradient(to right, #ef4444 0%, #dc2626 100%);
+    height: 4px;
+    border-radius: 2px;
+  }
+
+  .slider-red::-moz-range-track {
+    background: linear-gradient(to right, #ef4444 0%, #dc2626 100%);
+    height: 4px;
+    border-radius: 2px;
+  }
+
+  /* MOBILE OPTIMIZATIONS */
+  @media (max-width: 640px) {
+    .balance-display {
+      @apply text-4xl;
+    }
+    
+    .price-tag {
+      @apply text-xl;
+    }
+  }
+
+  /* MOBILE ADMIN OPTIMIZATIONS */
+  @media (max-width: 768px) {
+    .glass-panel {
+      @apply rounded-lg;
+    }
+    
+    /* Larger touch targets for mobile */
+    .slider-red {
+      height: 8px;
+    }
+    
+    .slider-red::-webkit-slider-thumb {
+      height: 24px;
+      width: 24px;
+    }
+    
+    .slider-red::-moz-range-thumb {
+      height: 24px;
+      width: 24px;
+    }
+    
+    /* Better mobile form inputs */
+    input[type="text"], 
+    input[type="number"], 
+    textarea {
+      @apply text-base; /* Prevents zoom on iOS */
+    }
+    
+    /* Mobile-friendly buttons */
+    button {
+      min-height: 44px; /* iOS recommended touch target */
+    }
+    
+    /* Improved mobile scrolling */
+    .overflow-y-auto {
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+  
+  /* ADMIN MODE MOBILE ADJUSTMENTS */
+  @media (max-width: 640px) {
+    .glass-panel {
+      @apply mx-0 rounded-lg;
+    }
+    
+    /* Stack mobile admin controls */
+    .admin-mobile-stack > * {
+      @apply w-full mb-3;
+    }
+    
+    /* Compact mobile headers */
+    .admin-mobile-header {
+      @apply text-base font-semibold;
+    }
+  }
+}

@@ -9,7 +9,8 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then((registration) => {
-        console.log('🎫 Ghost Pass Service Worker registered successfully:', registration.scope);
+        if (import.meta.env.DEV) {
+        }
         
         // Check for updates periodically
         setInterval(() => {
@@ -17,7 +18,7 @@ if ('serviceWorker' in navigator) {
         }, 60000); // Check every minute
       })
       .catch((error) => {
-        console.log('🎫 Ghost Pass Service Worker registration failed:', error);
+        console.error('Service Worker registration failed:', error);
       });
   });
 }

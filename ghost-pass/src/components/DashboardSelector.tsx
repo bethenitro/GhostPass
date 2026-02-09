@@ -136,19 +136,7 @@ const DashboardSelector: React.FC<DashboardSelectorProps> = ({
           transition={{ delay: 0.3 }}
           className="mt-8"
         >
-          <Card className="glass-card bg-cyan-500/5 border-cyan-500/20">
-            <CardContent className="p-4">
-              <div className="flex items-start space-x-3">
-                <div className="w-2 h-2 bg-cyan-400 rounded-full mt-2 flex-shrink-0 neon-glow-cyan"></div>
-                <div className="text-sm">
-                  <p className="font-semibold text-neon-cyan mb-1">Secure Access</p>
-                  <p className="text-slate-400">
-                    All dashboards are protected by military-grade encryption. Your data is secure and private.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+
         </motion.div>
       </div>
     </div>

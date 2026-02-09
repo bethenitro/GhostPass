@@ -1,0 +1,26 @@
+import { VercelRequest, VercelResponse } from '@vercel/node';
+import { handleCors } from '../_lib/cors';
+import { requireAuth } from '../_lib/auth';
+
+export default async (req: VercelRequest, res: VercelResponse) => {
+  if (handleCors(req, res)) return;
+
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    await requireAuth(req, res);
+
+    res.status(200).json({
+      session: {
+        session_id: 'current_session',
+        status: 'ACTIVE',
+        expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('Session status error:', error);
+    res.status(500).json({ detail: 'Failed to get session status' });
+  }
+};

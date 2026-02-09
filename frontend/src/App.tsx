@@ -3,7 +3,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './components/AuthProvider';
 import LoginScreen from './components/LoginScreen';
 import DashboardSelector from './components/DashboardSelector';
-import SensoryCargoMonitor from './components/SensoryCargoMonitor';
 import TestSignalInjector from './components/TestSignalInjector';
 import Layout from './components/Layout';
 import WalletDashboard from './components/WalletDashboard';
@@ -33,8 +32,25 @@ const AppContent: React.FC = () => {
   const [purchasingDuration, setPurchasingDuration] = useState<number | null>(null);
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [previousRoute, setPreviousRoute] = useState<string>('');
-  const [selectedDashboard, setSelectedDashboard] = useState<'selector' | 'ghostpass' | 'sensory-monitor'>('selector');
+  const [selectedDashboard, setSelectedDashboard] = useState<'selector' | 'ghostpass'>('selector');
   const queryClient = useQueryClient();
+
+  // Check for existing wallet session on mount (FAST ENTRY FLOW)
+  useEffect(() => {
+    const walletSession = localStorage.getItem('ghost_pass_wallet_session');
+    if (walletSession) {
+      try {
+        const session = JSON.parse(walletSession);
+        // If session exists and hasn't expired, skip selector and go straight to wallet
+        if (session.expires_at && new Date(session.expires_at) > new Date()) {
+          console.log('🎫 FAST ENTRY: Existing wallet session found, skipping selector');
+          setSelectedDashboard('ghostpass');
+        }
+      } catch (error) {
+        console.error('Failed to parse wallet session:', error);
+      }
+    }
+  }, []);
 
   // Check if we're on special routes
   const [currentRoute, setCurrentRoute] = useState(window.location.hash);
@@ -62,7 +78,6 @@ const AppContent: React.FC = () => {
   const isGatewayManagerRoute = currentRoute === '#/gateway-manager';
   const isAuditTrailRoute = currentRoute === '#/audit-trail';
   const isCommandCenterRoute = currentRoute === '#/command-center';
-  const isSensoryMonitorRoute = currentRoute === '#/sensory-monitor';
   const isTestSignalInjectorRoute = currentRoute === '#/test-signal-injector';
   const isGhostPassTesterRoute = currentRoute === '#/ghost-pass-tester';
   const isGhostPassScannerRoute = currentRoute === '#/ghost-pass-scanner';
@@ -165,11 +180,6 @@ const AppContent: React.FC = () => {
     />;
   }
 
-  // Show Sensory Monitor page if on sensory-monitor route
-  if (isSensoryMonitorRoute) {
-    return <SensoryCargoMonitor onBack={handleBackToMain} />;
-  }
-
   // Show Test Signal Injector page if on test-signal-injector route
   if (isTestSignalInjectorRoute) {
     return <TestSignalInjector onBack={handleBackToMain} />;
@@ -190,14 +200,8 @@ const AppContent: React.FC = () => {
     return (
       <DashboardSelector
         onSelectGhostPass={() => setSelectedDashboard('ghostpass')}
-        onSelectSensoryMonitor={() => setSelectedDashboard('sensory-monitor')}
       />
     );
-  }
-
-  // Show Sensory Cargo Monitor
-  if (selectedDashboard === 'sensory-monitor') {
-    return <SensoryCargoMonitor onBack={handleBackToSelector} />;
   }
 
   const renderActiveTab = () => {

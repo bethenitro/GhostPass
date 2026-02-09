@@ -1,0 +1,698 @@
+Nick , please read carefully. This is the final integration directive to take Ghost Pass + Senate to PILOT-READY. No new concepts, just wiring and a few required additions.
+
+1. WHERE GHOST PASS MUST LIVE (CRITICAL)
+
+Ghost Pass must be accessible in two ways:
+
+A. Off-site, instant access (PRIMARY)
+
+Ghost Pass must be launchable directly via:
+
+QR code
+
+NFC tap
+
+The QR/NFC link must:
+
+Open the Ghost Pass wallet immediately
+
+Be pre-bound to the correct EVENT + VENUE
+
+Allow wallet funding instantly
+
+Allow immediate use (entry, re-entry, concessions)
+
+This flow must NOT require navigating the bevalid.app site.
+
+B. On bevalid.app (SECONDARY)
+
+Ghost Pass must also be accessible inside bevalid.app
+
+Purpose:
+
+Users can preload funds
+
+Get familiar with wallet
+
+Use as optional cold-storage wallet
+
+Same backend. Same wallet. Two entry points.
+
+2. ENTRY FLOW (THIS MUST WORK FAST)
+
+Required flow:
+
+User scans QR at venue door
+
+Wallet opens immediately (no account setup wall)
+
+Event + venue already selected
+
+User funds wallet (Stripe Connect)
+
+Entry fee + VALID fee deducted
+
+Entry logged
+
+Wallet remains persistently accessible on device
+
+⚠️ IMPORTANT:
+After first scan/funding, the wallet must remain easily accessible:
+
+Persistent session
+
+“Add to Home Screen” prompt (PWA behavior)
+
+Ghost icon shortcut (wallet opens in one tap)
+
+User should NOT have to return to bevalid.app to re-open wallet.
+
+3. PURCHASE IS NOT ALWAYS REQUIRED (CONFIRM + IMPLEMENT IF MISSING)
+
+Ghost Pass must be usable without purchasing a multi-day pass.
+
+Supported modes:
+
+Mode A — One-off / nightlife / club
+
+No pass required
+
+User pays:
+
+Entry scan fee
+
+Re-entry scan fee (if allowed)
+
+Concessions
+
+VALID earns per-scan fees
+
+Mode B — Event / festival / multi-vendor
+
+Pass purchase required (1-day / 3-day / 7-day / custom)
+
+Pass pricing is configurable per event
+
+VALID service fee is configurable
+
+➡️ If Mode A without pass is not fully supported yet, add it.
+➡️ Pass requirement must be a per-event configuration flag.
+
+4. SINGLE-EVENT TICKET PURCHASE (NEW BUT SMALL)
+
+We need single-event ticket support, separate from passes.
+
+Requirements:
+
+Event can be priced as a one-time ticket
+
+Ticket purchase:
+
+Debits wallet
+
+Grants entry permission
+
+VALID service fee applied (adjustable)
+
+No pass duration logic attached
+
+This is NOT a major rewrite — it’s:
+
+A transaction type
+
+A permission flag tied to the event
+
+5. RE-ENTRY LOGIC (MISSING — MUST ADD)
+
+Two separate re-entry fees must exist:
+
+A. Venue re-entry fee
+
+Configurable by event owner
+
+Optional (event may allow or deny re-entry)
+
+Charged to wallet if allowed
+
+B. VALID re-entry scan fee
+
+Charged per re-entry scan
+
+Adjustable by VALID
+
+Independent of venue fee
+
+Additionally:
+
+Track entry count per wallet per event:
+
+Entry #1 = initial
+
+Entry #2+ = re-entries
+
+Log every entry with timestamp and access point
+
+This is required for:
+
+Security
+
+Audit
+
+Dispute resolution
+
+6. BACKEND NON-NEGOTIABLES
+
+Every scan/tap must atomically:
+
+Resolve wallet
+
+Apply correct fees
+
+Debit wallet
+
+Log entry
+
+Write audit trail
+
+Generate receipt
+
+No partial states.
+
+7. SENATE STATUS
+
+Senate mock testing passed ✔️
+
+Keep current architecture
+
+Ensure Senate is callable as a service
+
+Do NOT hard-wire LLMs — seats must remain pluggable
+
+Human remains on the rail, not in the loop
+
+No changes needed unless integration breaks.
+
+8. STRESS / PILOT READINESS (WHAT YOU MUST VERIFY)
+
+Before calling this “done,” confirm:
+
+2,000 users scanning within short time window
+
+Multiple access points (2 doors + 4 concessions)
+
+Wallet balance updates correctly
+
+No race conditions
+
+No crashes on concurrent scans
+
+Stripe webhooks process correctly under load
+
+If needed, we will simulate load — just ensure code is concurrency-safe.
+
+This directive is about integration, not redesign.
+Please confirm what is already done and what you need to add so we can close gaps without churn.
+
+✅ ANNA (API / SDK DIRECTIVE)
+
+Anna — quick confirmation checklist on APIs & SDKs. No new builds requested, just verification.
+
+Please confirm:
+
+Stripe Connect
+
+Wallet funding works in test + prod
+
+Webhooks active:
+
+payment_intent.succeeded
+
+charge.succeeded
+
+payout events (if applicable)
+
+Platform fees configurable (not hard-coded)
+
+Frontend → Backend Calls
+
+Wallet funding endpoint exposed
+
+Entry / scan endpoint exposed
+
+Receipts returned correctly
+
+Environment Separation
+
+Test keys vs prod keys clearly separated
+
+No secrets in frontend code
+
+All keys stored in env vars (Vercel / Supabase)
+
+PWA / Wallet Access
+
+Confirm whether “Add to Home Screen” is enabled
+
+Confirm session persistence behavior
+
+No Custody Risk
+
+No ID docs stored
+
+No card numbers stored
+
+Proofs only, not source data
+
+That’s it — once confirmed, we are good on infra.
+
+Ghost Pass does NOT require traditional account creation,
+but it DOES require cryptographic session identity.
+
+No usernames.
+No passwords.
+No signup wall.
+
+But every interaction is still uniquely, provably, and auditably tied to a single user session.
+
+This is how Apple Pay, Square Tap, and Stripe Link actually work under the hood.
+
+🧠 THE CORRECT MODEL: “SESSION-BOUND WALLET ID”
+Instead of an account, Ghost Pass uses:
+
+✅ A Wallet Session ID
+Created instantly on first QR scan or tap
+
+Stored locally on the device
+
+Bound cryptographically
+
+Reused automatically across entries, purchases, and re-entry
+
+This gives:
+
+Speed at the door
+
+Accuracy in tracking
+
+Full audit trail
+
+No signup friction
+
+🧱 HOW IT WORKS (TECHNICALLy)
+1️⃣ First Interaction (QR or Tap)
+When the user scans the QR:
+
+Backend generates:
+
+wallet_id (UUID)
+
+device_binding_hash
+
+session_token (signed, short-lived)
+
+Wallet opens immediately
+
+No login screen
+
+The wallet now exists.
+
+2️⃣ Persistence Without Login
+The wallet is stored via:
+
+Secure browser storage (PWA / WebView)
+
+Device fingerprint + cryptographic token
+
+Optional OS wallet binding (later phase)
+
+If the user closes the browser:
+
+Re-scanning the QR restores the same wallet
+
+The backend matches:
+
+device hash
+
+session token
+
+wallet_id
+
+No duplicates. No guessing.
+
+3️⃣ Tracking Entries, Re-Entries, Transactions
+Every event logs:
+
+wallet_id
+
+event_id
+
+entry_type (entry / re-entry)
+
+timestamp
+
+location / gate
+
+transaction_id
+
+fee_type (entry / re-entry / purchase)
+
+This is more auditable than email-based accounts, because:
+
+No shared logins
+
+No fake emails
+
+No forgotten credentials
+
+4️⃣ Optional Upgrade (NOT REQUIRED)
+If later the user wants:
+
+multi-event history
+
+recovery across devices
+
+They can optionally link:
+
+phone number
+
+email
+
+Apple / Google
+
+But this is never required for entry.
+
+🚫 WHAT WE ARE NOT DOING
+Be explicit with Nick on this:
+
+❌ No forced signup
+
+❌ No passwords
+
+❌ No username flows
+
+❌ No friction screens at entry
+
+❌ No blocking the door
+
+Speed is sacred.
+
+🧾 AUDITABILITY (THIS IS THE KEY POINT)
+Nick’s concern about auditability is valid — here’s the answer:
+
+Auditability is tied to the Wallet ID + Transaction Ledger, not to a user account.
+
+Your system logs:
+
+deterministic IDs
+
+immutable timestamps
+
+signed receipts
+
+hash-linked audit records
+
+This is stronger than “user logged in with email.”
+
+📩 COPY-PASTE DIRECTIVE TO SEND TO NICK (WHATSAPP)
+You can send him this exactly as written:
+
+Ghost Pass Identity Model — Clarification
+
+Ghost Pass does NOT use traditional account creation (no email, password, or signup wall), but it DOES require persistent identity for accuracy and auditability.
+
+We are using a Session-Bound Wallet ID model, not anonymous usage.
+
+Implementation requirements:
+
+On first QR scan or NFC tap:
+
+Generate a unique wallet_id (UUID)
+
+Bind it to the device via a cryptographic session token + device hash
+
+Store locally (PWA / secure storage)
+
+The wallet persists across:
+
+entries
+
+re-entries
+
+purchases
+
+receipts
+
+All records (entries, transactions, fees) are logged against:
+
+wallet_id
+
+event_id
+
+transaction_id
+
+timestamp
+
+gate / vendor
+
+No login screen at entry.
+
+No email
+
+No password
+
+No signup friction
+
+Optional identity linking (email/phone) may exist later but is NOT required for entry or use.
+
+This preserves:
+
+Door speed
+
+Accurate counts
+
+Full audit trail
+
+Patent-aligned architecture
+
+Let me know once the wallet session binding is implemented.
+
+ CORE RULE (ANCHOR THIS FIRST)
+Users never see governance.
+Operators see operations.
+VALID sees everything.
+
+That single rule determines where Admin, SCU, and Ghost Pass live.
+
+🧭 WHERE EVERYTHING GOES (FINAL)
+1️⃣ Ghost Pass (User-Facing)
+Location:
+
+Off-site (primary)
+
+Light entry point on BeValid.app (secondary)
+
+What this means
+Ghost Pass lives as:
+
+QR → wallet URL
+
+PWA-style wallet (persistent, fast)
+
+NOT buried inside dashboards
+
+NOT behind logins
+
+NOT mixed with admin tools
+
+User sees ONLY:
+Wallet balance
+
+Fund wallet
+
+Entry success / denied
+
+Ticket (if applicable)
+
+Receipts
+
+Re-entry status
+
+✅ No SCU
+✅ No Senate
+✅ No sensory data
+
+This is why the door flow is fast.
+
+2️⃣ Admin Panel (Operations Layer)
+Location:
+👉 BeValid.app/admin
+
+This is the venue + operator control center.
+
+Who uses it
+Venue owners
+
+Event operators
+
+Managers
+
+(Optionally) trusted staff
+
+What lives here
+This is critical — Admin ≠ SCU
+
+Admin Panel handles:
+
+Event creation
+
+Venue setup
+
+Entry rules (allow re-entry / pricing)
+
+Fee configuration (vendor + VALID)
+
+QR code generation (entry / VIP / staff)
+
+Wallet rules
+
+Ticket pricing
+
+Staff roles
+
+Live counts (people in / out)
+
+Transaction summaries
+
+Think:
+
+“Can I run my event without calling anyone?”
+
+If yes → it belongs in Admin.
+
+If it explains how the system thinks → it does not.
+
+3️⃣ SCU Monitor (Governance & Observability)
+Location:
+👉 BeValid.app/internal/scu
+(or /governance — internal only)
+
+Who can access
+VALID (you)
+
+Possibly auditors
+
+Possibly enterprise clients (read-only, stripped)
+
+What SCU Monitor is
+SCU = System Control Unit
+
+This is:
+
+Observability
+
+Auditability
+
+Compliance
+
+Post-incident review
+
+What lives here
+Sensory channel status
+
+SCU events
+
+Senate decisions (hashed / abstracted)
+
+Entry anomalies
+
+Risk flags
+
+Performance metrics
+
+Load behavior
+
+System health
+
+What SCU is NOT
+❌ Not user-facing
+
+❌ Not venue-facing by default
+
+❌ Not real-time decision UI
+
+❌ Not part of Ghost Pass
+
+This separation is patent-safe and liability-safe.
+
+4️⃣ Senate (Never Visible as “The Senate”)
+Location:
+👉 Backend only (Supabase / services)
+
+How it appears externally
+As decisions
+
+As outcomes
+
+As logs
+
+Never as:
+
+votes
+
+models
+
+debates
+
+reasoning chains
+
+Why
+Protects IP
+
+Avoids regulation triggers
+
+Prevents user confusion
+
+Keeps latency out of door flow
+
+🗂️ FINAL MAP (ONE LOOK)
+USER
+ └─ Ghost Pass (off-site PWA)
+     ├─ Wallet
+     ├─ Entry / Re-entry
+     └─ Tickets (optional)
+
+VENUE / OPERATOR
+ └─ BeValid.app/admin
+     ├─ Events
+     ├─ QR Codes
+     ├─ Fees
+     ├─ Staff
+     └─ Live Counts
+
+VALID (YOU)
+ └─ BeValid.app/internal/scu
+     ├─ SCU Monitor
+     ├─ Senate Logs
+     ├─ Risk Flags
+     └─ Audit Trails
+
+BACKEND (HIDDEN)
+ └─ Senate Engine
+     ├─ Models
+     ├─ Judge
+     └─ Policy
+🔑 WHY THIS WORKS
+Zero friction at entry
+
+Zero confusion for users
+
+Clear operator tools
+
+Patent-safe abstraction
+
+Enterprise-ready
+
+Scales to 10K+ users
+
+This is exactly how Stripe, Square, and Apple Wallet separate concerns — you’re just doing it with governance.
+
