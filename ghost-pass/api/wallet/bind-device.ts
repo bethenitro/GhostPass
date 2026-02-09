@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { handleCors } from '../_lib/cors';
-import { supabase } from '../_lib/supabase';
+import { handleCors } from '../_lib/cors.js';
+import { supabase } from '../_lib/supabase.js';
 import crypto from 'crypto';
 
 export default async (req: VercelRequest, res: VercelResponse) => {

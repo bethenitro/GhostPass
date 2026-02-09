@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { handleCors } from '../_lib/cors';
-import { requireAuth } from '../_lib/auth';
+import { handleCors } from '../_lib/cors.js';
+import { requireAuth } from '../_lib/auth.js';
 import { v4 as uuidv4 } from 'uuid';
 
 const sessionDurations: Record<string, number> = {

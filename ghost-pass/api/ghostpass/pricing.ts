@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { handleCors } from '../_lib/cors';
-import { supabase } from '../_lib/supabase';
+import { handleCors } from '../_lib/cors.js';
+import { supabase } from '../_lib/supabase.js';
 
 const DEFAULT_PRICES: Record<number, number> = {
   1: 1000,

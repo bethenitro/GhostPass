@@ -7,7 +7,7 @@
 
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
-import { handleCors } from '../_lib/cors';
+import { handleCors } from '../_lib/cors.js';
 import crypto from 'crypto';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL!;

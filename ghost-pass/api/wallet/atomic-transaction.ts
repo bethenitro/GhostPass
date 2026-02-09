@@ -1,7 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { handleCors } from '../_lib/cors';
-import { requireAuth } from '../_lib/auth';
-import { supabase } from '../_lib/supabase';
+import { handleCors } from '../_lib/cors.js';
+import { requireAuth } from '../_lib/auth.js';
+import { supabase } from '../_lib/supabase.js';
 
 const platformFeeEngine = {
   contextFees: { entry: 25, bar: 50, merch: 75, general: 50 },
