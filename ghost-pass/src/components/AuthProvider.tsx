@@ -55,14 +55,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     checkAuth();
   }, []);
 
-  const signIn = async (_email: string, _password: string) => {
-    await authApi.signIn();
-    setUser(null);
+  const signIn = async (email: string, password: string) => {
+    const data = await authApi.signIn(email, password);
+    setUser(data.user);
   };
 
-  const signUp = async (_email: string, _password: string) => {
-    await authApi.signUp();
-    setUser(null);
+  const signUp = async (email: string, password: string) => {
+    const data = await authApi.signUp(email, password);
+    setUser(data.user);
   };
 
   const signOut = async () => {

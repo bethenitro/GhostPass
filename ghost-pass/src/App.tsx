@@ -40,7 +40,6 @@ const AppContent: React.FC = () => {
   const [showRecovery, setShowRecovery] = useState(false);
   const [showOperatorPortal, setShowOperatorPortal] = useState(false);
   const [showOperatorLogin, setShowOperatorLogin] = useState(false);
-  const [isOperatorAuthenticated, setIsOperatorAuthenticated] = useState(false);
   const [showGatewayManager, setShowGatewayManager] = useState(false);
   const queryClient = useQueryClient();
 
@@ -196,17 +195,15 @@ const AppContent: React.FC = () => {
     
     // Check if already authenticated
     if (authApi.isAuthenticated()) {
-      setIsOperatorAuthenticated(true);
       setShowOperatorPortal(true);
     } else {
       setShowOperatorLogin(true);
     }
   };
 
-  const handleOperatorLoginSuccess = (token: string, user: any) => {
+  const handleOperatorLoginSuccess = (_token: string, user: any) => {
     console.log('✅ Operator login successful:', user);
     setShowOperatorLogin(false);
-    setIsOperatorAuthenticated(true);
     setShowOperatorPortal(true);
   };
 
