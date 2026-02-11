@@ -10,7 +10,10 @@ import GhostPassScanner from './components/GhostPassScanner';
 import WalletRecovery from './components/WalletRecovery';
 import TicketPurchase from './components/TicketPurchase';
 import GhostPassModesTester from './components/GhostPassModesTester';
-import { ghostPassApi } from './lib/api';
+import CommandCenterPage from './components/CommandCenterPage';
+import GatewayManagerPage from './components/GatewayManagerPage';
+import OperatorLogin from './components/OperatorLogin';
+import { ghostPassApi, authApi } from './lib/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ToastProvider } from './components/ui/toast';
 
@@ -35,6 +38,10 @@ const AppContent: React.FC = () => {
   }>({});
   const [loading, setLoading] = useState(true);
   const [showRecovery, setShowRecovery] = useState(false);
+  const [showOperatorPortal, setShowOperatorPortal] = useState(false);
+  const [showOperatorLogin, setShowOperatorLogin] = useState(false);
+  const [isOperatorAuthenticated, setIsOperatorAuthenticated] = useState(false);
+  const [showGatewayManager, setShowGatewayManager] = useState(false);
   const queryClient = useQueryClient();
 
   // Initialize app (device fingerprint is handled in API client)
@@ -183,6 +190,39 @@ const AppContent: React.FC = () => {
     window.location.reload();
   };
 
+  const handleOperatorPortal = () => {
+    console.log('🏢 Opening Operator Portal');
+    setShowRecovery(false);
+    
+    // Check if already authenticated
+    if (authApi.isAuthenticated()) {
+      setIsOperatorAuthenticated(true);
+      setShowOperatorPortal(true);
+    } else {
+      setShowOperatorLogin(true);
+    }
+  };
+
+  const handleOperatorLoginSuccess = (token: string, user: any) => {
+    console.log('✅ Operator login successful:', user);
+    setShowOperatorLogin(false);
+    setIsOperatorAuthenticated(true);
+    setShowOperatorPortal(true);
+  };
+
+  const handleOperatorLoginCancel = () => {
+    setShowOperatorLogin(false);
+  };
+
+  const handleBackFromOperatorPortal = () => {
+    setShowOperatorPortal(false);
+    setShowGatewayManager(false);
+  };
+
+  const handleNavigateToGatewayManager = () => {
+    setShowGatewayManager(true);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
@@ -201,8 +241,32 @@ const AppContent: React.FC = () => {
         <WalletRecovery
           onRecoverySuccess={handleRecoverySuccess}
           onCancel={() => setShowRecovery(false)}
+          onOperatorPortal={handleOperatorPortal}
         />
       </div>
+    );
+  }
+
+  // Show Operator Login
+  if (showOperatorLogin) {
+    return (
+      <OperatorLogin
+        onLoginSuccess={handleOperatorLoginSuccess}
+        onCancel={handleOperatorLoginCancel}
+      />
+    );
+  }
+
+  // Show Operator Portal (Command Center or Gateway Manager)
+  if (showOperatorPortal) {
+    if (showGatewayManager) {
+      return <GatewayManagerPage onBack={handleBackFromOperatorPortal} />;
+    }
+    return (
+      <CommandCenterPage
+        onBack={handleBackFromOperatorPortal}
+        onNavigateToGatewayManager={handleNavigateToGatewayManager}
+      />
     );
   }
 

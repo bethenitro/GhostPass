@@ -57,12 +57,12 @@ const Layout: React.FC<LayoutProps> = ({
             </div>
           </div>
           
-          {/* Recover Wallet Button - Mobile */}
+          {/* Recover Wallet / Operator Access Button - Mobile */}
           {onRecoverWallet && (
             <button
               onClick={onRecoverWallet}
               className="flex items-center justify-center p-2 rounded-lg transition-all duration-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400"
-              title="Recover Wallet"
+              title="Recover Wallet or Operator Access"
             >
               <Shield size={20} />
             </button>
@@ -135,14 +135,14 @@ const Layout: React.FC<LayoutProps> = ({
 
         {/* Footer */}
         <div className="p-4 lg:p-6 border-t border-slate-700 space-y-3">
-          {/* Recover Wallet Button */}
+          {/* Recover Wallet / Operator Access Button */}
           {onRecoverWallet && (
             <button
               onClick={onRecoverWallet}
               className="w-full flex items-center justify-center space-x-2 p-3 lg:p-4 rounded-lg transition-all duration-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400"
             >
               <Shield size={20} />
-              <span className="hidden lg:block font-medium">Recover Wallet</span>
+              <span className="hidden lg:block font-medium">Wallet & Access</span>
             </button>
           )}
           

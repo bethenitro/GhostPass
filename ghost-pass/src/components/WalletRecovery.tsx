@@ -4,19 +4,22 @@
  * Allows users to recover their wallet on a new device using:
  * - Wallet ID
  * - Recovery Code
+ * 
+ * Also provides access to Operator Portal for venue/event administrators
  */
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Shield, ArrowRight, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Shield, ArrowRight, Loader2, CheckCircle, AlertTriangle, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface WalletRecoveryProps {
   onRecoverySuccess: () => void;
   onCancel: () => void;
+  onOperatorPortal?: () => void;
 }
 
-const WalletRecovery: React.FC<WalletRecoveryProps> = ({ onRecoverySuccess, onCancel }) => {
+const WalletRecovery: React.FC<WalletRecoveryProps> = ({ onRecoverySuccess, onCancel, onOperatorPortal }) => {
   const [walletId, setWalletId] = useState('');
   const [recoveryCode, setRecoveryCode] = useState('');
   const [isRecovering, setIsRecovering] = useState(false);
@@ -169,6 +172,28 @@ const WalletRecovery: React.FC<WalletRecoveryProps> = ({ onRecoverySuccess, onCa
             Check your saved recovery file or backup.
           </p>
         </div>
+
+        {/* Operator Portal Access */}
+        {onOperatorPortal && (
+          <div className="border-t border-slate-700 pt-4 mt-2">
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 mb-3">
+              <p className="text-amber-400 text-xs font-medium mb-1">
+                Venue/Event Administrator?
+              </p>
+              <p className="text-amber-300/80 text-xs">
+                Access the Operator Portal to manage your venues, gateways, and revenue.
+              </p>
+            </div>
+            <button
+              onClick={onOperatorPortal}
+              className="w-full px-4 py-3 bg-amber-500/20 border border-amber-500/50 text-amber-400 rounded-lg font-medium hover:bg-amber-500/30 transition-all flex items-center justify-center space-x-2"
+            >
+              <Building2 className="w-4 h-4" />
+              <span>Open Operator Portal</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
 
         {/* Actions */}
         <div className="grid grid-cols-2 gap-3 pt-2">

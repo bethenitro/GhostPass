@@ -41,11 +41,21 @@ if (!deviceFingerprint) {
   localStorage.setItem('device_fingerprint', deviceFingerprint);
 }
 
-// Add device fingerprint to requests instead of auth token
+// Add device fingerprint to requests, and auth token for admin/gateway endpoints
 api.interceptors.request.use((config) => {
+  // Always add device fingerprint for wallet operations
   if (deviceFingerprint) {
     config.headers['X-Device-Fingerprint'] = deviceFingerprint;
   }
+  
+  // Add Bearer token for admin and gateway endpoints (operator portal)
+  if (config.url?.startsWith('/admin/') || config.url?.startsWith('/gateway/')) {
+    const authToken = localStorage.getItem('auth_token');
+    if (authToken) {
+      config.headers['Authorization'] = `Bearer ${authToken}`;
+    }
+  }
+  
   return config;
 });
 
@@ -59,24 +69,53 @@ api.interceptors.response.use(
   }
 );
 
-// Auth API - REMOVED (Anonymous mode only)
-// Keeping minimal structure for backward compatibility
+// Auth API - For operator portal authentication only
 export const authApi = {
-  signIn: async () => {
-    throw new Error('Authentication not available in anonymous mode');
+  signIn: async (email: string, password: string) => {
+    const { data } = await api.post('/auth/login', { email, password });
+    if (data.access_token) {
+      localStorage.setItem('auth_token', data.access_token);
+      localStorage.setItem('user_data', JSON.stringify(data.user));
+    }
+    return data;
   },
-  signUp: async () => {
-    throw new Error('Authentication not available in anonymous mode');
+  
+  signUp: async (email: string, password: string) => {
+    const { data } = await api.post('/auth/register', { email, password });
+    if (data.access_token) {
+      localStorage.setItem('auth_token', data.access_token);
+      localStorage.setItem('user_data', JSON.stringify(data.user));
+    }
+    return data;
   },
+  
   signOut: async () => {
-    // Just clear local storage
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_data');
     localStorage.removeItem('ghost_pass_wallet_session');
   },
+  
   getCurrentUser: async () => {
-    return null;
+    try {
+      const { data } = await api.get('/auth/me');
+      return data;
+    } catch (error) {
+      return null;
+    }
   },
-  getToken: () => null,
-  setToken: () => {},
+  
+  getToken: () => localStorage.getItem('auth_token'),
+  
+  setToken: (token: string) => {
+    localStorage.setItem('auth_token', token);
+  },
+  
+  isAuthenticated: () => !!localStorage.getItem('auth_token'),
+  
+  getUserData: () => {
+    const userData = localStorage.getItem('user_data');
+    return userData ? JSON.parse(userData) : null;
+  }
 };
 
 // Wallet API - ALL REQUESTS USE DEVICE FINGERPRINT (NO AUTH)

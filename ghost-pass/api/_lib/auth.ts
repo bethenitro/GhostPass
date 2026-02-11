@@ -18,14 +18,50 @@ export const getCurrentUser = async (req: VercelRequest) => {
   }
 
   const token = authHeader.substring(7);
-  return await verifyToken(token);
+  const user = await verifyToken(token);
+  
+  if (!user) return null;
+
+  // Get user role from database
+  try {
+    const { data: userData } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    return {
+      ...user,
+      role: userData?.role || 'USER'
+    };
+  } catch (error) {
+    return {
+      ...user,
+      role: 'USER'
+    };
+  }
 };
 
 export const requireAuth = async (req: VercelRequest, res: VercelResponse) => {
   const user = await getCurrentUser(req);
   if (!user) {
-    res.status(401).json({ error: 'Unauthorized' });
+    res.status(401).json({ error: 'Unauthorized', detail: 'Authentication required' });
     return null;
   }
+  return user;
+};
+
+export const requireAdmin = async (req: VercelRequest, res: VercelResponse) => {
+  const user = await getCurrentUser(req);
+  if (!user) {
+    res.status(401).json({ error: 'Unauthorized', detail: 'Authentication required' });
+    return null;
+  }
+
+  if (user.role !== 'ADMIN') {
+    res.status(403).json({ error: 'Forbidden', detail: 'Admin access required' });
+    return null;
+  }
+
   return user;
 };

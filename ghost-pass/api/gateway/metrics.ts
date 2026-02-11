@@ -6,33 +6,75 @@ import { supabase } from '../_lib/supabase.js';
 export default async (req: VercelRequest, res: VercelResponse) => {
   if (handleCors(req, res)) return;
 
+  // Require authentication
+  const user = await requireAuth(req, res);
+  if (!user) return;
+
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    await requireAuth(req, res);
+    const { type } = req.query;
 
-    const { pointId } = req.query;
+    // TODO: Get actual venue_id from user context
+    const venueId = 'venue_001';
 
-    if (pointId) {
-      const { data: metrics } = await supabase
-        .from('gateway_metrics')
-        .select('*')
-        .eq('gateway_point_id', pointId)
-        .order('created_at', { ascending: false });
+    // Get all gateway points for the venue
+    let query = supabase
+      .from('gateway_points')
+      .select('id')
+      .eq('venue_id', venueId);
 
-      res.status(200).json(metrics || []);
-    } else {
-      const { data: metrics } = await supabase
-        .from('gateway_metrics')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      res.status(200).json(metrics || []);
+    if (type) {
+      query = query.eq('type', (type as string).toUpperCase());
     }
+
+    const { data: points, error: pointsError } = await query;
+
+    if (pointsError) throw pointsError;
+
+    if (!points || points.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    // Get metrics for each point
+    const allMetrics = [];
+    for (const point of points) {
+      try {
+        const { data, error } = await supabase.rpc('get_gateway_realtime_metrics', {
+          p_gateway_point_id: point.id
+        });
+
+        if (!error && data && data.length > 0) {
+          const metricsData = data[0];
+          allMetrics.push({
+            gateway_point_id: metricsData.gateway_point_id,
+            gateway_name: metricsData.gateway_name,
+            gateway_type: metricsData.gateway_type,
+            gateway_status: metricsData.gateway_status,
+            total_qr_scans: metricsData.total_qr_scans || 0,
+            last_qr_scan: metricsData.last_qr_scan || null,
+            qr_scans_last_hour: metricsData.qr_scans_last_hour || 0,
+            qr_scans_today: metricsData.qr_scans_today || 0,
+            total_transactions: metricsData.total_transactions || 0,
+            last_transaction: metricsData.last_transaction || null,
+            transactions_last_hour: metricsData.transactions_last_hour || 0,
+            transactions_today: metricsData.transactions_today || 0,
+            total_sales_cents: metricsData.total_sales_cents || 0,
+            sales_last_hour_cents: metricsData.sales_last_hour_cents || 0,
+            sales_today_cents: metricsData.sales_today_cents || 0
+          });
+        }
+      } catch (error) {
+        console.warn(`Error fetching metrics for point ${point.id}:`, error);
+        continue;
+      }
+    }
+
+    res.status(200).json(allMetrics);
   } catch (error) {
-    console.error('Get metrics error:', error);
-    res.status(500).json({ detail: 'Failed to fetch metrics' });
+    console.error('Get all gateway metrics error:', error);
+    res.status(500).json({ detail: 'Failed to fetch gateway metrics' });
   }
 };
