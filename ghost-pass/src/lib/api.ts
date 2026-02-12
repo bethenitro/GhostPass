@@ -53,7 +53,8 @@ api.interceptors.request.use((config) => {
       config.url?.startsWith('/gateway/') || 
       config.url?.startsWith('/venue/') ||
       config.url?.startsWith('/audit/') ||
-      config.url?.startsWith('/auth/me')) {
+      config.url?.startsWith('/auth/me') ||
+      config.url?.startsWith('/auth/sso-token')) {
     const authToken = localStorage.getItem('auth_token');
     if (authToken) {
       config.headers['Authorization'] = `Bearer ${authToken}`;

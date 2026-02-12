@@ -134,23 +134,26 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
     <div className="min-h-screen bg-slate-950">
       {/* Header */}
       <div className="border-b border-purple-500/30 bg-gradient-to-r from-purple-500/10 to-transparent sticky top-0 z-10 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 md:py-6">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4 flex-1 min-w-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 md:py-4">
+          <div className="flex flex-col space-y-3 md:flex-row md:items-center md:justify-between md:space-y-0">
+            {/* Left side - Back button and title */}
+            <div className="flex items-center gap-3 md:gap-4 min-w-0">
               <button
                 onClick={onBack}
                 className="p-2 hover:bg-purple-500/10 rounded-lg transition-colors text-purple-400 flex-shrink-0 touch-manipulation active:scale-95"
               >
-                <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
+                <ArrowLeft size={20} />
               </button>
-              <div className="flex-1 min-w-0">
-                <h1 className="text-lg sm:text-xl md:text-3xl font-bold text-purple-400 truncate">Venue Command Center</h1>
-                <p className="text-xs sm:text-sm md:text-base text-slate-400 mt-1 truncate">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg md:text-2xl font-bold text-purple-400 truncate">Venue Command Center</h1>
+                <p className="text-xs md:text-sm text-slate-400 mt-0.5 truncate">
                   Event-scoped controls {eventId && `• Event: ${eventId}`}
                 </p>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
+            
+            {/* Right side - Action buttons */}
+            <div className="flex items-center space-x-2 ml-auto md:ml-0">
               <button
                 onClick={async () => {
                   try {
@@ -162,7 +165,7 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
                     alert('Failed to open beVALID. Please try again.');
                   }
                 }}
-                className="px-3 sm:px-4 py-2 bg-cyan-500/20 border border-cyan-500 text-cyan-400 rounded-lg font-medium hover:bg-cyan-500/30 transition-colors text-sm sm:text-base flex-shrink-0"
+                className="px-3 py-2 md:px-4 bg-cyan-500/20 border border-cyan-500 text-cyan-400 rounded-lg text-sm font-medium hover:bg-cyan-500/30 transition-colors whitespace-nowrap"
               >
                 beVALID
               </button>
@@ -171,7 +174,7 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
                   await authApi.signOut();
                   onBack();
                 }}
-                className="px-3 sm:px-4 py-2 bg-purple-500/20 border border-purple-500 text-purple-400 rounded-lg font-medium hover:bg-purple-500/30 transition-colors text-sm sm:text-base flex-shrink-0"
+                className="px-3 py-2 md:px-4 bg-purple-500/20 border border-purple-500 text-purple-400 rounded-lg text-sm font-medium hover:bg-purple-500/30 transition-colors whitespace-nowrap"
               >
                 Logout
               </button>

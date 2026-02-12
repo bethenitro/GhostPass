@@ -287,28 +287,30 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
       {/* Header */}
       <div className="bg-slate-900/95 backdrop-blur-xl border-b border-red-500/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
+          <div className="flex flex-col space-y-3 py-3 md:flex-row md:items-center md:justify-between md:h-16 md:space-y-0 md:py-0">
+            {/* Left side - Back button and title */}
+            <div className="flex items-center space-x-3 md:space-x-4">
               <button
                 onClick={onBack}
-                className="p-2 hover:bg-red-500/10 rounded-lg transition-colors text-red-400"
+                className="p-2 hover:bg-red-500/10 rounded-lg transition-colors text-red-400 flex-shrink-0"
               >
                 <ArrowLeft size={20} />
               </button>
-              <div className="flex items-center space-x-3">
-                <AlertTriangle className="text-red-400" size={24} />
-                <div>
-                  <h1 className="text-xl font-bold text-red-400">COMMAND CENTER</h1>
+              <div className="flex items-center space-x-2 md:space-x-3 min-w-0">
+                <AlertTriangle className="text-red-400 flex-shrink-0" size={20} />
+                <div className="min-w-0">
+                  <h1 className="text-lg md:text-xl font-bold text-red-400 truncate">COMMAND CENTER</h1>
                   <div className="flex items-center space-x-2">
-                    <div className="px-2 py-1 bg-red-500/20 border border-red-500/50 rounded text-xs font-medium text-red-300">
+                    <div className="px-2 py-0.5 bg-red-500/20 border border-red-500/50 rounded text-xs font-medium text-red-300 whitespace-nowrap">
                       AUDIT LOGGED
                     </div>
-                    <span className="text-xs text-slate-400 hidden sm:inline">Every change is tracked</span>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
+            
+            {/* Right side - Action buttons */}
+            <div className="flex items-center space-x-2 ml-auto md:ml-0">
               <button
                 onClick={async () => {
                   try {
@@ -320,7 +322,7 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                     alert('Failed to open beVALID. Please try again.');
                   }
                 }}
-                className="px-4 py-2 bg-cyan-500/20 border border-cyan-500 text-cyan-400 rounded-lg font-medium hover:bg-cyan-500/30 transition-colors"
+                className="px-3 py-2 md:px-4 bg-cyan-500/20 border border-cyan-500 text-cyan-400 rounded-lg text-sm font-medium hover:bg-cyan-500/30 transition-colors whitespace-nowrap"
               >
                 beVALID
               </button>
@@ -329,7 +331,7 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                   await authApi.signOut();
                   onBack();
                 }}
-                className="px-4 py-2 bg-red-500/20 border border-red-500 text-red-400 rounded-lg font-medium hover:bg-red-500/30 transition-colors"
+                className="px-3 py-2 md:px-4 bg-red-500/20 border border-red-500 text-red-400 rounded-lg text-sm font-medium hover:bg-red-500/30 transition-colors whitespace-nowrap"
               >
                 Logout
               </button>
