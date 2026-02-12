@@ -1,8 +1,11 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../_lib/cors.js';
 import { requireAuth } from '../_lib/auth.js';
-import { supabase } from '../_lib/supabase.js';
+import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+
+const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || '';
 
 export default async (req: VercelRequest, res: VercelResponse) => {
   if (handleCors(req, res)) return;
@@ -23,6 +26,23 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         return res.status(400).json({ error: 'device_fingerprint is required' });
       }
 
+      // Get the user's JWT token from the Authorization header
+      const authHeader = req.headers.authorization;
+      const userToken = authHeader?.substring(7); // Remove 'Bearer ' prefix
+
+      if (!userToken) {
+        return res.status(401).json({ error: 'Missing authentication token' });
+      }
+
+      // Create an authenticated Supabase client with the user's JWT token
+      const authenticatedSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+        global: {
+          headers: {
+            Authorization: `Bearer ${userToken}`
+          }
+        }
+      });
+
       // Generate a secure SSO token
       // Format: userId:deviceFingerprint:timestamp:randomBytes
       const timestamp = Date.now();
@@ -38,7 +58,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       // Store the SSO token in database with expiration (5 minutes)
       const expiresAt = new Date(timestamp + 5 * 60 * 1000); // 5 minutes from now
 
-      const { data: tokenRecord, error: insertError } = await supabase
+      const { data: tokenRecord, error: insertError } = await authenticatedSupabase
         .from('sso_tokens')
         .insert({
           token: ssoToken,
@@ -53,8 +73,8 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
       if (insertError) throw insertError;
 
-      // Log the SSO token generation
-      await supabase.from('audit_logs').insert({
+      // Log the SSO token generation (using authenticated client)
+      await authenticatedSupabase.from('audit_logs').insert({
         admin_user_id: user.id,
         admin_email: user.email,
         action: 'SSO_TOKEN_GENERATED',
