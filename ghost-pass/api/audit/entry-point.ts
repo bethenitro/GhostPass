@@ -22,17 +22,34 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         offset = '0'
       } = req.query;
 
-      // Call the database function to get filtered audit logs
-      const { data, error } = await supabase.rpc('get_entry_point_audit_logs', {
-        p_entry_point_id: entry_point_id || null,
-        p_employee_name: employee_name || null,
-        p_action_type: action_type || null,
-        p_start_date: start_date || null,
-        p_end_date: end_date || null,
-        p_source_location: source_location || null,
-        p_limit: parseInt(limit as string),
-        p_offset: parseInt(offset as string)
-      });
+      // Build query for entry_point_audit_logs table
+      let query = supabase
+        .from('entry_point_audit_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .range(parseInt(offset as string), parseInt(offset as string) + parseInt(limit as string) - 1);
+
+      // Apply filters
+      if (entry_point_id) {
+        query = query.eq('entry_point_id', entry_point_id);
+      }
+      if (employee_name) {
+        query = query.ilike('employee_name', `%${employee_name}%`);
+      }
+      if (action_type) {
+        query = query.eq('action_type', action_type);
+      }
+      if (start_date) {
+        query = query.gte('created_at', start_date);
+      }
+      if (end_date) {
+        query = query.lte('created_at', end_date);
+      }
+      if (source_location) {
+        query = query.ilike('source_location', `%${source_location}%`);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
