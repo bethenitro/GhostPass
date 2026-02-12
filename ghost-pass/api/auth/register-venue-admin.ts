@@ -40,6 +40,20 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         });
       }
 
+      // Check if user with this email already exists in users table
+      const { data: existingUser, error: existingUserError } = await supabase
+        .from('users')
+        .select('id, email, role')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (existingUser) {
+        return res.status(400).json({
+          error: 'Email already registered',
+          detail: 'An account with this email already exists. Please sign in instead.'
+        });
+      }
+
       // Check if venue admin already exists for this venue
       const { data: existingVenueAdmin, error: checkError } = await supabase
         .from('users')
@@ -87,23 +101,27 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         });
       }
 
-      // Create user record in users table with VENUE_ADMIN role
+      // Create or update user record in users table with VENUE_ADMIN role
+      // Use upsert to handle case where user already exists
       const { data: userData, error: userError } = await supabase
         .from('users')
-        .insert({
+        .upsert({
           id: authData.user.id,
           email: email,
           role: 'VENUE_ADMIN',
           venue_id: venue_id,
           event_id: event_id || null,
           created_at: new Date().toISOString()
+        }, {
+          onConflict: 'id',
+          ignoreDuplicates: false
         })
         .select()
         .single();
 
       if (userError) {
-        console.error('User table insert error:', userError);
-        // Try to clean up auth user if user table insert fails
+        console.error('User table upsert error:', userError);
+        // Try to clean up auth user if user table upsert fails
         try {
           await supabase.auth.admin.deleteUser(authData.user.id);
         } catch (cleanupError) {
