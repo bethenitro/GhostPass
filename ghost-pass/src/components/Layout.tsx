@@ -61,10 +61,11 @@ const Layout: React.FC<LayoutProps> = ({
           {onRecoverWallet && (
             <button
               onClick={onRecoverWallet}
-              className="flex items-center justify-center p-2 rounded-lg transition-all duration-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400"
+              className="flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400"
               title="Recover Wallet or Operator Access"
             >
               <Shield size={20} />
+              <span className="text-[10px] font-medium mt-0.5">Wallet & Access</span>
             </button>
           )}
         </div>

@@ -150,15 +150,32 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
                 </p>
               </div>
             </div>
-            <button
-              onClick={async () => {
-                await authApi.signOut();
-                onBack();
-              }}
-              className="px-3 sm:px-4 py-2 bg-purple-500/20 border border-purple-500 text-purple-400 rounded-lg font-medium hover:bg-purple-500/30 transition-colors text-sm sm:text-base flex-shrink-0"
-            >
-              Logout
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={async () => {
+                  try {
+                    const deviceFingerprint = localStorage.getItem('device_fingerprint') || '';
+                    const ssoData = await authApi.generateSSOToken(deviceFingerprint);
+                    window.open(ssoData.bevalid_url, '_blank');
+                  } catch (error) {
+                    console.error('Error generating SSO token:', error);
+                    alert('Failed to open beVALID. Please try again.');
+                  }
+                }}
+                className="px-3 sm:px-4 py-2 bg-cyan-500/20 border border-cyan-500 text-cyan-400 rounded-lg font-medium hover:bg-cyan-500/30 transition-colors text-sm sm:text-base flex-shrink-0"
+              >
+                beVALID
+              </button>
+              <button
+                onClick={async () => {
+                  await authApi.signOut();
+                  onBack();
+                }}
+                className="px-3 sm:px-4 py-2 bg-purple-500/20 border border-purple-500 text-purple-400 rounded-lg font-medium hover:bg-purple-500/30 transition-colors text-sm sm:text-base flex-shrink-0"
+              >
+                Logout
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -245,10 +262,20 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
                     type="number"
                     step="0.01"
                     value={(config.initial_entry_fee_cents / 100).toFixed(2)}
-                    onChange={(e) => setConfig(prev => ({ 
-                      ...prev, 
-                      initial_entry_fee_cents: Math.round(parseFloat(e.target.value) * 100) 
-                    }))}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === '' || value === '.') {
+                        setConfig(prev => ({ ...prev, initial_entry_fee_cents: 0 }));
+                      } else {
+                        const parsed = parseFloat(value);
+                        if (!isNaN(parsed)) {
+                          setConfig(prev => ({ 
+                            ...prev, 
+                            initial_entry_fee_cents: Math.round(parsed * 100) 
+                          }));
+                        }
+                      }
+                    }}
                     className="w-full pl-8 pr-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-purple-500 focus:outline-none text-base"
                   />
                 </div>
@@ -265,10 +292,20 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
                     type="number"
                     step="0.01"
                     value={(config.venue_reentry_fee_cents / 100).toFixed(2)}
-                    onChange={(e) => setConfig(prev => ({ 
-                      ...prev, 
-                      venue_reentry_fee_cents: Math.round(parseFloat(e.target.value) * 100) 
-                    }))}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === '' || value === '.') {
+                        setConfig(prev => ({ ...prev, venue_reentry_fee_cents: 0 }));
+                      } else {
+                        const parsed = parseFloat(value);
+                        if (!isNaN(parsed)) {
+                          setConfig(prev => ({ 
+                            ...prev, 
+                            venue_reentry_fee_cents: Math.round(parsed * 100) 
+                          }));
+                        }
+                      }
+                    }}
                     disabled={!config.re_entry_allowed}
                     className="w-full pl-8 pr-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-purple-500 focus:outline-none text-base disabled:opacity-50 disabled:cursor-not-allowed"
                   />
@@ -286,10 +323,20 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
                     type="number"
                     step="0.01"
                     value={(config.valid_reentry_scan_fee_cents / 100).toFixed(2)}
-                    onChange={(e) => setConfig(prev => ({ 
-                      ...prev, 
-                      valid_reentry_scan_fee_cents: Math.round(parseFloat(e.target.value) * 100) 
-                    }))}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === '' || value === '.') {
+                        setConfig(prev => ({ ...prev, valid_reentry_scan_fee_cents: 0 }));
+                      } else {
+                        const parsed = parseFloat(value);
+                        if (!isNaN(parsed)) {
+                          setConfig(prev => ({ 
+                            ...prev, 
+                            valid_reentry_scan_fee_cents: Math.round(parsed * 100) 
+                          }));
+                        }
+                      }
+                    }}
                     disabled={!config.re_entry_allowed}
                     className="w-full pl-8 pr-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-purple-500 focus:outline-none text-base disabled:opacity-50 disabled:cursor-not-allowed"
                   />

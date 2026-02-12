@@ -136,6 +136,14 @@ export const authApi = {
   getUserData: () => {
     const userData = localStorage.getItem('user_data');
     return userData ? JSON.parse(userData) : null;
+  },
+
+  // Generate SSO token for beVALID
+  generateSSOToken: async (deviceFingerprint: string) => {
+    const { data } = await api.post('/auth/sso-token', {
+      device_fingerprint: deviceFingerprint
+    });
+    return data;
   }
 };
 
