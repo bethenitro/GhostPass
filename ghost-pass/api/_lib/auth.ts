@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { supabase } from './supabase';
+import { supabase } from './supabase.js';
 
 export const verifyToken = async (token: string) => {
   try {

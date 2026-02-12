@@ -6,7 +6,7 @@
  */
 
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { supabase } from './supabase';
+import { supabase } from './supabase.js';
 
 export interface WalletAuth {
   wallet_id: string;
