@@ -14,7 +14,6 @@ import CommandCenterRouter from './components/CommandCenterRouter';
 import GatewayManagerPage from './components/GatewayManagerPage';
 import AuditTrail from './components/AuditTrail';
 import OperatorLogin from './components/OperatorLogin';
-import VenueAdminSignup from './components/VenueAdminSignup';
 import { ghostPassApi, authApi } from './lib/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ToastProvider } from './components/ui/toast';
@@ -42,7 +41,6 @@ const AppContent: React.FC = () => {
   const [showRecovery, setShowRecovery] = useState(false);
   const [showOperatorPortal, setShowOperatorPortal] = useState(false);
   const [showOperatorLogin, setShowOperatorLogin] = useState(false);
-  const [showVenueAdminSignup, setShowVenueAdminSignup] = useState(false);
   const [showGatewayManager, setShowGatewayManager] = useState(false);
   const [showAuditTrail, setShowAuditTrail] = useState(false);
   const queryClient = useQueryClient();
@@ -215,21 +213,6 @@ const AppContent: React.FC = () => {
     setShowOperatorLogin(false);
   };
 
-  const handleVenueAdminSignup = () => {
-    setShowOperatorLogin(false);
-    setShowVenueAdminSignup(true);
-  };
-
-  const handleVenueAdminSignupSuccess = () => {
-    setShowVenueAdminSignup(false);
-    setShowOperatorPortal(true);
-  };
-
-  const handleVenueAdminSignupCancel = () => {
-    setShowVenueAdminSignup(false);
-    setShowOperatorLogin(true);
-  };
-
   const handleBackFromOperatorPortal = () => {
     setShowOperatorPortal(false);
     setShowGatewayManager(false);
@@ -276,17 +259,6 @@ const AppContent: React.FC = () => {
       <OperatorLogin
         onLoginSuccess={handleOperatorLoginSuccess}
         onCancel={handleOperatorLoginCancel}
-        onVenueAdminSignup={handleVenueAdminSignup}
-      />
-    );
-  }
-
-  // Show Venue Admin Signup
-  if (showVenueAdminSignup) {
-    return (
-      <VenueAdminSignup
-        onSuccess={handleVenueAdminSignupSuccess}
-        onCancel={handleVenueAdminSignupCancel}
       />
     );
   }

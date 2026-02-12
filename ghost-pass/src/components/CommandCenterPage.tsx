@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, AlertTriangle, Shield, DollarSign, Users, Database, FileText, ChevronDown, ChevronRight, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { adminApi } from '@/lib/api';
+import { adminApi, authApi } from '@/lib/api';
 import AdminSetupCheck from './AdminSetupCheck';
 import BankVisualPlaceholders from './BankVisualPlaceholders';
 import type {
@@ -308,6 +308,15 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                 </div>
               </div>
             </div>
+            <button
+              onClick={async () => {
+                await authApi.signOut();
+                onBack();
+              }}
+              className="px-4 py-2 bg-red-500/20 border border-red-500 text-red-400 rounded-lg font-medium hover:bg-red-500/30 transition-colors"
+            >
+              Logout
+            </button>
           </div>
         </div>
       </div>

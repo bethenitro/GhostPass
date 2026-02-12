@@ -883,5 +883,44 @@ export const venueApi = {
     
     const { data } = await api.get(`/venue/audit-logs?${params.toString()}`);
     return data;
+  },
+
+  // Vendor Items Management
+  getVendorItems: async (venueId?: string, eventId?: string) => {
+    const params = new URLSearchParams();
+    if (venueId) params.append('venue_id', venueId);
+    if (eventId) params.append('event_id', eventId);
+    
+    const { data } = await api.get(`/venue/items?${params.toString()}`);
+    return data;
+  },
+
+  createVendorItem: async (item: {
+    name: string;
+    price_cents: number;
+    category: string;
+    description?: string;
+    available?: boolean;
+    event_id?: string;
+  }) => {
+    const { data } = await api.post('/venue/items', item);
+    return data;
+  },
+
+  updateVendorItem: async (item: {
+    id: string;
+    name?: string;
+    price_cents?: number;
+    category?: string;
+    description?: string;
+    available?: boolean;
+  }) => {
+    const { data } = await api.put('/venue/items', item);
+    return data;
+  },
+
+  deleteVendorItem: async (itemId: string) => {
+    const { data } = await api.delete(`/venue/items?id=${itemId}`);
+    return data;
   }
 };

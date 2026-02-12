@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, DollarSign, Users, TrendingUp, FileText, ToggleLeft, ToggleRight, Save } from 'lucide-react';
-import { venueApi } from '@/lib/api';
+import { ArrowLeft, DollarSign, Users, TrendingUp, FileText, ToggleLeft, ToggleRight, Save, QrCode, Package, Eye, Download, Trash2, Edit } from 'lucide-react';
+import { venueApi, authApi, gatewayApi } from '@/lib/api';
 import type { VenueDashboard, VenueEntryConfig } from '@/types';
+import QRCodeLib from 'qrcode';
 
 interface VenueCommandCenterProps {
   onBack: () => void;
@@ -134,19 +135,30 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
       {/* Header */}
       <div className="border-b border-purple-500/30 bg-gradient-to-r from-purple-500/10 to-transparent sticky top-0 z-10 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 md:py-6">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={onBack}
-              className="p-2 hover:bg-purple-500/10 rounded-lg transition-colors text-purple-400 flex-shrink-0 touch-manipulation active:scale-95"
-            >
-              <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
-            </button>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-lg sm:text-xl md:text-3xl font-bold text-purple-400 truncate">Venue Command Center</h1>
-              <p className="text-xs sm:text-sm md:text-base text-slate-400 mt-1 truncate">
-                Event-scoped controls {eventId && `• Event: ${eventId}`}
-              </p>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4 flex-1 min-w-0">
+              <button
+                onClick={onBack}
+                className="p-2 hover:bg-purple-500/10 rounded-lg transition-colors text-purple-400 flex-shrink-0 touch-manipulation active:scale-95"
+              >
+                <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
+              </button>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-lg sm:text-xl md:text-3xl font-bold text-purple-400 truncate">Venue Command Center</h1>
+                <p className="text-xs sm:text-sm md:text-base text-slate-400 mt-1 truncate">
+                  Event-scoped controls {eventId && `• Event: ${eventId}`}
+                </p>
+              </div>
             </div>
+            <button
+              onClick={async () => {
+                await authApi.signOut();
+                onBack();
+              }}
+              className="px-3 sm:px-4 py-2 bg-purple-500/20 border border-purple-500 text-purple-400 rounded-lg font-medium hover:bg-purple-500/30 transition-colors text-sm sm:text-base flex-shrink-0"
+            >
+              Logout
+            </button>
           </div>
         </div>
       </div>
@@ -364,7 +376,496 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
             <p className="text-slate-400 text-center py-8">No recent activity</p>
           )}
         </div>
+
+        {/* Entry Point QR Codes */}
+        <EntryPointQRSection venueId={venueId} eventId={eventId} />
+
+        {/* Vendor Item Configuration */}
+        <VendorItemSection venueId={venueId} eventId={eventId} />
+
+        {/* Revenue Visibility */}
+        <RevenueVisibilitySection venueId={venueId} eventId={eventId} />
       </div>
+    </div>
+  );
+};
+
+// Entry Point QR Code Generator Section
+const EntryPointQRSection: React.FC<{ venueId?: string; eventId?: string }> = ({ venueId, eventId }) => {
+  const [entryPoints, setEntryPoints] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedPoint, setSelectedPoint] = useState<string | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
+
+  useEffect(() => {
+    loadEntryPoints();
+  }, [venueId]);
+
+  const loadEntryPoints = async () => {
+    try {
+      setLoading(true);
+      const points = await gatewayApi.getEntryPoints();
+      setEntryPoints(points);
+    } catch (error) {
+      console.error('Error loading entry points:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateQRCode = async (pointId: string, pointName: string) => {
+    try {
+      const qrData = JSON.stringify({
+        type: 'ENTRY_POINT',
+        venue_id: venueId,
+        event_id: eventId,
+        entry_point_id: pointId,
+        entry_point_name: pointName,
+        timestamp: new Date().toISOString()
+      });
+
+      // Generate QR code as data URL
+      const dataUrl = await QRCodeLib.toDataURL(qrData, {
+        width: 400,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+
+      setQrDataUrl(dataUrl);
+      setSelectedPoint(pointId);
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+    }
+  };
+
+  const downloadQRCode = (pointName: string) => {
+    const link = document.createElement('a');
+    link.download = `entry-point-${pointName.replace(/\s+/g, '-').toLowerCase()}.png`;
+    link.href = qrDataUrl;
+    link.click();
+  };
+
+  return (
+    <div className="bg-slate-900/50 backdrop-blur-sm border border-purple-500/20 rounded-lg p-4 sm:p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg sm:text-xl font-bold text-purple-400">Entry Point QR Codes</h2>
+        <QrCode className="text-purple-400" size={24} />
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400"></div>
+        </div>
+      ) : entryPoints.length > 0 ? (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {entryPoints.map((point) => (
+              <div key={point.id} className="bg-slate-800/50 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <h3 className="text-base font-semibold text-white">{point.name}</h3>
+                    <p className="text-xs text-slate-400">{point.type.replace(/_/g, ' ')}</p>
+                  </div>
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${
+                    point.status === 'ENABLED' 
+                      ? 'bg-emerald-500/20 text-emerald-400' 
+                      : 'bg-slate-700 text-slate-400'
+                  }`}>
+                    {point.status}
+                  </span>
+                </div>
+                <button
+                  onClick={() => generateQRCode(point.id, point.name)}
+                  className="w-full mt-2 px-4 py-2 bg-purple-500/20 border border-purple-500 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors text-sm"
+                >
+                  Generate QR Code
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {qrDataUrl && selectedPoint && (
+            <div className="bg-slate-800/50 rounded-lg p-6 text-center">
+              <h3 className="text-lg font-semibold text-white mb-4">
+                QR Code for {entryPoints.find(p => p.id === selectedPoint)?.name}
+              </h3>
+              <div className="inline-block bg-white p-4 rounded-lg mb-4">
+                <img src={qrDataUrl} alt="Entry Point QR Code" className="w-64 h-64" />
+              </div>
+              <div className="flex justify-center gap-3">
+                <button
+                  onClick={() => downloadQRCode(entryPoints.find(p => p.id === selectedPoint)?.name || 'entry-point')}
+                  className="inline-flex items-center space-x-2 px-4 py-2 bg-emerald-500/20 border border-emerald-500 text-emerald-400 rounded-lg hover:bg-emerald-500/30 transition-colors"
+                >
+                  <Download size={18} />
+                  <span>Download QR Code</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setQrDataUrl('');
+                    setSelectedPoint(null);
+                  }}
+                  className="px-4 py-2 bg-slate-700 border border-slate-600 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <p className="text-slate-400 text-center py-8">No entry points configured</p>
+      )}
+    </div>
+  );
+};
+
+// Vendor Item Configuration Section
+const VendorItemSection: React.FC<{ venueId?: string; eventId?: string }> = ({ venueId, eventId }) => {
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingItem, setEditingItem] = useState<any>(null);
+  const [newItem, setNewItem] = useState({
+    name: '',
+    price_cents: 0,
+    category: 'FOOD',
+    description: '',
+    available: true
+  });
+
+  const categories = ['FOOD', 'BEVERAGE', 'MERCHANDISE', 'SERVICE', 'OTHER'];
+
+  useEffect(() => {
+    loadItems();
+  }, [venueId, eventId]);
+
+  const loadItems = async () => {
+    try {
+      setLoading(true);
+      const data = await venueApi.getVendorItems(venueId, eventId);
+      setItems(data);
+    } catch (error) {
+      console.error('Error loading vendor items:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddItem = async () => {
+    try {
+      await venueApi.createVendorItem({
+        ...newItem,
+        event_id: eventId
+      });
+      setShowAddForm(false);
+      setNewItem({ name: '', price_cents: 0, category: 'FOOD', description: '', available: true });
+      await loadItems();
+    } catch (error) {
+      console.error('Error adding item:', error);
+    }
+  };
+
+  const handleUpdateItem = async () => {
+    try {
+      await venueApi.updateVendorItem(editingItem);
+      setEditingItem(null);
+      await loadItems();
+    } catch (error) {
+      console.error('Error updating item:', error);
+    }
+  };
+
+  const handleDeleteItem = async (itemId: string) => {
+    if (!confirm('Are you sure you want to delete this item?')) return;
+    
+    try {
+      await venueApi.deleteVendorItem(itemId);
+      await loadItems();
+    } catch (error) {
+      console.error('Error deleting item:', error);
+    }
+  };
+
+  const formatCurrency = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+
+  return (
+    <div className="bg-slate-900/50 backdrop-blur-sm border border-purple-500/20 rounded-lg p-4 sm:p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center space-x-2">
+          <Package className="text-purple-400" size={24} />
+          <h2 className="text-lg sm:text-xl font-bold text-purple-400">Vendor Items</h2>
+        </div>
+        <button
+          onClick={() => setShowAddForm(!showAddForm)}
+          className="px-4 py-2 bg-purple-500/20 border border-purple-500 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors text-sm"
+        >
+          {showAddForm ? 'Cancel' : 'Add Item'}
+        </button>
+      </div>
+
+      {showAddForm && (
+        <div className="bg-slate-800/50 rounded-lg p-4 mb-4 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Item Name</label>
+              <input
+                type="text"
+                value={newItem.name}
+                onChange={(e) => setNewItem(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="e.g., Hot Dog"
+                className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-purple-500 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Price</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={(newItem.price_cents / 100).toFixed(2)}
+                  onChange={(e) => setNewItem(prev => ({ 
+                    ...prev, 
+                    price_cents: Math.round(parseFloat(e.target.value || '0') * 100) 
+                  }))}
+                  className="w-full pl-8 pr-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-purple-500 focus:outline-none"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Category</label>
+              <select
+                value={newItem.category}
+                onChange={(e) => setNewItem(prev => ({ ...prev, category: e.target.value }))}
+                className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-purple-500 focus:outline-none"
+              >
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Description (Optional)</label>
+              <input
+                type="text"
+                value={newItem.description}
+                onChange={(e) => setNewItem(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Item description"
+                className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-purple-500 focus:outline-none"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <button
+              onClick={handleAddItem}
+              disabled={!newItem.name || newItem.price_cents <= 0}
+              className="px-4 py-2 bg-emerald-500/20 border border-emerald-500 text-emerald-400 rounded-lg hover:bg-emerald-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Add Item
+            </button>
+          </div>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400"></div>
+        </div>
+      ) : items.length > 0 ? (
+        <div className="space-y-3">
+          {items.map((item) => (
+            <div key={item.id} className="bg-slate-800/50 rounded-lg p-4">
+              {editingItem?.id === item.id ? (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input
+                      type="text"
+                      value={editingItem.name}
+                      onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
+                      className="px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-purple-500 focus:outline-none"
+                    />
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={(editingItem.price_cents / 100).toFixed(2)}
+                        onChange={(e) => setEditingItem({ 
+                          ...editingItem, 
+                          price_cents: Math.round(parseFloat(e.target.value || '0') * 100) 
+                        })}
+                        className="w-full pl-8 pr-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-purple-500 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <button
+                      onClick={() => setEditingItem(null)}
+                      className="px-3 py-1 bg-slate-700 border border-slate-600 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors text-sm"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleUpdateItem}
+                      className="px-3 py-1 bg-emerald-500/20 border border-emerald-500 text-emerald-400 rounded-lg hover:bg-emerald-500/30 transition-colors text-sm"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2">
+                      <h3 className="text-base font-semibold text-white">{item.name}</h3>
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                        item.available 
+                          ? 'bg-emerald-500/20 text-emerald-400' 
+                          : 'bg-slate-700 text-slate-400'
+                      }`}>
+                        {item.available ? 'Available' : 'Unavailable'}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-3 mt-1">
+                      <p className="text-sm text-slate-400">{item.category}</p>
+                      <p className="text-lg font-bold text-emerald-400">{formatCurrency(item.price_cents)}</p>
+                    </div>
+                    {item.description && (
+                      <p className="text-xs text-slate-500 mt-1">{item.description}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setEditingItem(item)}
+                      className="p-2 bg-blue-500/20 border border-blue-500 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors"
+                    >
+                      <Edit size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteItem(item.id)}
+                      className="p-2 bg-red-500/20 border border-red-500 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-slate-400 text-center py-8">
+          <Package className="mx-auto mb-2 text-slate-600" size={48} />
+          <p>No vendor items configured</p>
+          <p className="text-sm text-slate-500 mt-1">Add items available for sale at your venue</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Revenue Visibility Section
+const RevenueVisibilitySection: React.FC<{ venueId?: string; eventId?: string }> = ({ venueId }) => {
+  const [revenueData, setRevenueData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [timeRange] = useState<'today' | 'week' | 'month' | 'all'>('today');
+
+  useEffect(() => {
+    loadRevenueData();
+  }, [venueId, timeRange]);
+
+  const loadRevenueData = async () => {
+    try {
+      setLoading(true);
+      const stats = await venueApi.getStats(venueId);
+      
+      setRevenueData({
+        total_revenue: stats.total_revenue_cents || 0,
+        entry_fees: stats.venue_revenue_cents || 0,
+        reentry_fees: stats.venue_revenue_cents || 0,
+        vendor_sales: 0, // Would need separate vendor sales tracking
+        platform_fees: stats.valid_revenue_cents || 0
+      });
+    } catch (error) {
+      console.error('Error loading revenue data:', error);
+      setRevenueData({
+        total_revenue: 0,
+        entry_fees: 0,
+        reentry_fees: 0,
+        vendor_sales: 0,
+        platform_fees: 0
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatCurrency = (cents: number) => {
+    return `$${(cents / 100).toFixed(2)}`;
+  };
+
+  return (
+    <div className="bg-slate-900/50 backdrop-blur-sm border border-purple-500/20 rounded-lg p-4 sm:p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center space-x-2">
+          <Eye className="text-purple-400" size={24} />
+          <h2 className="text-lg sm:text-xl font-bold text-purple-400">Revenue Breakdown</h2>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400"></div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="bg-gradient-to-r from-purple-500/20 to-transparent rounded-lg p-4 border border-purple-500/30">
+            <p className="text-sm text-slate-400 mb-1">Total Revenue</p>
+            <p className="text-3xl font-bold text-white">{formatCurrency(revenueData?.total_revenue || 0)}</p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="bg-slate-800/50 rounded-lg p-3">
+              <p className="text-xs text-slate-400 mb-1">Entry Fees</p>
+              <p className="text-lg font-bold text-emerald-400">{formatCurrency(revenueData?.entry_fees || 0)}</p>
+            </div>
+            <div className="bg-slate-800/50 rounded-lg p-3">
+              <p className="text-xs text-slate-400 mb-1">Re-Entry Fees</p>
+              <p className="text-lg font-bold text-blue-400">{formatCurrency(revenueData?.reentry_fees || 0)}</p>
+            </div>
+            <div className="bg-slate-800/50 rounded-lg p-3">
+              <p className="text-xs text-slate-400 mb-1">Vendor Sales</p>
+              <p className="text-lg font-bold text-amber-400">{formatCurrency(revenueData?.vendor_sales || 0)}</p>
+            </div>
+            <div className="bg-slate-800/50 rounded-lg p-3">
+              <p className="text-xs text-slate-400 mb-1">Platform Fees</p>
+              <p className="text-lg font-bold text-purple-400">{formatCurrency(revenueData?.platform_fees || 0)}</p>
+            </div>
+          </div>
+
+          <div className="bg-slate-800/50 rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-white mb-3">Revenue Distribution</h3>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-400">Your Share (Venue)</span>
+                <span className="text-white font-medium">{formatCurrency(revenueData?.entry_fees || 0)}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-400">VALID Platform Fee</span>
+                <span className="text-white font-medium">{formatCurrency(revenueData?.platform_fees || 0)}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-400">Vendor Earnings</span>
+                <span className="text-white font-medium">{formatCurrency(revenueData?.vendor_sales || 0)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
