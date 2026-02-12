@@ -10,9 +10,11 @@ import GhostPassScanner from './components/GhostPassScanner';
 import WalletRecovery from './components/WalletRecovery';
 import TicketPurchase from './components/TicketPurchase';
 import GhostPassModesTester from './components/GhostPassModesTester';
-import CommandCenterPage from './components/CommandCenterPage';
+import CommandCenterRouter from './components/CommandCenterRouter';
 import GatewayManagerPage from './components/GatewayManagerPage';
+import AuditTrail from './components/AuditTrail';
 import OperatorLogin from './components/OperatorLogin';
+import VenueAdminSignup from './components/VenueAdminSignup';
 import { ghostPassApi, authApi } from './lib/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ToastProvider } from './components/ui/toast';
@@ -40,7 +42,9 @@ const AppContent: React.FC = () => {
   const [showRecovery, setShowRecovery] = useState(false);
   const [showOperatorPortal, setShowOperatorPortal] = useState(false);
   const [showOperatorLogin, setShowOperatorLogin] = useState(false);
+  const [showVenueAdminSignup, setShowVenueAdminSignup] = useState(false);
   const [showGatewayManager, setShowGatewayManager] = useState(false);
+  const [showAuditTrail, setShowAuditTrail] = useState(false);
   const queryClient = useQueryClient();
 
   // Initialize app (device fingerprint is handled in API client)
@@ -211,13 +215,35 @@ const AppContent: React.FC = () => {
     setShowOperatorLogin(false);
   };
 
+  const handleVenueAdminSignup = () => {
+    setShowOperatorLogin(false);
+    setShowVenueAdminSignup(true);
+  };
+
+  const handleVenueAdminSignupSuccess = () => {
+    setShowVenueAdminSignup(false);
+    setShowOperatorPortal(true);
+  };
+
+  const handleVenueAdminSignupCancel = () => {
+    setShowVenueAdminSignup(false);
+    setShowOperatorLogin(true);
+  };
+
   const handleBackFromOperatorPortal = () => {
     setShowOperatorPortal(false);
     setShowGatewayManager(false);
+    setShowAuditTrail(false);
   };
 
   const handleNavigateToGatewayManager = () => {
     setShowGatewayManager(true);
+    setShowAuditTrail(false);
+  };
+
+  const handleNavigateToAuditTrail = () => {
+    setShowAuditTrail(true);
+    setShowGatewayManager(false);
   };
 
   if (loading) {
@@ -250,19 +276,34 @@ const AppContent: React.FC = () => {
       <OperatorLogin
         onLoginSuccess={handleOperatorLoginSuccess}
         onCancel={handleOperatorLoginCancel}
+        onVenueAdminSignup={handleVenueAdminSignup}
       />
     );
   }
 
-  // Show Operator Portal (Command Center or Gateway Manager)
+  // Show Venue Admin Signup
+  if (showVenueAdminSignup) {
+    return (
+      <VenueAdminSignup
+        onSuccess={handleVenueAdminSignupSuccess}
+        onCancel={handleVenueAdminSignupCancel}
+      />
+    );
+  }
+
+  // Show Operator Portal (Command Center or Gateway Manager or Audit Trail)
   if (showOperatorPortal) {
     if (showGatewayManager) {
       return <GatewayManagerPage onBack={handleBackFromOperatorPortal} />;
     }
+    if (showAuditTrail) {
+      return <AuditTrail onBack={handleBackFromOperatorPortal} />;
+    }
     return (
-      <CommandCenterPage
+      <CommandCenterRouter
         onBack={handleBackFromOperatorPortal}
         onNavigateToGatewayManager={handleNavigateToGatewayManager}
+        onNavigateToAuditTrail={handleNavigateToAuditTrail}
       />
     );
   }

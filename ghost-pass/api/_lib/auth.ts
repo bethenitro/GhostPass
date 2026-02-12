@@ -22,17 +22,19 @@ export const getCurrentUser = async (req: VercelRequest) => {
   
   if (!user) return null;
 
-  // Get user role from database
+  // Get user role and venue/event info from database
   try {
     const { data: userData } = await supabase
       .from('users')
-      .select('role')
+      .select('role, venue_id, event_id')
       .eq('id', user.id)
       .single();
 
     return {
       ...user,
-      role: userData?.role || 'USER'
+      role: userData?.role || 'USER',
+      venue_id: userData?.venue_id,
+      event_id: userData?.event_id
     };
   } catch (error) {
     return {

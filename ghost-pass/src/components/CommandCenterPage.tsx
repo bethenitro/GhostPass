@@ -16,6 +16,7 @@ import type {
 interface CommandCenterPageProps {
   onBack: () => void;
   onNavigateToGatewayManager: () => void;
+  onNavigateToAuditTrail?: () => void;
 }
 
 interface CollapsibleSectionProps {
@@ -58,7 +59,7 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
   );
 };
 
-const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigateToGatewayManager }) => {
+const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigateToGatewayManager, onNavigateToAuditTrail }) => {
   const [dashboard, setDashboard] = useState<AdminDashboard | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -337,20 +338,22 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                 <div className="flex flex-wrap gap-3">
                   <button
                     onClick={onNavigateToGatewayManager}
-                    className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-500/20 border border-blue-500/50 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors"
+                    className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-500/20 border border-blue-500/50 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors touch-manipulation min-h-[44px] active:scale-95"
                     title="View entry-point level details"
                   >
                     <MapPin size={16} />
                     <span>Open Gateway Manager</span>
                   </button>
-                  <button
-                    onClick={() => window.location.hash = '#/ghost-pass-tester'}
-                    className="inline-flex items-center space-x-2 px-4 py-2 bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-colors"
-                    title="Test Ghost Pass dual modes"
-                  >
-                    <Shield size={16} />
-                    <span>Ghost Pass Tester</span>
-                  </button>
+                  {onNavigateToAuditTrail && (
+                    <button
+                      onClick={onNavigateToAuditTrail}
+                      className="inline-flex items-center space-x-2 px-4 py-2 bg-purple-500/20 border border-purple-500/50 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors touch-manipulation min-h-[44px] active:scale-95"
+                      title="View audit trail and activity logs"
+                    >
+                      <FileText size={16} />
+                      <span>Open Audit Trail</span>
+                    </button>
+                  )}
                 </div>
               </div>
 

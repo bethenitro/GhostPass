@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Filter, ArrowLeft, Search, Activity, Eye } from 'lucide-react';
-import { cn } from '../lib/utils';
 import { auditApi } from '../lib/api';
 import type { 
   EntryPointAuditLog, 
@@ -113,7 +112,7 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
               {onBack && (
                 <button
                   onClick={onBack}
-                  className="p-2 hover:bg-red-500/10 rounded-lg transition-colors text-red-400 flex-shrink-0 touch-manipulation"
+                  className="p-2 hover:bg-red-500/10 rounded-lg transition-colors text-red-400 flex-shrink-0 touch-manipulation active:scale-95"
                   aria-label="Back to Dashboard"
                 >
                   <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
@@ -151,7 +150,7 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
               {onBack && (
                 <button
                   onClick={onBack}
-                  className="p-2 hover:bg-red-500/10 rounded-lg transition-colors text-red-400 flex-shrink-0 touch-manipulation"
+                  className="p-2 hover:bg-red-500/10 rounded-lg transition-colors text-red-400 flex-shrink-0 touch-manipulation active:scale-95"
                   aria-label="Back to Dashboard"
                 >
                   <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
@@ -171,7 +170,7 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
 
         {/* Error State */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-8">
-          <div className="glass-panel border-red-500/20 p-8 sm:p-12 text-center">
+          <div className="bg-slate-900/50 backdrop-blur-sm border border-red-500/20 rounded-lg p-8 sm:p-12 text-center">
             <FileText className="mx-auto text-red-600 mb-4" size={48} />
             <p className="text-red-400 text-base sm:text-lg mb-2">Error Loading Audit Trail</p>
             <p className="text-slate-500 text-xs sm:text-sm mb-6">{error}</p>
@@ -197,7 +196,7 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
             {onBack && (
               <button
                 onClick={onBack}
-                className="p-2 hover:bg-red-500/10 rounded-lg transition-colors text-red-400 flex-shrink-0 touch-manipulation"
+                className="p-2 hover:bg-red-500/10 rounded-lg transition-colors text-red-400 flex-shrink-0 touch-manipulation active:scale-95"
                 aria-label="Back to Dashboard"
               >
                 <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
@@ -213,15 +212,15 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
             </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={cn(
-                "px-4 py-2.5 sm:py-2 border rounded-lg font-medium transition-all duration-300 flex items-center justify-center space-x-2 touch-manipulation min-h-[44px] active:scale-95",
+              className={`px-3 sm:px-4 py-2.5 sm:py-2 border rounded-lg font-medium transition-all duration-300 flex items-center justify-center space-x-2 touch-manipulation min-h-[44px] active:scale-95 ${
                 showFilters
-                  ? "bg-red-500/30 border-red-500 text-red-400"
-                  : "bg-red-500/20 border-red-500 text-red-400 hover:bg-red-500/30 hover:shadow-lg hover:shadow-red-500/20"
-              )}
+                  ? 'bg-red-500/30 border-red-500 text-red-400'
+                  : 'bg-red-500/20 border-red-500 text-red-400 hover:bg-red-500/30 hover:shadow-lg hover:shadow-red-500/20'
+              }`}
             >
               <Filter size={18} />
-              <span className="text-sm sm:text-base">{showFilters ? 'HIDE FILTERS' : 'SHOW FILTERS'}</span>
+              <span className="text-sm sm:text-base hidden sm:inline">{showFilters ? 'HIDE' : 'SHOW'}</span>
+              <span className="text-sm sm:text-base sm:hidden">FILTER</span>
             </button>
           </div>
         </div>
@@ -231,30 +230,30 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-8">
         {/* Summary Stats */}
         {summaryStats && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="glass-panel border-red-500/20 p-4">
-              <div className="text-2xl font-bold text-blue-400">{summaryStats.total_scans}</div>
-              <div className="text-sm text-slate-400">Total Scans (30d)</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
+            <div className="bg-slate-900/50 backdrop-blur-sm border border-red-500/20 rounded-lg p-3 sm:p-4">
+              <div className="text-xl sm:text-2xl font-bold text-blue-400">{summaryStats.total_scans}</div>
+              <div className="text-xs sm:text-sm text-slate-400">Total Scans (30d)</div>
             </div>
-            <div className="glass-panel border-red-500/20 p-4">
-              <div className="text-2xl font-bold text-amber-400">{summaryStats.total_edits}</div>
-              <div className="text-sm text-slate-400">Edits (30d)</div>
+            <div className="bg-slate-900/50 backdrop-blur-sm border border-red-500/20 rounded-lg p-3 sm:p-4">
+              <div className="text-xl sm:text-2xl font-bold text-amber-400">{summaryStats.total_edits}</div>
+              <div className="text-xs sm:text-sm text-slate-400">Edits (30d)</div>
             </div>
-            <div className="glass-panel border-red-500/20 p-4">
-              <div className="text-2xl font-bold text-emerald-400">{summaryStats.unique_entry_points}</div>
-              <div className="text-sm text-slate-400">Active Entry Points</div>
+            <div className="bg-slate-900/50 backdrop-blur-sm border border-red-500/20 rounded-lg p-3 sm:p-4">
+              <div className="text-xl sm:text-2xl font-bold text-emerald-400">{summaryStats.unique_entry_points}</div>
+              <div className="text-xs sm:text-sm text-slate-400">Active Entry Points</div>
             </div>
-            <div className="glass-panel border-red-500/20 p-4">
-              <div className="text-2xl font-bold text-purple-400">{summaryStats.unique_employees}</div>
-              <div className="text-sm text-slate-400">Active Employees</div>
+            <div className="bg-slate-900/50 backdrop-blur-sm border border-red-500/20 rounded-lg p-3 sm:p-4">
+              <div className="text-xl sm:text-2xl font-bold text-purple-400">{summaryStats.unique_employees}</div>
+              <div className="text-xs sm:text-sm text-slate-400">Active Employees</div>
             </div>
           </div>
         )}
 
         {/* Filters */}
         {showFilters && (
-          <div className="glass-panel border-red-500/20 p-4 sm:p-6 mb-6">
-            <h3 className="text-lg font-semibold text-red-400 mb-4 flex items-center space-x-2">
+          <div className="bg-slate-900/50 backdrop-blur-sm border border-red-500/20 rounded-lg p-4 sm:p-6 mb-6">
+            <h3 className="text-base sm:text-lg font-semibold text-red-400 mb-4 flex items-center space-x-2">
               <Search size={18} />
               <span>Filter Audit Logs</span>
             </h3>
@@ -321,7 +320,7 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
 
         {/* Audit Logs */}
         <div className="space-y-4">
-          {/* Header with Add Button */}
+          {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
             <div className="flex-1 min-w-0">
               <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-red-400">Audit Log Entries</h2>
@@ -332,7 +331,7 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
           </div>
 
           {auditLogs.length === 0 ? (
-            <div className="glass-panel border-red-500/20 p-8 sm:p-12 text-center">
+            <div className="bg-slate-900/50 backdrop-blur-sm border border-red-500/20 rounded-lg p-8 sm:p-12 text-center">
               <FileText className="mx-auto text-slate-600 mb-4" size={48} />
               <p className="text-slate-400 text-base sm:text-lg mb-2">No audit entries found</p>
               <p className="text-slate-500 text-xs sm:text-sm mb-6">
@@ -342,7 +341,7 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
           ) : (
             <>
               {/* Desktop Table */}
-              <div className="hidden md:block glass-panel border-red-500/20 overflow-hidden">
+              <div className="hidden md:block bg-slate-900/50 backdrop-blur-sm border border-red-500/20 rounded-lg overflow-hidden">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-red-500/20 bg-slate-800/50">
@@ -361,10 +360,7 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
                         className="border-b border-slate-800 hover:bg-red-500/5 transition-colors"
                       >
                         <td className="py-3 px-4">
-                          <span className={cn(
-                            "px-2 py-1 rounded-full text-xs font-medium",
-                            getActionTypeColor(log.action_type)
-                          )}>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getActionTypeColor(log.action_type)}`}>
                             {log.action_type}
                           </span>
                         </td>
@@ -414,7 +410,7 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
                 {auditLogs.map((log) => (
                   <div
                     key={log.id}
-                    className="glass-panel border-red-500/20 p-4"
+                    className="bg-slate-900/50 backdrop-blur-sm border border-red-500/20 rounded-lg p-4"
                   >
                     <div className="flex items-start justify-between mb-3 gap-2">
                       <div className="flex items-center space-x-2 flex-1 min-w-0">
@@ -426,34 +422,31 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
                           <span className="text-xs text-slate-400">{log.entry_point_type.replace('_', ' ')}</span>
                         </div>
                       </div>
-                      <span className={cn(
-                        "px-2 py-1 rounded-full text-xs font-medium flex-shrink-0",
-                        getActionTypeColor(log.action_type)
-                      )}>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ${getActionTypeColor(log.action_type)}`}>
                         {log.action_type}
                       </span>
                     </div>
                     
                     <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
+                      <div className="flex justify-between gap-2">
                         <span className="text-slate-400">Employee:</span>
-                        <span className="text-white">{log.employee_name} ({log.employee_id})</span>
+                        <span className="text-white text-right">{log.employee_name} ({log.employee_id})</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between gap-2">
                         <span className="text-slate-400">Source:</span>
                         <span className="text-slate-300 flex items-center space-x-1">
                           <span>{getSourceLocationIcon(log.source_location)}</span>
                           <span>{log.source_location}</span>
                         </span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between gap-2">
                         <span className="text-slate-400">Time:</span>
-                        <span className="text-slate-300">{formatTimestamp(log.created_at)}</span>
+                        <span className="text-slate-300 text-right text-xs">{formatTimestamp(log.created_at)}</span>
                       </div>
                       {log.admin_email && (
-                        <div className="flex justify-between">
+                        <div className="flex justify-between gap-2">
                           <span className="text-slate-400">Admin:</span>
-                          <span className="text-purple-400">{log.admin_email}</span>
+                          <span className="text-purple-400 text-right break-all">{log.admin_email}</span>
                         </div>
                       )}
                     </div>
@@ -464,11 +457,13 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
                         <div className="text-xs font-medium text-amber-400 mb-2">Changes Made:</div>
                         <div className="space-y-1 text-xs">
                           {Object.entries(log.metadata.changes).map(([field, change]: [string, any]) => (
-                            <div key={field} className="flex items-center space-x-2">
+                            <div key={field} className="flex flex-col space-y-1">
                               <span className="font-medium capitalize text-slate-300">{field.replace('_', ' ')}:</span>
-                              <span className="text-red-400">"{change.old}"</span>
-                              <span className="text-slate-400">→</span>
-                              <span className="text-emerald-400">"{change.new}"</span>
+                              <div className="flex items-center space-x-2 pl-2">
+                                <span className="text-red-400 break-all">"{change.old}"</span>
+                                <span className="text-slate-400">→</span>
+                                <span className="text-emerald-400 break-all">"{change.new}"</span>
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -477,7 +472,7 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
 
                     {/* Show scan metadata */}
                     {log.action_type === 'SCAN' && log.metadata && (
-                      <div className="mt-2 text-xs">
+                      <div className="mt-2 text-xs flex flex-wrap gap-2">
                         {log.metadata.is_session ? (
                           <span className="px-2 py-1 bg-purple-500/20 text-purple-400 border border-purple-500/50 rounded-full">
                             Session Scan
@@ -488,12 +483,11 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
                           </span>
                         )}
                         {log.metadata.scan_result && (
-                          <span className={cn(
-                            "ml-2 px-2 py-1 rounded-full text-xs font-medium",
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                             log.metadata.scan_result === 'APPROVED' 
                               ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50'
                               : 'bg-red-500/20 text-red-400 border border-red-500/50'
-                          )}>
+                          }`}>
                             {log.metadata.scan_result}
                           </span>
                         )}
@@ -504,22 +498,22 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
               </div>
 
               {/* Pagination */}
-              <div className="glass-panel border-red-500/20 px-6 py-4 flex justify-between items-center">
+              <div className="bg-slate-900/50 backdrop-blur-sm border border-red-500/20 rounded-lg px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
                 <div className="text-sm text-slate-400">
                   Page {currentPage} • Showing {auditLogs.length} entries
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex space-x-2 w-full sm:w-auto">
                   <button
                     onClick={() => handlePageChange('prev')}
                     disabled={currentPage === 1}
-                    className="px-4 py-2 bg-slate-700 border border-slate-600 text-slate-300 rounded-lg font-medium hover:bg-slate-600 active:bg-slate-600 transition-colors touch-manipulation min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 sm:flex-none px-4 py-2 bg-slate-700 border border-slate-600 text-slate-300 rounded-lg font-medium hover:bg-slate-600 active:bg-slate-600 transition-colors touch-manipulation min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Previous
                   </button>
                   <button
                     onClick={() => handlePageChange('next')}
                     disabled={!hasMore}
-                    className="px-4 py-2 bg-slate-700 border border-slate-600 text-slate-300 rounded-lg font-medium hover:bg-slate-600 active:bg-slate-600 transition-colors touch-manipulation min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 sm:flex-none px-4 py-2 bg-slate-700 border border-slate-600 text-slate-300 rounded-lg font-medium hover:bg-slate-600 active:bg-slate-600 transition-colors touch-manipulation min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Next
                   </button>

@@ -88,6 +88,23 @@ export const authApi = {
     }
     return data;
   },
+
+  signUpVenueAdmin: async (venueAdminData: {
+    email: string;
+    password: string;
+    venue_id: string;
+    event_id?: string;
+    venue_name: string;
+    contact_name: string;
+    contact_phone?: string;
+  }) => {
+    const { data } = await api.post('/auth/register-venue-admin', venueAdminData);
+    if (data.access_token) {
+      localStorage.setItem('auth_token', data.access_token);
+      localStorage.setItem('user_data', JSON.stringify(data.user));
+    }
+    return data;
+  },
   
   signOut: async () => {
     localStorage.removeItem('auth_token');
@@ -600,7 +617,7 @@ export const auditApi = {
 
   // Get audit summary statistics
   getAuditSummary: async (days: number = 30) => {
-    const { data } = await api.get('/audit/entry-point/summary', {
+    const { data } = await api.get('/audit/summary', {
       params: { days }
     });
     return data;
@@ -608,23 +625,23 @@ export const auditApi = {
 
   // Get complete history for specific entry point
   getEntryPointHistory: async (entryPointId: string, limit: number = 50) => {
-    const { data } = await api.get(`/audit/entry-point/${entryPointId}/history`, {
-      params: { limit }
+    const { data } = await api.get('/audit/history', {
+      params: { entry_point_id: entryPointId, limit }
     });
     return data;
   },
 
   // Get activity for specific employee
   getEmployeeActivity: async (employeeName: string, days: number = 7, limit: number = 100) => {
-    const { data } = await api.get(`/audit/entry-point/employee/${encodeURIComponent(employeeName)}/activity`, {
-      params: { days, limit }
+    const { data } = await api.get('/audit/employee-activity', {
+      params: { employee_name: employeeName, days, limit }
     });
     return data;
   },
 
   // Get recent scan activity
   getRecentScans: async (hours: number = 24, limit: number = 50) => {
-    const { data } = await api.get('/audit/entry-point/recent-scans', {
+    const { data } = await api.get('/audit/recent-scans', {
       params: { hours, limit }
     });
     return data;
@@ -792,6 +809,76 @@ export const scanApi = {
 
   getVenueStats: async (venueId: string): Promise<any> => {
     const { data } = await api.get(`/scan/venue/${venueId}/stats`);
+    return data;
+  }
+};
+
+
+// Venue Admin API - REQUIRES VENUE_ADMIN OR ADMIN ROLE
+export const venueApi = {
+  // Get venue dashboard (all data)
+  getDashboard: async (venueId?: string, eventId?: string) => {
+    const params = new URLSearchParams();
+    if (venueId) params.append('venue_id', venueId);
+    if (eventId) params.append('event_id', eventId);
+    
+    const { data } = await api.get(`/venue/dashboard?${params.toString()}`);
+    return data;
+  },
+
+  // Get venue entry configuration
+  getConfig: async (venueId?: string, eventId?: string) => {
+    const params = new URLSearchParams();
+    if (venueId) params.append('venue_id', venueId);
+    if (eventId) params.append('event_id', eventId);
+    
+    const { data } = await api.get(`/venue/config?${params.toString()}`);
+    return data;
+  },
+
+  // Update venue entry configuration
+  updateConfig: async (config: {
+    venue_id?: string;
+    event_id?: string;
+    re_entry_allowed: boolean;
+    initial_entry_fee_cents: number;
+    venue_reentry_fee_cents: number;
+    valid_reentry_scan_fee_cents: number;
+    max_reentries?: number;
+    reentry_time_limit_hours?: number;
+  }) => {
+    const { data } = await api.post('/venue/config', config);
+    return data;
+  },
+
+  // Get venue statistics
+  getStats: async (venueId?: string, eventId?: string) => {
+    const params = new URLSearchParams();
+    if (venueId) params.append('venue_id', venueId);
+    if (eventId) params.append('event_id', eventId);
+    
+    const { data } = await api.get(`/venue/stats?${params.toString()}`);
+    return data;
+  },
+
+  // Get vendor payouts for venue/event
+  getVendorPayouts: async (venueId?: string, eventId?: string) => {
+    const params = new URLSearchParams();
+    if (venueId) params.append('venue_id', venueId);
+    if (eventId) params.append('event_id', eventId);
+    
+    const { data } = await api.get(`/venue/payouts?${params.toString()}`);
+    return data;
+  },
+
+  // Get audit logs for venue/event
+  getAuditLogs: async (venueId?: string, eventId?: string, limit: number = 50) => {
+    const params = new URLSearchParams();
+    if (venueId) params.append('venue_id', venueId);
+    if (eventId) params.append('event_id', eventId);
+    params.append('limit', limit.toString());
+    
+    const { data } = await api.get(`/venue/audit-logs?${params.toString()}`);
     return data;
   }
 };

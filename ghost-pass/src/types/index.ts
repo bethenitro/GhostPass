@@ -1,8 +1,10 @@
 export interface User {
   id: string;
   email: string;
-  role: 'USER' | 'VENDOR' | 'ADMIN';
+  role: 'USER' | 'VENDOR' | 'ADMIN' | 'VENUE_ADMIN';
   created_at?: string;
+  venue_id?: string;
+  event_id?: string;
 }
 
 export interface GhostPass {
@@ -83,8 +85,10 @@ export interface ApiResponse<T> {
 export interface AdminUser {
   id: string;
   email: string;
-  role: 'USER' | 'VENDOR' | 'ADMIN';
+  role: 'USER' | 'VENDOR' | 'ADMIN' | 'VENUE_ADMIN';
   created_at: string;
+  venue_id?: string;
+  event_id?: string;
 }
 
 export interface FeeConfig {
@@ -519,4 +523,62 @@ export interface GhostPassRevocation {
   revoked_by: string;
   revoked_at: string;
   metadata: Record<string, any>;
+}
+
+
+// Venue Admin Types
+export interface VenueEntryConfig {
+  id?: string;
+  venue_id: string;
+  event_id?: string;
+  re_entry_allowed: boolean;
+  initial_entry_fee_cents: number;
+  venue_reentry_fee_cents: number;
+  valid_reentry_scan_fee_cents: number;
+  max_reentries?: number;
+  reentry_time_limit_hours?: number;
+  created_at?: string;
+  updated_at?: string;
+  created_by?: string;
+}
+
+export interface VenueEventStats {
+  total_entries: number;
+  total_reentries: number;
+  total_revenue_cents: number;
+  venue_revenue_cents: number;
+  valid_revenue_cents: number;
+  unique_attendees: number;
+  current_capacity: number;
+  peak_capacity: number;
+  avg_entry_time_minutes: number;
+}
+
+export interface VenueVendorPayout {
+  id: string;
+  vendor_id: string;
+  vendor_name: string;
+  event_id: string;
+  amount_cents: number;
+  transaction_count: number;
+  status: 'PENDING' | 'APPROVED' | 'PAID';
+  created_at: string;
+  paid_at?: string;
+}
+
+export interface VenueAuditLog {
+  id: string;
+  action_type: string;
+  event_id: string;
+  venue_id: string;
+  admin_email: string;
+  details: Record<string, any>;
+  created_at: string;
+}
+
+export interface VenueDashboard {
+  config: VenueEntryConfig;
+  stats: VenueEventStats;
+  vendor_payouts: VenueVendorPayout[];
+  recent_audit_logs: VenueAuditLog[];
 }

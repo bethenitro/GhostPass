@@ -6,9 +6,10 @@ import { cn } from '@/lib/utils';
 interface OperatorLoginProps {
   onLoginSuccess: (token: string, user: any) => void;
   onCancel: () => void;
+  onVenueAdminSignup?: () => void;
 }
 
-const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onCancel }) => {
+const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onCancel, onVenueAdminSignup }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -43,7 +44,7 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onCancel 
       const data = await response.json();
 
       // Check if user has admin or operator role
-      if (data.user.role !== 'ADMIN' && data.user.role !== 'VENDOR') {
+      if (data.user.role !== 'ADMIN' && data.user.role !== 'VENDOR' && data.user.role !== 'VENUE_ADMIN') {
         throw new Error('Access denied. Operator credentials required.');
       }
 
@@ -170,6 +171,22 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onCancel 
             </button>
           </div>
         </form>
+
+        {/* Venue Admin Signup Link */}
+        {onVenueAdminSignup && (
+          <div className="mt-6 pt-6 border-t border-slate-700 text-center">
+            <p className="text-slate-400 text-sm mb-3">
+              Need to register a new venue?
+            </p>
+            <button
+              onClick={onVenueAdminSignup}
+              disabled={isLoading}
+              className="w-full px-4 py-3 bg-purple-500/20 border border-purple-500/50 text-purple-400 rounded-lg font-medium hover:bg-purple-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Register as Venue Admin
+            </button>
+          </div>
+        )}
       </motion.div>
     </div>
   );
