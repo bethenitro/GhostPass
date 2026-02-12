@@ -48,8 +48,11 @@ api.interceptors.request.use((config) => {
     config.headers['X-Device-Fingerprint'] = deviceFingerprint;
   }
   
-  // Add Bearer token for admin and gateway endpoints (operator portal)
-  if (config.url?.startsWith('/admin/') || config.url?.startsWith('/gateway/')) {
+  // Add Bearer token for admin, gateway, venue, and auth endpoints (operator portal)
+  if (config.url?.startsWith('/admin/') || 
+      config.url?.startsWith('/gateway/') || 
+      config.url?.startsWith('/venue/') ||
+      config.url?.startsWith('/auth/me')) {
     const authToken = localStorage.getItem('auth_token');
     if (authToken) {
       config.headers['Authorization'] = `Bearer ${authToken}`;

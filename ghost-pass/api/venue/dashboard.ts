@@ -26,24 +26,27 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       }
 
       // Fetch all data in parallel
+      const protocol = req.headers['x-forwarded-proto'] || 'https';
+      const baseUrl = `${protocol}://${req.headers.host}`;
+      
       const [configRes, statsRes, payoutsRes, auditLogsRes] = await Promise.allSettled([
         // Config
-        fetch(`${req.headers.host}/api/venue/config?venue_id=${targetVenueId}${event_id ? `&event_id=${event_id}` : ''}`, {
+        fetch(`${baseUrl}/api/venue/config?venue_id=${targetVenueId}${event_id ? `&event_id=${event_id}` : ''}`, {
           headers: { Authorization: req.headers.authorization || '' }
         }).then(r => r.json()),
         
         // Stats
-        fetch(`${req.headers.host}/api/venue/stats?venue_id=${targetVenueId}${event_id ? `&event_id=${event_id}` : ''}`, {
+        fetch(`${baseUrl}/api/venue/stats?venue_id=${targetVenueId}${event_id ? `&event_id=${event_id}` : ''}`, {
           headers: { Authorization: req.headers.authorization || '' }
         }).then(r => r.json()),
         
         // Payouts
-        fetch(`${req.headers.host}/api/venue/payouts?venue_id=${targetVenueId}${event_id ? `&event_id=${event_id}` : ''}`, {
+        fetch(`${baseUrl}/api/venue/payouts?venue_id=${targetVenueId}${event_id ? `&event_id=${event_id}` : ''}`, {
           headers: { Authorization: req.headers.authorization || '' }
         }).then(r => r.json()),
         
         // Audit Logs
-        fetch(`${req.headers.host}/api/venue/audit-logs?venue_id=${targetVenueId}${event_id ? `&event_id=${event_id}` : ''}&limit=10`, {
+        fetch(`${baseUrl}/api/venue/audit-logs?venue_id=${targetVenueId}${event_id ? `&event_id=${event_id}` : ''}&limit=10`, {
           headers: { Authorization: req.headers.authorization || '' }
         }).then(r => r.json())
       ]);

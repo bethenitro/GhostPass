@@ -34,10 +34,10 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       email: user.email
     }, { onConflict: 'id' });
 
-    // Get user role
+    // Get user role and venue info
     const { data: userData } = await supabase
       .from('users')
-      .select('role')
+      .select('role, venue_id, event_id')
       .eq('id', user.id)
       .single();
 
@@ -50,6 +50,8 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         id: user.id,
         email: user.email,
         role: userRole,
+        venue_id: userData?.venue_id,
+        event_id: userData?.event_id,
         created_at: user.created_at
       }
     });
