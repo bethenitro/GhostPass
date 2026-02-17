@@ -1,0 +1,30 @@
+{
+  "name": "ghostpass-stress-tests",
+  "version": "1.0.0",
+  "description": "Stress testing suite for GhostPass 5,000-user pilot",
+  "type": "module",
+  "scripts": {
+    "test:entry": "k6 run --env API_BASE_URL=$API_BASE_URL --env TEST_VENUE_ID=$TEST_VENUE_ID --env TEST_GATEWAY_1_ID=$TEST_GATEWAY_1_ID --env TEST_GATEWAY_2_ID=$TEST_GATEWAY_2_ID scenarios/entry-scan-test.js",
+    "test:concession": "k6 run --env API_BASE_URL=$API_BASE_URL --env TEST_VENUE_ID=$TEST_VENUE_ID scenarios/concession-test.js",
+    "test:wallet": "k6 run --env API_BASE_URL=$API_BASE_URL scenarios/wallet-funding-test.js",
+    "test:reentry": "k6 run --env API_BASE_URL=$API_BASE_URL --env TEST_VENUE_ID=$TEST_VENUE_ID --env TEST_GATEWAY_1_ID=$TEST_GATEWAY_1_ID --env TEST_GATEWAY_2_ID=$TEST_GATEWAY_2_ID scenarios/reentry-test.js",
+    "test:full": "k6 run --env API_BASE_URL=$API_BASE_URL --env TEST_VENUE_ID=$TEST_VENUE_ID --env TEST_GATEWAY_1_ID=$TEST_GATEWAY_1_ID --env TEST_GATEWAY_2_ID=$TEST_GATEWAY_2_ID scenarios/full-system-test.js",
+    "test:chaos": "k6 run --env API_BASE_URL=$API_BASE_URL --env TEST_VENUE_ID=$TEST_VENUE_ID --env TEST_GATEWAY_1_ID=$TEST_GATEWAY_1_ID --env TEST_GATEWAY_2_ID=$TEST_GATEWAY_2_ID scenarios/failure-simulation-test.js",
+    "test:all": "npm run test:entry && npm run test:concession && npm run test:wallet && npm run test:reentry",
+    "validate-results": "node scripts/validate-results.js",
+    "generate-report": "node scripts/generate-report.js",
+    "health-check": "node scripts/health-check.js",
+    "rollback-test-data": "node scripts/rollback-test-data.js",
+    "seed-test-data": "node scripts/seed-test-data.js",
+    "monitor:db": "node monitoring/db-monitor.js",
+    "analyze-logs": "node monitoring/log-analyzer.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.90.1",
+    "dotenv": "^16.4.7",
+    "stripe": "^20.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.1"
+  }
+}

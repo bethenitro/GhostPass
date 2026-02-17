@@ -27,33 +27,6 @@
 
 ---
 
-## 🎯 PHASE 1: CRITICAL MUST-HAVES (PILOT BLOCKERS)
-
-### 1.1 WHERE GHOST PASS MUST LIVE
-
-#### A. Off-Site Instant Access (PRIMARY)
-**Status:** ❌ NOT IMPLEMENTED  
-**Priority:** CRITICAL
-
-**Requirements:**
-- Ghost Pass launchable directly via QR code or NFC tap
-- QR/NFC link opens wallet immediately
-- Pre-bound to correct EVENT + VENUE
-- Allows instant wallet funding
-- Allows immediate use (entry, re-entry, concessions)
-- Must NOT require navigating bevalid.app site
-
-**Implementation Needs:**
-- Create standalone wallet route: `/wallet/:eventId/:venueId`
-- QR code format: `{siteurl}/wallet/{eventId}/{venueId}?binding={walletBindingId}`
-- NFC tap opens same URL structure
-- Wallet component loads without login wall
-- Event/venue context pre-populated
-- Instant Stripe Connect funding flow
-
-**Backend Status:** ✅ EXISTS (`/wallet-access/surface-wallet` endpoint)  
-**Frontend Status:** ❌ MISSING (route and component needed)
-
 #### B. On BeValid.app (SECONDARY)
 **Status:** ⚠️ PARTIALLY IMPLEMENTED  
 **Priority:** HIGH

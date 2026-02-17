@@ -40,8 +40,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const interactionId = `int_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`;
 
-    // Check context mode first
-    const checkResponse = await fetch(`${req.headers.host}/api/modes/check-context`, {
+    // Check context mode first - construct proper URL from request headers
+    const protocol = req.headers['x-forwarded-proto'] || 'https';
+    const host = req.headers.host;
+    
+    if (!host) {
+      return res.status(500).json({
+        error: 'Internal server error',
+        details: 'Unable to determine host for internal API call'
+      });
+    }
+    
+    const baseUrl = `${protocol}://${host}`;
+    
+    const checkResponse = await fetch(`${baseUrl}/api/modes/check-context`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ context, wallet_binding_id, ghost_pass_token }),
