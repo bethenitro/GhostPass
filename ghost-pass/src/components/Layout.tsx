@@ -4,8 +4,8 @@ import { cn } from '@/lib/utils';
 
 interface LayoutProps {
   children: React.ReactNode;
-  activeTab: 'wallet' | 'scan' | 'session' | 'trust' | 'history' | 'tickets' | 'modes';
-  onTabChange: (tab: 'wallet' | 'scan' | 'session' | 'trust' | 'history' | 'tickets' | 'modes') => void;
+  activeTab: 'wallet' | 'scan' | 'session' | 'trust' | 'history' | 'tickets' | 'modes' | 'entry-test';
+  onTabChange: (tab: 'wallet' | 'scan' | 'session' | 'trust' | 'history' | 'tickets' | 'modes' | 'entry-test') => void;
   fastEntryMode?: boolean; // Hide TopUp tab in fast entry mode
   onRecoverWallet?: () => void;
 }
@@ -27,7 +27,7 @@ const Layout: React.FC<LayoutProps> = ({
     { id: 'history' as const, icon: History, label: 'History' },
   ];
 
-  const handleTabChange = (tabId: 'wallet' | 'scan' | 'session' | 'trust' | 'history' | 'tickets' | 'modes') => {
+  const handleTabChange = (tabId: 'wallet' | 'scan' | 'session' | 'trust' | 'history' | 'tickets' | 'modes' | 'entry-test') => {
     // Navigate to the proper URL
     const routes = {
       wallet: '#/wallet',
@@ -37,6 +37,7 @@ const Layout: React.FC<LayoutProps> = ({
       history: '#/history',
       tickets: '#/tickets',
       modes: '#/modes',
+      'entry-test': '#/entry-test',
     };
     window.location.hash = routes[tabId];
     onTabChange(tabId);

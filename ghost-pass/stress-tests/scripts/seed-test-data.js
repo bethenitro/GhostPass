@@ -72,6 +72,13 @@ async function createVenueEntryConfig() {
 
   const venueId = process.env.TEST_VENUE_ID || 'test-venue-stress-001';
   
+  // Check if config already exists for this venue
+  const { data: existing } = await supabase
+    .from('venue_entry_configs')
+    .select('id')
+    .eq('venue_id', venueId)
+    .maybeSingle();
+
   const configData = {
     venue_id: venueId,
     re_entry_allowed: true,
@@ -82,19 +89,37 @@ async function createVenueEntryConfig() {
     reentry_time_limit_hours: null, // No time limit
   };
 
-  const { data, error } = await supabase
-    .from('venue_entry_configs')
-    .upsert(configData, { onConflict: 'venue_id' })
-    .select();
+  if (existing) {
+    // Update existing config
+    const { error } = await supabase
+      .from('venue_entry_configs')
+      .update(configData)
+      .eq('id', existing.id);
 
-  if (error) {
-    console.error('  ❌ Error creating venue entry config:', error.message);
+    if (error) {
+      console.error('  ❌ Error updating venue entry config:', error.message);
+    } else {
+      console.log(`  ✅ Venue entry config updated:`);
+      console.log(`     - Initial entry: $${(configData.initial_entry_fee_cents / 100).toFixed(2)}`);
+      console.log(`     - Re-entry venue fee: $${(configData.venue_reentry_fee_cents / 100).toFixed(2)}`);
+      console.log(`     - Re-entry VALID fee: $${(configData.valid_reentry_scan_fee_cents / 100).toFixed(2)}`);
+      console.log(`     - Re-entry allowed: ${configData.re_entry_allowed}`);
+    }
   } else {
-    console.log(`  ✅ Venue entry config created:`);
-    console.log(`     - Initial entry: $${(configData.initial_entry_fee_cents / 100).toFixed(2)}`);
-    console.log(`     - Re-entry venue fee: $${(configData.venue_reentry_fee_cents / 100).toFixed(2)}`);
-    console.log(`     - Re-entry VALID fee: $${(configData.valid_reentry_scan_fee_cents / 100).toFixed(2)}`);
-    console.log(`     - Re-entry allowed: ${configData.re_entry_allowed}`);
+    // Insert new config
+    const { error } = await supabase
+      .from('venue_entry_configs')
+      .insert(configData);
+
+    if (error) {
+      console.error('  ❌ Error creating venue entry config:', error.message);
+    } else {
+      console.log(`  ✅ Venue entry config created:`);
+      console.log(`     - Initial entry: $${(configData.initial_entry_fee_cents / 100).toFixed(2)}`);
+      console.log(`     - Re-entry venue fee: $${(configData.venue_reentry_fee_cents / 100).toFixed(2)}`);
+      console.log(`     - Re-entry VALID fee: $${(configData.valid_reentry_scan_fee_cents / 100).toFixed(2)}`);
+      console.log(`     - Re-entry allowed: ${configData.re_entry_allowed}`);
+    }
   }
 }
 

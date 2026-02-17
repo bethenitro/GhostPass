@@ -10,7 +10,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { DoorOpen, DoorClosed, Wallet, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
+import { DoorOpen, Wallet, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
 
 interface EntryResult {
   success: boolean;
