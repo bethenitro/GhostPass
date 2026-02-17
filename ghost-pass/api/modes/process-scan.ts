@@ -122,26 +122,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .eq('wallet_binding_id', wallet_binding_id);
 
       if (updateError) {
-        return res.status(500).json({ error: 'Failed to update wallet balance' });
+        console.error('Wallet update error:', updateError);
+        return res.status(500).json({ 
+          error: 'Failed to update wallet balance',
+          details: updateError.message,
+          wallet_binding_id,
+        });
       }
 
       // Record transaction
-      await supabase.from('transactions').insert({
-        id: `txn_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`,
-        wallet_binding_id,
-        type: 'PAY_PER_SCAN',
-        amount_cents: -amountCharged,
-        description: `Per-scan fee for ${context}`,
-        status: 'completed',
-        payment_method: 'wallet',
+      const { error: txError } = await supabase.from('transactions').insert({
+        wallet_id: wallet.id,
+        type: 'SPEND',
+        amount_cents: amountCharged,
+        balance_before_cents: wallet.balance_cents,
+        balance_after_cents: newBalance,
+        gateway_id,
+        context,
+        interaction_method,
         metadata: {
-          context,
           interaction_id: interactionId,
-          interaction_method,
-          gateway_id,
+          mode: 'pay_per_scan',
         },
-        created_at: new Date().toISOString(),
       });
+
+      if (txError) {
+        console.error('Transaction insert error:', txError);
+        // Don't fail the whole request if transaction logging fails
+      }
     } else {
       // Mode B: Event pass - no charge, just validate
       const { data: wallet } = await supabase
