@@ -3,26 +3,27 @@ Main entry point for The Senate governance engine.
 
 This module provides the main entry point for running The Senate as a
 standalone service using uvicorn.
-
-Run from the parent directory: python -m senate.main
 """
 
 import uvicorn
 import logging
 import sys
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Add current directory to path for imports
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(current_dir)
-sys.path.insert(0, parent_dir)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 try:
-    from senate.api.app import app
-    from senate.utils.logging import setup_logging
+    from api.app import app
+    from utils.logging import setup_logging
 except ImportError as e:
     print(f"Import error: {e}")
-    print("Please run from the parent directory using: python -m senate.main")
+    print(f"Current directory: {os.getcwd()}")
+    print(f"Python path: {sys.path}")
     sys.exit(1)
 
 
@@ -34,13 +35,17 @@ def main():
     
     logger.info("Starting The Senate Governance Engine")
     
+    # Get environment configuration
+    environment = os.getenv("ENVIRONMENT", "development")
+    reload = environment == "development"
+    
     # Run the FastAPI application
     uvicorn.run(
-        "senate.api.app:app",
+        "api.app:app",
         host="0.0.0.0",
         port=8000,
-        reload=True,  # Set to False in production
-        log_level="info"
+        reload=reload,
+        log_level=os.getenv("LOG_LEVEL", "info").lower()
     )
 
 

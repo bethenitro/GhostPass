@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import QRCodeLib from 'react-qr-code';
 import { Shield, AlertTriangle, Clock, Trash2, Wifi, QrCode as QrCodeIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import SessionSelector from './SessionSelector';
 import { useSession } from '../hooks/useSession';
@@ -10,6 +11,7 @@ import { ghostPassApi } from '../lib/api';
 const QRCode = (QRCodeLib as any).default || QRCodeLib;
 
 const QRCodeView: React.FC = () => {
+  const { t } = useTranslation();
   const [isVaporizing, setIsVaporizing] = useState(false);
   const [showVaporizeConfirm, setShowVaporizeConfirm] = useState(false);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
@@ -35,7 +37,7 @@ const QRCodeView: React.FC = () => {
       const pass = await ghostPassApi.getStatus();
       setGhostPass(pass);
     } catch (error) {
-      console.error('Failed to fetch ghost pass:', error);
+      console.error(t('session.failedToFetchGhostPass'), error);
       setGhostPass(null);
     }
   };
@@ -48,7 +50,7 @@ const QRCodeView: React.FC = () => {
       await vaporizeSession();
       setShowVaporizeConfirm(false);
     } catch (error) {
-      console.error('Failed to vaporize session:', error);
+      console.error(t('session.failedToVaporize'), error);
     } finally {
       setIsVaporizing(false);
     }
@@ -60,8 +62,8 @@ const QRCodeView: React.FC = () => {
         {isSessionExpired && activeSession && !isCreatingSession && (
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="mb-6 bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-center">
             <AlertTriangle className="text-red-400 mx-auto mb-2" size={32} />
-            <p className="text-red-400 font-semibold">Session Vaporized</p>
-            <p className="text-slate-400 text-sm mt-1">Create a new session to continue</p>
+            <p className="text-red-400 font-semibold">{t('session.sessionVaporized')}</p>
+            <p className="text-slate-400 text-sm mt-1">{t('session.createNewSession')}</p>
           </motion.div>
         )}
         <SessionSelector onSessionCreated={(_session) => { 
@@ -76,7 +78,7 @@ const QRCodeView: React.FC = () => {
   return (
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center">
-        <h1 className="text-xl sm:text-2xl font-bold text-white mb-2">GHOSTPASS SESSION</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-white mb-2">{t('session.title')}</h1>
         <p className="text-cyan-400 font-medium text-sm sm:text-base">{activeSession.session_type.replace('_', ' ').toUpperCase()}</p>
         <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent mx-auto mt-4"></div>
       </motion.div>
@@ -85,15 +87,15 @@ const QRCodeView: React.FC = () => {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
               <Shield className="text-emerald-400" size={20} />
-              <span className="text-base sm:text-lg font-semibold text-white">SESSION ACTIVE</span>
+              <span className="text-base sm:text-lg font-semibold text-white">{t('session.active')}</span>
             </div>
-            <div className="px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">LIVE</div>
+            <div className="px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">{t('session.live')}</div>
           </div>
           {sessionTimeRemaining && (
             <div className="space-y-3">
               <div className="flex items-center space-x-2">
                 <Clock size={14} className="text-slate-400" />
-                <span className="text-xs uppercase tracking-widest text-slate-400 font-medium">Vaporizes in</span>
+                <span className="text-xs uppercase tracking-widest text-slate-400 font-medium">{t('session.vaporizesIn')}</span>
               </div>
               <motion.div key={`${sessionTimeRemaining.hours}:${sessionTimeRemaining.minutes}:${sessionTimeRemaining.seconds}`} initial={{ scale: 0.95 }} animate={{ scale: 1 }} className={cn("text-3xl sm:text-4xl font-bold font-mono", isSessionExpiringSoon ? 'text-red-400' : 'text-cyan-400')}>
                 {String(sessionTimeRemaining.hours).padStart(2, '0')}:{String(sessionTimeRemaining.minutes).padStart(2, '0')}:{String(sessionTimeRemaining.seconds).padStart(2, '0')}
@@ -126,8 +128,8 @@ const QRCodeView: React.FC = () => {
                   <div className="w-32 h-32 flex items-center justify-center bg-cyan-500/10 border-2 border-cyan-500/30 rounded-xl">
                     <div className="text-center">
                       <Wifi className="text-cyan-400 mx-auto mb-2" size={32} />
-                      <div className="text-cyan-400 text-sm font-medium">NFC Ready</div>
-                      <div className="text-slate-400 text-xs">Tap to scan</div>
+                      <div className="text-cyan-400 text-sm font-medium">{t('session.nfcReady')}</div>
+                      <div className="text-slate-400 text-xs">{t('session.tapToScan')}</div>
                     </div>
                   </div>
                 )}
@@ -148,7 +150,7 @@ const QRCodeView: React.FC = () => {
                 )}
               >
                 <QrCodeIcon size={14} />
-                <span>QR Scan</span>
+                <span>{t('session.qrScan')}</span>
               </button>
               <button
                 onClick={() => setInteractionMethod('NFC')}
@@ -160,16 +162,16 @@ const QRCodeView: React.FC = () => {
                 )}
               >
                 <Wifi size={14} />
-                <span>NFC Tap</span>
+                <span>{t('session.nfcTap')}</span>
               </button>
             </div>
           </div>
           
           <div className="mt-3 sm:mt-4 text-center">
             <p className="text-slate-400 font-mono text-xs uppercase tracking-wider px-2">
-              {interactionMethod === 'QR' ? 'PRESENT CODE AT VENUE ENTRANCE' : 'TAP DEVICE AT NFC READER'}
+              {interactionMethod === 'QR' ? t('session.presentCode') : t('session.tapDevice')}
             </p>
-            <div className="text-xs text-slate-500 font-mono break-all mt-2">SESSION ID: {activeSession.id}</div>
+            <div className="text-xs text-slate-500 font-mono break-all mt-2">{t('session.sessionId')}: {activeSession.id}</div>
           </div>
         </div>
       </motion.div>
@@ -178,8 +180,8 @@ const QRCodeView: React.FC = () => {
           <div className="flex items-start space-x-3">
             <div className="w-2 h-2 bg-cyan-400 rounded-full mt-2 flex-shrink-0"></div>
             <div className="text-sm">
-              <p className="font-semibold text-cyan-400 mb-1">Vaporization Protocol</p>
-              <p className="text-slate-400">This session QR code vaporizes automatically after the selected time. No reuse or extension possible. Single-use only.</p>
+              <p className="font-semibold text-cyan-400 mb-1">{t('session.vaporizationProtocol')}</p>
+              <p className="text-slate-400">{t('session.vaporizationDescription')}</p>
             </div>
           </div>
         </div>
@@ -190,8 +192,8 @@ const QRCodeView: React.FC = () => {
             <div className="flex items-center space-x-3">
               <AlertTriangle className="text-red-400" size={20} />
               <div>
-                <p className="text-red-400 font-semibold">Critical Warning</p>
-                <p className="text-slate-400 text-sm">Session vaporizes in less than 30 seconds. No extension possible.</p>
+                <p className="text-red-400 font-semibold">{t('session.criticalWarning')}</p>
+                <p className="text-slate-400 text-sm">{t('session.vaporizingWarning')}</p>
               </div>
             </div>
           </div>
@@ -204,13 +206,13 @@ const QRCodeView: React.FC = () => {
           onClick={() => setShowVaporizeConfirm(true)}
           disabled={isVaporizing}
           className="w-full py-3 px-4 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg font-semibold hover:bg-red-500/20 transition-all duration-300 flex items-center justify-center space-x-2 group"
-          title="Immediately ends the active Ghost Pass session and invalidates the QR code"
+          title={t('session.instantVaporizationDescription')}
         >
           <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
-          <span>INSTANT VAPORIZATION</span>
+          <span>{t('session.instantVaporization')}</span>
         </button>
         <p className="text-slate-500 text-xs text-center mt-2">
-          Immediately ends the active session and invalidates the QR code
+          {t('session.instantVaporizationDescription')}
         </p>
       </motion.div>
 
@@ -232,25 +234,25 @@ const QRCodeView: React.FC = () => {
               <div className="p-3 bg-red-500/20 rounded-full">
                 <Trash2 className="text-red-400" size={24} />
               </div>
-              <h3 className="text-xl font-bold text-red-400">Instant Vaporization</h3>
+              <h3 className="text-xl font-bold text-red-400">{t('session.confirmVaporization')}</h3>
             </div>
 
             <p className="text-slate-300 mb-6">
-              Are you sure you want to immediately vaporize this session? This will:
+              {t('session.vaporizeConfirmation')}
             </p>
 
             <ul className="space-y-2 mb-6 text-sm text-slate-400">
               <li className="flex items-start space-x-2">
                 <span className="text-red-400 mt-0.5">•</span>
-                <span>Immediately end the active Ghost Pass session</span>
+                <span>{t('session.vaporizeEffects.endSession')}</span>
               </li>
               <li className="flex items-start space-x-2">
                 <span className="text-red-400 mt-0.5">•</span>
-                <span>Invalidate the QR code instantly</span>
+                <span>{t('session.vaporizeEffects.invalidateQR')}</span>
               </li>
               <li className="flex items-start space-x-2">
                 <span className="text-red-400 mt-0.5">•</span>
-                <span>Cannot be undone or recovered</span>
+                <span>{t('session.vaporizeEffects.cannotUndo')}</span>
               </li>
             </ul>
 
@@ -260,7 +262,7 @@ const QRCodeView: React.FC = () => {
                 disabled={isVaporizing}
                 className="flex-1 px-4 py-3 bg-slate-700 border border-slate-600 text-slate-300 rounded-lg font-medium hover:bg-slate-600 transition-colors disabled:opacity-50"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleInstantVaporize}
@@ -270,12 +272,12 @@ const QRCodeView: React.FC = () => {
                 {isVaporizing ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-400"></div>
-                    <span>Vaporizing...</span>
+                    <span>{t('session.vaporizing')}</span>
                   </>
                 ) : (
                   <>
                     <Trash2 size={16} />
-                    <span>Vaporize Now</span>
+                    <span>{t('session.vaporizeNow')}</span>
                   </>
                 )}
               </button>

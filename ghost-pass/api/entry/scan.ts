@@ -70,46 +70,47 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get wallet
-    const { data: wallet, error: walletError } = await supabase
-      .from('wallets')
-      .select('*')
-      .eq('wallet_binding_id', wallet_binding_id)
-      .eq('device_fingerprint', deviceFingerprint)
-      .single();
+    // Parallel fetch: wallet, venue config, and gateway info
+    const [walletResult, venueConfigResult, gatewayResult] = await Promise.all([
+      supabase
+        .from('wallets')
+        .select('id, wallet_binding_id, balance_cents, entry_count')
+        .eq('wallet_binding_id', wallet_binding_id)
+        .eq('device_fingerprint', deviceFingerprint)
+        .single(),
+      supabase
+        .from('venue_entry_configs')
+        .select('initial_entry_fee_cents, venue_reentry_fee_cents, valid_reentry_scan_fee_cents, re_entry_allowed')
+        .eq('venue_id', venue_id)
+        .maybeSingle(),
+      supabase
+        .from('gateway_points')
+        .select('id, name, type')
+        .eq('id', gateway_id)
+        .single(),
+    ]);
+
+    const { data: wallet, error: walletError } = walletResult;
+    const { data: venueConfig } = venueConfigResult;
+    const { data: gateway } = gatewayResult;
 
     if (walletError || !wallet) {
       return res.status(404).json({ error: 'Wallet not found' });
     }
 
-    // Get venue entry configuration
-    const { data: venueConfig } = await supabase
-      .from('venue_entry_configs')
-      .select('*')
-      .eq('venue_id', venue_id)
-      .maybeSingle();
-
-    // Get gateway info
-    const { data: gateway } = await supabase
-      .from('gateway_points')
-      .select('*')
-      .eq('id', gateway_id)
-      .single();
-
     if (!gateway) {
       return res.status(404).json({ error: 'Gateway not found' });
     }
 
-    // Check previous entries for this wallet at this venue
-    const { data: previousEntries } = await supabase
+    // Count previous entries instead of fetching all
+    const { count: previousEntryCount } = await supabase
       .from('entry_events')
-      .select('*')
+      .select('*', { count: 'exact', head: true })
       .eq('wallet_binding_id', wallet_binding_id)
-      .eq('venue_id', venue_id)
-      .order('timestamp', { ascending: false });
+      .eq('venue_id', venue_id);
 
-    const isInitialEntry = !previousEntries || previousEntries.length === 0;
-    const entryNumber = (previousEntries?.length || 0) + 1;
+    const isInitialEntry = !previousEntryCount || previousEntryCount === 0;
+    const entryNumber = (previousEntryCount || 0) + 1;
 
     // Calculate fees based on entry type
     const fees: EntryFees = {
@@ -158,79 +159,79 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Deduct fees from wallet
     const newBalance = wallet.balance_cents - fees.total_fees_cents;
 
-    const { error: updateError } = await supabase
-      .from('wallets')
-      .update({
-        balance_cents: newBalance,
-        last_entry_at: new Date().toISOString(),
-        entry_count: wallet.entry_count + 1,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('wallet_binding_id', wallet_binding_id);
+    // Create entry event and transaction, update wallet in parallel
+    const receiptId = uuidv4();
+    const entryId = `entry_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const timestamp = new Date().toISOString();
 
-    if (updateError) {
-      console.error('Wallet update error:', updateError);
+    const [updateResult, entryResult, txResult] = await Promise.all([
+      supabase
+        .from('wallets')
+        .update({
+          balance_cents: newBalance,
+          last_entry_at: timestamp,
+          entry_count: wallet.entry_count + 1,
+          updated_at: timestamp,
+        })
+        .eq('wallet_binding_id', wallet_binding_id),
+      supabase.from('entry_events').insert({
+        id: entryId,
+        wallet_id: wallet.id,
+        wallet_binding_id,
+        venue_id,
+        gateway_id,
+        gateway_name: gateway.name,
+        entry_number: entryNumber,
+        entry_type: isInitialEntry ? 'initial' : 're_entry',
+        initial_entry_fee_cents: fees.initial_entry_fee_cents,
+        venue_reentry_fee_cents: fees.venue_reentry_fee_cents,
+        valid_reentry_scan_fee_cents: fees.valid_reentry_scan_fee_cents,
+        total_fees_cents: fees.total_fees_cents,
+        device_fingerprint: deviceFingerprint,
+        interaction_method,
+        receipt_id: receiptId,
+        status: 'APPROVED',
+        timestamp,
+      }),
+      supabase.from('transactions').insert({
+        wallet_id: wallet.id,
+        type: 'SPEND',
+        amount_cents: fees.total_fees_cents,
+        balance_before_cents: wallet.balance_cents,
+        balance_after_cents: newBalance,
+        gateway_id,
+        venue_id,
+        gateway_name: gateway.name,
+        gateway_type: gateway.type,
+        interaction_method,
+        entry_number: entryNumber,
+        entry_type: isInitialEntry ? 'initial' : 're_entry',
+        venue_reentry_fee_cents: fees.venue_reentry_fee_cents,
+        valid_reentry_scan_fee_cents: fees.valid_reentry_scan_fee_cents,
+        metadata: {
+          entry_id: entryId,
+          receipt_id: receiptId,
+          entry_type: isInitialEntry ? 'initial' : 're_entry',
+          entry_number: entryNumber,
+        },
+      }),
+    ]);
+
+    if (updateResult.error) {
+      console.error('Wallet update error:', updateResult.error);
       return res.status(500).json({
         error: 'Failed to update wallet balance',
-        details: updateError.message,
+        details: updateResult.error.message,
       });
     }
 
-    // Create entry event
-    const receiptId = uuidv4();
-    const entryId = `entry_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-
-    const { error: entryError } = await supabase.from('entry_events').insert({
-      id: entryId,
-      wallet_id: wallet.id,
-      wallet_binding_id,
-      venue_id,
-      gateway_id,
-      gateway_name: gateway.name,
-      entry_number: entryNumber,
-      entry_type: isInitialEntry ? 'initial' : 're_entry',
-      initial_entry_fee_cents: fees.initial_entry_fee_cents,
-      venue_reentry_fee_cents: fees.venue_reentry_fee_cents,
-      valid_reentry_scan_fee_cents: fees.valid_reentry_scan_fee_cents,
-      total_fees_cents: fees.total_fees_cents,
-      device_fingerprint: deviceFingerprint,
-      interaction_method,
-      receipt_id: receiptId,
-      status: 'APPROVED',
-      timestamp: new Date().toISOString(),
-    });
-
-    if (entryError) {
-      console.error('Entry event insert error:', entryError);
+    if (entryResult.error) {
+      console.error('Entry event insert error:', entryResult.error);
       // Don't fail the whole request if entry logging fails
     }
 
-    // Record transaction
-    const { error: txError } = await supabase.from('transactions').insert({
-      wallet_id: wallet.id,
-      type: 'SPEND',
-      amount_cents: fees.total_fees_cents,
-      balance_before_cents: wallet.balance_cents,
-      balance_after_cents: newBalance,
-      gateway_id,
-      venue_id,
-      gateway_name: gateway.name,
-      gateway_type: gateway.type,
-      interaction_method,
-      entry_number: entryNumber,
-      entry_type: isInitialEntry ? 'initial' : 're_entry',
-      venue_reentry_fee_cents: fees.venue_reentry_fee_cents,
-      valid_reentry_scan_fee_cents: fees.valid_reentry_scan_fee_cents,
-      metadata: {
-        entry_id: entryId,
-        receipt_id: receiptId,
-        entry_type: isInitialEntry ? 'initial' : 're_entry',
-        entry_number: entryNumber,
-      },
-    });
-
-    if (txError) {
-      console.error('Transaction insert error:', txError);
+    if (txResult.error) {
+      console.error('Transaction insert error:', txResult.error);
       // Don't fail the whole request if transaction logging fails
     }
 

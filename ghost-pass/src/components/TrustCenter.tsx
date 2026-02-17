@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CreditCard, Smartphone, Zap, ArrowRight, Wallet, DollarSign, Bitcoin, Check, X, ArrowLeft } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { walletApi } from '../lib/api';
 import { useToast } from './ui/toast';
 
@@ -13,6 +14,7 @@ interface SourceAmount {
 }
 
 const TrustCenter: React.FC = () => {
+  const { t } = useTranslation();
   const [selectedSources, setSelectedSources] = useState<Map<string, SourceAmount>>(new Map());
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -212,8 +214,8 @@ const TrustCenter: React.FC = () => {
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="text-center">
-        <h1 className="text-xl sm:text-2xl font-bold text-white mb-1 sm:mb-2">TopUp</h1>
-        <p className="text-slate-400 text-sm sm:text-base">Secure funding for your wallet</p>
+        <h1 className="text-xl sm:text-2xl font-bold text-white mb-1 sm:mb-2">{t('trustCenter.title')}</h1>
+        <p className="text-slate-400 text-sm sm:text-base">{t('trustCenter.subtitle')}</p>
         <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent mx-auto mt-3 sm:mt-4"></div>
       </div>
 
@@ -235,7 +237,7 @@ const TrustCenter: React.FC = () => {
               {/* Funding Source Selection */}
               <div className="space-y-2 sm:space-y-3">
                 <label className="block text-white font-medium text-sm sm:text-base">
-                  Select Funding Sources (Multiple Allowed)
+                  {t('trustCenter.selectSources')}
                 </label>
                 <div className="grid gap-2 sm:gap-3 grid-cols-3 sm:grid-cols-4 lg:grid-cols-7">
                   {fundingSources?.map((source) => {
@@ -268,7 +270,7 @@ const TrustCenter: React.FC = () => {
                         <span className="font-medium text-xs sm:text-sm leading-tight">{source.name}</span>
                         {!source.enabled && (
                           <span className="text-xs text-slate-500 bg-slate-700/50 px-1 py-0.5 sm:px-2 sm:py-1 rounded text-[10px] sm:text-xs">
-                            Soon
+                            {t('common.soon')}
                           </span>
                         )}
                       </button>
@@ -281,7 +283,7 @@ const TrustCenter: React.FC = () => {
               {selectedSources.size > 0 && (
                 <div className="space-y-3 sm:space-y-4">
                   <label className="block text-white font-medium text-sm sm:text-base">
-                    Enter Amount for Each Source
+                    {t('trustCenter.enterAmount')}
                   </label>
                   <div className="space-y-2 sm:space-y-3">
                     {Array.from(selectedSources.values()).map((source) => (
@@ -319,13 +321,13 @@ const TrustCenter: React.FC = () => {
               {selectedSources.size > 0 && (
                 <div className="bg-slate-900/50 border border-slate-600 rounded-lg p-3 sm:p-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-300 font-medium text-sm sm:text-base">Total Amount:</span>
+                    <span className="text-slate-300 font-medium text-sm sm:text-base">{t('trustCenter.totalAmount')}</span>
                     <span className="text-cyan-400 font-bold text-lg sm:text-xl font-mono">
                       ${getTotalAmount().toFixed(2)}
                     </span>
                   </div>
                   <div className="text-xs sm:text-sm text-slate-400 mt-1">
-                    From {selectedSources.size} source{selectedSources.size !== 1 ? 's' : ''}
+                    {t('trustCenter.from')} {selectedSources.size} {selectedSources.size === 1 ? t('trustCenter.source') : t('trustCenter.sources')}
                   </div>
                 </div>
               )}
@@ -346,7 +348,7 @@ const TrustCenter: React.FC = () => {
                     : { filter: 'drop-shadow(0 0 10px rgba(6, 182, 212, 0.3))' }
                 }
               >
-                <span>CONTINUE TO CONFIRMATION</span>
+                <span>{t('trustCenter.continueToConfirmation')}</span>
                 <ArrowRight size={18} className="sm:w-5 sm:h-5" />
               </motion.button>
 
@@ -355,9 +357,9 @@ const TrustCenter: React.FC = () => {
                 <div className="flex items-start space-x-2 sm:space-x-3">
                   <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-cyan-400 rounded-full mt-1.5 sm:mt-2 flex-shrink-0"></div>
                   <div className="text-xs sm:text-sm text-slate-300">
-                    <p className="font-medium text-cyan-400 mb-0.5 sm:mb-1">No Limits</p>
-                    <p className="sm:hidden">Enter any amount. Multiple sources supported.</p>
-                    <p className="hidden sm:block">Enter any amount you need. You can combine multiple funding sources with different amounts for each.</p>
+                    <p className="font-medium text-cyan-400 mb-0.5 sm:mb-1">{t('trustCenter.noLimits')}</p>
+                    <p className="sm:hidden">{t('trustCenter.noLimitsDescription')}</p>
+                    <p className="hidden sm:block">{t('trustCenter.noLimitsDescriptionFull')}</p>
                   </div>
                 </div>
               </div>
@@ -378,13 +380,13 @@ const TrustCenter: React.FC = () => {
               className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-xl p-4 sm:p-6 space-y-4 sm:space-y-6"
             >
               <div className="text-center">
-                <h2 className="text-lg sm:text-xl font-bold text-white mb-2">Confirm Transfer</h2>
-                <p className="text-slate-400 text-sm">Review your funding details</p>
+                <h2 className="text-lg sm:text-xl font-bold text-white mb-2">{t('trustCenter.confirmTransfer')}</h2>
+                <p className="text-slate-400 text-sm">{t('trustCenter.reviewDetails')}</p>
               </div>
 
               {/* Source Breakdown */}
               <div className="space-y-2 sm:space-y-3">
-                <label className="block text-white font-medium text-sm sm:text-base">Funding Breakdown</label>
+                <label className="block text-white font-medium text-sm sm:text-base">{t('trustCenter.fundingBreakdown')}</label>
                 <div className="bg-slate-900/50 border border-slate-600 rounded-lg p-3 sm:p-4 space-y-2">
                   {Array.from(selectedSources.values()).map((source) => {
                     const Icon = getSourceIcon(source.sourceType);
@@ -406,7 +408,7 @@ const TrustCenter: React.FC = () => {
               {/* Total */}
               <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4 sm:p-5">
                 <div className="flex justify-between items-center">
-                  <span className="text-white font-bold text-base sm:text-lg">Total Transfer:</span>
+                  <span className="text-white font-bold text-base sm:text-lg">{t('trustCenter.totalTransfer')}</span>
                   <span className="text-cyan-400 font-bold text-xl sm:text-2xl font-mono">
                     ${getTotalAmount().toFixed(2)}
                   </span>
@@ -422,7 +424,7 @@ const TrustCenter: React.FC = () => {
                   whileTap={{ scale: 0.98 }}
                 >
                   <ArrowLeft size={16} className="sm:w-5 sm:h-5" />
-                  <span>BACK</span>
+                  <span>{t('common.back')}</span>
                 </motion.button>
 
                 <motion.button
@@ -443,12 +445,12 @@ const TrustCenter: React.FC = () => {
                   {isProcessing ? (
                     <>
                       <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
-                      <span>PROCESSING</span>
+                      <span>{t('common.processing')}</span>
                     </>
                   ) : (
                     <>
                       <Check size={16} className="sm:w-5 sm:h-5" />
-                      <span>CONFIRM</span>
+                      <span>{t('common.confirm')}</span>
                     </>
                   )}
                 </motion.button>
@@ -459,8 +461,8 @@ const TrustCenter: React.FC = () => {
                 <div className="flex items-start space-x-2 sm:space-x-3">
                   <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-amber-400 rounded-full mt-1.5 sm:mt-2 flex-shrink-0"></div>
                   <div className="text-xs sm:text-sm text-slate-300">
-                    <p className="font-medium text-amber-400 mb-0.5 sm:mb-1">Confirm Before Proceeding</p>
-                    <p>This action will initiate transfers from all selected sources. Please verify the amounts are correct.</p>
+                    <p className="font-medium text-amber-400 mb-0.5 sm:mb-1">{t('trustCenter.confirmBeforeProceeding')}</p>
+                    <p>{t('trustCenter.confirmWarning')}</p>
                   </div>
                 </div>
               </div>
@@ -479,8 +481,8 @@ const TrustCenter: React.FC = () => {
           <div className="flex items-center space-x-3">
             <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse"></div>
             <div>
-              <p className="text-emerald-400 font-medium">Transfer Initiated</p>
-              <p className="text-slate-300 text-sm">Your wallet will be updated shortly</p>
+              <p className="text-emerald-400 font-medium">{t('trustCenter.transferInitiated')}</p>
+              <p className="text-slate-300 text-sm">{t('trustCenter.walletUpdated')}</p>
             </div>
           </div>
         </motion.div>

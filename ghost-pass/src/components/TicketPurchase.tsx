@@ -8,6 +8,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Ticket, Calendar, MapPin, DollarSign, CheckCircle, AlertCircle, Loader2, QrCode } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 
 interface Event {
@@ -41,6 +42,7 @@ interface PurchasedTicket {
 }
 
 const TicketPurchase: React.FC = () => {
+  const { t } = useTranslation();
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
@@ -70,7 +72,7 @@ const TicketPurchase: React.FC = () => {
         setEvents(data.events || []);
       }
     } catch (error) {
-      console.error('Failed to fetch events:', error);
+      console.error(t('tickets.failedToFetchEvents'), error);
     } finally {
       setLoading(false);
     }
@@ -90,7 +92,7 @@ const TicketPurchase: React.FC = () => {
         setBalance(data.balance_cents || 0);
       }
     } catch (error) {
-      console.error('Failed to fetch balance:', error);
+      console.error(t('tickets.failedToFetchBalance'), error);
     }
   };
 
@@ -104,7 +106,7 @@ const TicketPurchase: React.FC = () => {
         setTicketTypes(data.ticket_types || []);
       }
     } catch (error) {
-      console.error('Failed to fetch ticket types:', error);
+      console.error(t('tickets.failedToFetchTicketTypes'), error);
     }
   };
 
@@ -143,7 +145,7 @@ const TicketPurchase: React.FC = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Purchase failed');
+        throw new Error(errorData.error || t('tickets.purchaseFailed'));
       }
 
       const data = await response.json();
@@ -161,8 +163,8 @@ const TicketPurchase: React.FC = () => {
       await fetchBalance();
 
     } catch (error) {
-      console.error('Purchase error:', error);
-      setError(error instanceof Error ? error.message : 'Purchase failed');
+      console.error(t('tickets.purchaseFailed'), error);
+      setError(error instanceof Error ? error.message : t('tickets.purchaseFailed'));
     } finally {
       setPurchasing(false);
     }
@@ -192,21 +194,21 @@ const TicketPurchase: React.FC = () => {
           <div className="w-16 h-16 mx-auto mb-4 bg-green-500/20 rounded-full flex items-center justify-center">
             <CheckCircle className="w-8 h-8 text-green-400" />
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Ticket Purchased!</h2>
-          <p className="text-slate-400">Your ticket is ready to use</p>
+          <h2 className="text-2xl font-bold text-white mb-2">{t('tickets.ticketPurchased')}</h2>
+          <p className="text-slate-400">{t('tickets.ticketReady')}</p>
         </div>
 
         <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-slate-400">Event</span>
+            <span className="text-slate-400">{t('tickets.event')}</span>
             <span className="text-white font-medium">{purchasedTicket.event_name}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-slate-400">Ticket Type</span>
+            <span className="text-slate-400">{t('tickets.ticketType')}</span>
             <span className="text-white font-medium">{purchasedTicket.ticket_type_name}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-slate-400">Total Paid</span>
+            <span className="text-slate-400">{t('tickets.totalPaid')}</span>
             <span className="text-green-400 font-bold text-lg">
               ${(purchasedTicket.total_paid_cents / 100).toFixed(2)}
             </span>
@@ -220,7 +222,7 @@ const TicketPurchase: React.FC = () => {
               </div>
             </div>
             <p className="text-xs text-slate-400 text-center mt-2">
-              Show this QR code at the venue entrance
+              {t('tickets.showQRCode')}
             </p>
           </div>
         </div>
@@ -233,7 +235,7 @@ const TicketPurchase: React.FC = () => {
           }}
           className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
         >
-          Purchase Another Ticket
+          {t('tickets.purchaseAnotherTicket')}
         </button>
       </motion.div>
     );
@@ -243,12 +245,12 @@ const TicketPurchase: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-white mb-2">Event Tickets</h1>
-        <p className="text-slate-400">Purchase tickets for upcoming events</p>
+        <h1 className="text-2xl font-bold text-white mb-2">{t('tickets.title')}</h1>
+        <p className="text-slate-400">{t('tickets.purchaseTickets')}</p>
         <div className="mt-4 inline-flex items-center space-x-2 px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg">
           <DollarSign className="w-4 h-4 text-cyan-400" />
           <span className="text-white font-medium">${(balance / 100).toFixed(2)}</span>
-          <span className="text-slate-400 text-sm">available</span>
+          <span className="text-slate-400 text-sm">{t('tickets.available')}</span>
         </div>
       </div>
 
@@ -263,10 +265,10 @@ const TicketPurchase: React.FC = () => {
       {/* Event Selection */}
       {!selectedEvent && (
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-white">Available Events</h2>
+          <h2 className="text-lg font-semibold text-white">{t('tickets.availableEvents')}</h2>
           {events.length === 0 ? (
             <div className="text-center py-8 text-slate-400">
-              No events available at this time
+              {t('tickets.noEventsAvailable')}
             </div>
           ) : (
             events.map((event) => (
@@ -309,12 +311,12 @@ const TicketPurchase: React.FC = () => {
             onClick={() => setSelectedEvent(null)}
             className="text-cyan-400 hover:text-cyan-300 text-sm"
           >
-            ← Back to events
+            {t('tickets.backToEvents')}
           </button>
           
           <div>
             <h2 className="text-lg font-semibold text-white mb-1">{selectedEvent.name}</h2>
-            <p className="text-slate-400 text-sm">Select a ticket type</p>
+            <p className="text-slate-400 text-sm">{t('tickets.selectTicketType')}</p>
           </div>
 
           {ticketTypes.map((ticketType) => {
@@ -343,11 +345,11 @@ const TicketPurchase: React.FC = () => {
                     <div className="flex items-center space-x-2 text-xs">
                       {ticketType.allows_reentry && (
                         <span className="px-2 py-1 bg-green-500/20 text-green-400 rounded">
-                          Re-entry allowed
+                          {t('tickets.reEntryAllowed')}
                         </span>
                       )}
                       <span className="text-slate-500">
-                        {available} / {ticketType.max_quantity} available
+                        {available} / {ticketType.max_quantity} {t('tickets.available')}
                       </span>
                     </div>
                   </div>
@@ -356,7 +358,7 @@ const TicketPurchase: React.FC = () => {
                       ${(total / 100).toFixed(2)}
                     </div>
                     <div className="text-slate-500 text-xs">
-                      +${((total - ticketType.price_cents) / 100).toFixed(2)} fee
+                      +${((total - ticketType.price_cents) / 100).toFixed(2)} {t('tickets.fee')}
                     </div>
                   </div>
                 </div>
@@ -373,33 +375,33 @@ const TicketPurchase: React.FC = () => {
             onClick={() => setSelectedTicketType(null)}
             className="text-cyan-400 hover:text-cyan-300 text-sm"
           >
-            ← Back to ticket types
+            {t('tickets.backToTicketTypes')}
           </button>
 
           <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-white">Confirm Purchase</h2>
+            <h2 className="text-lg font-semibold text-white">{t('tickets.confirmPurchase')}</h2>
             
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-slate-400">Event</span>
+                <span className="text-slate-400">{t('tickets.event')}</span>
                 <span className="text-white">{selectedEvent.name}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Ticket</span>
+                <span className="text-slate-400">{t('tickets.ticketType')}</span>
                 <span className="text-white">{selectedTicketType.name}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Ticket Price</span>
+                <span className="text-slate-400">{t('tickets.ticketPrice')}</span>
                 <span className="text-white">${(selectedTicketType.price_cents / 100).toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Service Fee ({selectedEvent.service_fee_percent}%)</span>
+                <span className="text-slate-400">{t('tickets.serviceFee')} ({selectedEvent.service_fee_percent}%)</span>
                 <span className="text-white">
                   ${(Math.round(selectedTicketType.price_cents * (selectedEvent.service_fee_percent / 100)) / 100).toFixed(2)}
                 </span>
               </div>
               <div className="flex justify-between pt-2 border-t border-slate-700">
-                <span className="text-white font-semibold">Total</span>
+                <span className="text-white font-semibold">{t('tickets.total')}</span>
                 <span className="text-cyan-400 font-bold text-lg">
                   ${(calculateTotal(selectedTicketType, selectedEvent.service_fee_percent) / 100).toFixed(2)}
                 </span>
@@ -419,18 +421,18 @@ const TicketPurchase: React.FC = () => {
               {purchasing ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Processing...</span>
+                  <span>{t('tickets.processing')}</span>
                 </>
               ) : balance < calculateTotal(selectedTicketType, selectedEvent.service_fee_percent) ? (
-                <span>Insufficient Balance</span>
+                <span>{t('tickets.insufficientBalance')}</span>
               ) : (
-                <span>Purchase Ticket</span>
+                <span>{t('tickets.purchaseTicket')}</span>
               )}
             </button>
 
             {balance < calculateTotal(selectedTicketType, selectedEvent.service_fee_percent) && (
               <p className="text-red-400 text-sm text-center">
-                You need ${((calculateTotal(selectedTicketType, selectedEvent.service_fee_percent) - balance) / 100).toFixed(2)} more
+                {t('tickets.youNeed', { amount: ((calculateTotal(selectedTicketType, selectedEvent.service_fee_percent) - balance) / 100).toFixed(2) })}
               </p>
             )}
           </div>

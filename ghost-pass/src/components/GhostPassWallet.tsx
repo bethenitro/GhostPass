@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { QrCode, Wifi, Shield, AlertTriangle, CheckCircle, Zap, Lock, Key, Eye } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import GhostPassWalletPersistence from './GhostPassWalletPersistence';
 import GhostPassEntryManager from './GhostPassEntryManager';
@@ -30,6 +31,7 @@ const GhostPassWallet: React.FC<GhostPassWalletProps> = ({
   venueId,
   onBalanceUpdate
 }) => {
+  const { t } = useTranslation();
   const [selectedMethod, setSelectedMethod] = useState<'NFC' | 'QR'>('NFC');
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastInteraction, setLastInteraction] = useState<any>(null);
@@ -204,13 +206,13 @@ const GhostPassWallet: React.FC<GhostPassWalletProps> = ({
   const getProofLabel = (proof: CryptographicProof) => {
     switch (proof.proof_type) {
       case 'age_verified': 
-        return `Age Verified: ${proof.verified ? 'Yes' : 'No'}`;
+        return `${t('ghostPass.ageVerified')}: ${proof.verified ? t('ghostPass.yes') : t('ghostPass.no')}`;
       case 'medical_credential': 
-        return `Medical Credential: ${proof.credential_present ? 'Present' : 'Not Present'}`;
+        return `${t('ghostPass.medicalCredential')}: ${proof.credential_present ? t('ghostPass.present') : t('ghostPass.notPresent')}`;
       case 'access_class': 
-        return `Access Class: ${proof.access_class || 'GA'}`;
+        return `${t('ghostPass.accessClass')}: ${proof.access_class || t('ghostPass.ga')}`;
       default: 
-        return 'Unknown Proof';
+        return t('ghostPass.unknownProof');
     }
   };
 
@@ -222,8 +224,8 @@ const GhostPassWallet: React.FC<GhostPassWalletProps> = ({
         animate={{ opacity: 1, y: 0 }}
         className="text-center"
       >
-        <h1 className="text-2xl font-bold text-white mb-2">GHOST PASS WALLET</h1>
-        <p className="text-cyan-400 text-sm">Device-Bound • Zero Custody • Cryptographic Proofs</p>
+        <h1 className="text-2xl font-bold text-white mb-2">{t('ghostPass.walletTitle')}</h1>
+        <p className="text-cyan-400 text-sm">{t('ghostPass.walletSubtitle')}</p>
         <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent mx-auto mt-4"></div>
       </motion.div>
 
@@ -238,7 +240,7 @@ const GhostPassWallet: React.FC<GhostPassWalletProps> = ({
               : "text-gray-400 hover:text-white"
           )}
         >
-          Wallet
+          {t('ghostPass.walletTab')}
         </button>
         <button
           onClick={() => setActiveTab('entry')}
@@ -249,7 +251,7 @@ const GhostPassWallet: React.FC<GhostPassWalletProps> = ({
               : "text-gray-400 hover:text-white"
           )}
         >
-          Entry
+          {t('ghostPass.entryTab')}
         </button>
         <button
           onClick={() => setActiveTab('persistence')}
@@ -260,7 +262,7 @@ const GhostPassWallet: React.FC<GhostPassWalletProps> = ({
               : "text-gray-400 hover:text-white"
           )}
         >
-          Persistence
+          {t('ghostPass.persistenceTab')}
         </button>
       </div>
 
@@ -287,12 +289,12 @@ const GhostPassWallet: React.FC<GhostPassWalletProps> = ({
               )}
               <div>
                 <h3 className="font-semibold text-white">
-                  {deviceBound ? "Device Bound" : "Device Not Bound"}
+                  {deviceBound ? t('ghostPass.deviceBound') : t('ghostPass.deviceNotBound')}
                 </h3>
                 <p className="text-sm text-gray-400">
                   {deviceBound 
-                    ? "Wallet is securely bound to this device" 
-                    : "Bind your device to enable Ghost Pass features"
+                    ? t('ghostPass.walletSecure')
+                    : t('ghostPass.bindDevice')
                   }
                 </p>
               </div>
@@ -300,7 +302,7 @@ const GhostPassWallet: React.FC<GhostPassWalletProps> = ({
             
             {deviceBound && walletBindingId && (
               <div className="mt-3 p-2 bg-black/20 rounded text-xs font-mono text-cyan-400">
-                Binding ID: {walletBindingId.slice(0, 16)}...
+                {t('ghostPass.bindingId')}: {walletBindingId.slice(0, 16)}...
               </div>
             )}
           </motion.div>
@@ -315,7 +317,7 @@ const GhostPassWallet: React.FC<GhostPassWalletProps> = ({
             <div className="text-3xl font-bold text-white mb-2">
               ${(balance / 100).toFixed(2)}
             </div>
-            <div className="text-sm text-gray-400">Available Balance</div>
+            <div className="text-sm text-gray-400">{t('ghostPass.availableBalance')}</div>
           </motion.div>
 
           {/* Cryptographic Proofs Section */}
@@ -329,7 +331,7 @@ const GhostPassWallet: React.FC<GhostPassWalletProps> = ({
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                   <Shield className="w-5 h-5 text-cyan-400" />
-                  Cryptographic Proofs
+                  {t('ghostPass.cryptographicProofs')}
                 </h3>
                 <button
                   onClick={() => setShowProofs(!showProofs)}
@@ -343,7 +345,7 @@ const GhostPassWallet: React.FC<GhostPassWalletProps> = ({
                 <div className="space-y-2">
                   {proofs.length === 0 ? (
                     <div className="p-4 bg-gray-800/50 rounded-lg text-center text-gray-400">
-                      No cryptographic proofs found
+                      {t('ghostPass.noProofsFound')}
                     </div>
                   ) : (
                     proofs.map((proof) => (
@@ -359,7 +361,7 @@ const GhostPassWallet: React.FC<GhostPassWalletProps> = ({
                             {getProofLabel(proof)}
                           </div>
                           <div className="text-xs text-gray-400">
-                            Created: {new Date(proof.created_at).toLocaleDateString()}
+                            {t('ghostPass.created')}: {new Date(proof.created_at).toLocaleDateString()}
                           </div>
                         </div>
                         <div className={cn(
@@ -376,19 +378,19 @@ const GhostPassWallet: React.FC<GhostPassWalletProps> = ({
                       onClick={() => createProof('age_verified', { verified: true })}
                       className="p-2 bg-blue-600/20 border border-blue-500/30 rounded text-xs text-blue-400 hover:bg-blue-600/30 transition-colors"
                     >
-                      Add Age Proof
+                      {t('ghostPass.addAgeProof')}
                     </button>
                     <button
                       onClick={() => createProof('medical_credential', { credential_present: true })}
                       className="p-2 bg-green-600/20 border border-green-500/30 rounded text-xs text-green-400 hover:bg-green-600/30 transition-colors"
                     >
-                      Add Medical
+                      {t('ghostPass.addMedical')}
                     </button>
                     <button
                       onClick={() => createProof('access_class', { access_class: 'VIP' })}
                       className="p-2 bg-purple-600/20 border border-purple-500/30 rounded text-xs text-purple-400 hover:bg-purple-600/30 transition-colors"
                     >
-                      Add VIP Access
+                      {t('ghostPass.addVIPAccess')}
                     </button>
                   </div>
                 </div>
@@ -404,7 +406,7 @@ const GhostPassWallet: React.FC<GhostPassWalletProps> = ({
               transition={{ delay: 0.4 }}
               className="space-y-4"
             >
-              <h3 className="text-lg font-semibold text-white">Interaction Methods</h3>
+              <h3 className="text-lg font-semibold text-white">{t('ghostPass.interactionMethods')}</h3>
               
               {/* Method Selector */}
               <div className="grid grid-cols-2 gap-3">
@@ -419,8 +421,8 @@ const GhostPassWallet: React.FC<GhostPassWalletProps> = ({
                 >
                   <div className="flex flex-col items-center gap-2">
                     <Wifi className="w-6 h-6" />
-                    <span className="text-sm font-medium">NFC Tap</span>
-                    <span className="text-xs">Preferred</span>
+                    <span className="text-sm font-medium">{t('ghostPass.nfcTap')}</span>
+                    <span className="text-xs">{t('ghostPass.preferred')}</span>
                   </div>
                 </button>
 
@@ -435,9 +437,9 @@ const GhostPassWallet: React.FC<GhostPassWalletProps> = ({
                 >
                   <div className="flex flex-col items-center gap-2">
                     <QrCode className="w-6 h-6" />
-                    <span className="text-sm font-medium">QR Scan</span>
+                    <span className="text-sm font-medium">{t('ghostPass.qrScan')}</span>
                     {selectedMethod === 'QR' && (
-                      <span className="text-xs">Brightness: {currentBrightness}%</span>
+                      <span className="text-xs">{t('ghostPass.brightness')}: {currentBrightness}%</span>
                     )}
                   </div>
                 </button>
@@ -457,12 +459,12 @@ const GhostPassWallet: React.FC<GhostPassWalletProps> = ({
                 {isProcessing ? (
                   <div className="flex items-center justify-center gap-2">
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Processing {selectedMethod}...
+                    {t('ghostPass.processing', { method: selectedMethod })}
                   </div>
                 ) : (
                   <div className="flex items-center justify-center gap-2">
                     <Zap className="w-4 h-4" />
-                    Simulate {selectedMethod} Interaction
+                    {t('ghostPass.simulateInteraction', { method: selectedMethod })}
                   </div>
                 )}
               </button>
@@ -470,11 +472,11 @@ const GhostPassWallet: React.FC<GhostPassWalletProps> = ({
               {/* Platform Fee Info */}
               {platformFeeConfig && (
                 <div className="p-3 bg-yellow-900/20 border border-yellow-500/30 rounded-lg">
-                  <div className="text-yellow-400 text-sm font-medium mb-1">Platform Fee</div>
+                  <div className="text-yellow-400 text-sm font-medium mb-1">{t('ghostPass.platformFee')}</div>
                   <div className="text-xs text-gray-300">
-                    Entry: {platformFeeConfig.context_fees?.entry} • 
-                    Bar: {platformFeeConfig.context_fees?.bar} • 
-                    Merch: {platformFeeConfig.context_fees?.merch}
+                    {t('ghostPass.entry')}: {platformFeeConfig.context_fees?.entry} • 
+                    {t('ghostPass.bar')}: {platformFeeConfig.context_fees?.bar} • 
+                    {t('ghostPass.merch')}: {platformFeeConfig.context_fees?.merch}
                   </div>
                 </div>
               )}
@@ -490,13 +492,13 @@ const GhostPassWallet: React.FC<GhostPassWalletProps> = ({
             >
               <div className="flex items-center gap-2 mb-2">
                 <CheckCircle className="w-4 h-4 text-green-400" />
-                <span className="text-green-400 font-medium">Last Interaction</span>
+                <span className="text-green-400 font-medium">{t('ghostPass.lastInteraction')}</span>
               </div>
               <div className="text-sm text-gray-300 space-y-1">
-                <div>Method: {lastInteraction.method}</div>
-                <div>Gateway: {lastInteraction.gateway}</div>
-                <div>Platform Fee: {lastInteraction.platformFee}</div>
-                <div>Status: {lastInteraction.status}</div>
+                <div>{t('ghostPass.method')}: {lastInteraction.method}</div>
+                <div>{t('ghostPass.gateway')}: {lastInteraction.gateway}</div>
+                <div>{t('ghostPass.platformFee')}: {lastInteraction.platformFee}</div>
+                <div>{t('ghostPass.status')}: {lastInteraction.status}</div>
                 <div className="text-xs text-gray-400">
                   {new Date(lastInteraction.timestamp).toLocaleString()}
                 </div>
@@ -514,19 +516,19 @@ const GhostPassWallet: React.FC<GhostPassWalletProps> = ({
             >
               <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                 <Lock className="w-5 h-5 text-cyan-400" />
-                Biometric Verification
+                {t('ghostPass.biometricVerification')}
               </h3>
               
               <button
                 onClick={generateBiometricChallenge}
                 className="w-full p-3 bg-gray-800/50 border border-gray-600 rounded-lg text-gray-300 hover:border-gray-500 transition-colors"
               >
-                Generate Biometric Challenge
+                {t('ghostPass.generateChallenge')}
               </button>
 
               {biometricChallenge && (
                 <div className="p-3 bg-black/20 rounded-lg">
-                  <div className="text-xs text-gray-400 mb-1">Challenge (expires in 5 minutes):</div>
+                  <div className="text-xs text-gray-400 mb-1">{t('ghostPass.challenge')}:</div>
                   <div className="text-xs font-mono text-cyan-400 break-all">
                     {biometricChallenge}
                   </div>

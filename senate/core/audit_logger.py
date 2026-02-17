@@ -13,9 +13,9 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from senate.models.governance import GovernanceVerdict, AuditRecord, VetoResult
-from senate.utils.errors import AuditError
-from senate.utils.logging import get_audit_logger
+from models.governance import GovernanceVerdict, AuditRecord, VetoResult
+from utils.errors import AuditError
+from utils.logging import get_audit_logger
 
 
 logger = logging.getLogger(__name__)

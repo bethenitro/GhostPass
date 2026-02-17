@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Building2, Lock, Mail, ArrowRight, Loader2, AlertTriangle, Shield } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 
 interface OperatorLoginProps {
@@ -9,6 +10,7 @@ interface OperatorLoginProps {
 }
 
 const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onCancel }) => {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -18,7 +20,7 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onCancel 
     e.preventDefault();
     
     if (!email.trim() || !password.trim()) {
-      setError('Please enter both email and password');
+      setError(t('operator.enterBothFields'));
       return;
     }
 
@@ -37,14 +39,14 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onCancel 
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || 'Login failed');
+        throw new Error(errorData.detail || t('operator.loginError'));
       }
 
       const data = await response.json();
 
       // Check if user has admin or operator role
       if (data.user.role !== 'ADMIN' && data.user.role !== 'VENDOR' && data.user.role !== 'VENUE_ADMIN') {
-        throw new Error('Access denied. Operator credentials required.');
+        throw new Error(t('operator.accessDenied'));
       }
 
       // Store auth token
@@ -54,7 +56,7 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onCancel 
       onLoginSuccess(data.access_token, data.user);
     } catch (error) {
       console.error('Login error:', error);
-      setError(error instanceof Error ? error.message : 'Login failed. Please check your credentials.');
+      setError(error instanceof Error ? error.message : t('operator.loginError'));
     } finally {
       setIsLoading(false);
     }
@@ -72,8 +74,8 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onCancel 
           <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-500/50">
             <Building2 className="w-8 h-8 text-amber-400" />
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Operator Portal</h2>
-          <p className="text-slate-400">Sign in to access the Command Center</p>
+          <h2 className="text-2xl font-bold text-white mb-2">{t('operator.portalTitle')}</h2>
+          <p className="text-slate-400">{t('operator.signInSubtitle')}</p>
         </div>
 
         {/* Form */}
@@ -82,13 +84,13 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onCancel 
           <div className="space-y-2">
             <label className="text-slate-300 text-sm font-medium flex items-center space-x-2">
               <Mail className="w-4 h-4" />
-              <span>Email</span>
+              <span>{t('operator.emailLabel')}</span>
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="operator@example.com"
+              placeholder={t('operator.emailPlaceholder')}
               className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 transition-all"
               disabled={isLoading}
               autoComplete="email"
@@ -99,13 +101,13 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onCancel 
           <div className="space-y-2">
             <label className="text-slate-300 text-sm font-medium flex items-center space-x-2">
               <Lock className="w-4 h-4" />
-              <span>Password</span>
+              <span>{t('operator.passwordLabel')}</span>
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
+              placeholder={t('operator.passwordPlaceholder')}
               className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 transition-all"
               disabled={isLoading}
               autoComplete="current-password"
@@ -131,7 +133,7 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onCancel 
             <div className="flex items-start space-x-2">
               <Shield className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
               <p className="text-amber-400 text-xs">
-                This portal is for venue operators and administrators only. All actions are audit-logged.
+                {t('operator.auditWarning')}
               </p>
             </div>
           </div>
@@ -144,7 +146,7 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onCancel 
               disabled={isLoading}
               className="px-4 py-3 bg-slate-700/50 hover:bg-slate-600/50 disabled:bg-slate-800/50 disabled:cursor-not-allowed border border-slate-600 rounded-lg text-slate-300 font-medium transition-all"
             >
-              Cancel
+              {t('operator.cancelButton')}
             </button>
             <button
               type="submit"
@@ -159,11 +161,11 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onCancel 
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Signing in...</span>
+                  <span>{t('operator.signingInButton')}</span>
                 </>
               ) : (
                 <>
-                  <span>Sign In</span>
+                  <span>{t('operator.signInButton')}</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, AlertCircle, CheckCircle, ArrowLeftRight, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { walletApi } from '../lib/api';
 import type { RefundResponse, Transaction } from '../types';
 
@@ -17,6 +18,7 @@ export default function RefundModal({
     currentBalance,
     onRefundSuccess,
 }: RefundModalProps) {
+    const { t } = useTranslation();
     const [step, setStep] = useState<'select' | 'input' | 'confirm' | 'processing' | 'success' | 'error'>('select');
     const [fundingTransactions, setFundingTransactions] = useState<Transaction[]>([]);
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
@@ -37,7 +39,7 @@ export default function RefundModal({
             const transactions = await walletApi.getEligibleFundingTransactions();
             setFundingTransactions(transactions);
         } catch (err) {
-            setError('Failed to load funding transactions');
+            setError(t('refund.failedToLoadTransactions'));
         } finally {
             setLoading(false);
         }
@@ -57,7 +59,7 @@ export default function RefundModal({
 
     const validateAmount = (): boolean => {
         if (!amount || parseFloat(amount) <= 0) {
-            setError('Please enter a valid amount');
+            setError(t('refund.enterValidAmount'));
             return false;
         }
         if (amountCents > maxRefundable) {
@@ -101,7 +103,7 @@ export default function RefundModal({
                 setStep('error');
             }
         } catch (err: any) {
-            setError(err.response?.data?.detail || 'Failed to process refund. Please try again.');
+            setError(err.response?.data?.detail || t('refund.failedToProcessRefund'));
             setStep('error');
         }
     };
@@ -148,8 +150,8 @@ export default function RefundModal({
                                 <ArrowLeftRight className="w-5 h-5 text-cyan-400" />
                             </div>
                             <div>
-                                <h2 className="text-xl font-bold text-white">REFUND REQUEST</h2>
-                                <p className="text-xs text-slate-400 uppercase tracking-widest">Return to Original Source</p>
+                                <h2 className="text-xl font-bold text-white">{t('refund.title')}</h2>
+                                <p className="text-xs text-slate-400 uppercase tracking-widest">{t('refund.subtitle')}</p>
                             </div>
                         </div>
                         <button
@@ -170,18 +172,18 @@ export default function RefundModal({
                                 className="space-y-4"
                             >
                                 <div>
-                                    <h3 className="label-tactical mb-3">Select Deposit to Refund</h3>
+                                    <h3 className="label-tactical mb-3">{t('refund.selectDeposit')}</h3>
 
                                     {loading ? (
                                         <div className="text-center py-8">
                                             <div className="loading-spinner w-8 h-8 mx-auto mb-3"></div>
-                                            <p className="text-slate-400 text-sm">Loading transactions...</p>
+                                            <p className="text-slate-400 text-sm">{t('refund.loadingTransactions')}</p>
                                         </div>
                                     ) : fundingTransactions.length === 0 ? (
                                         <div className="glass-panel p-6 text-center">
                                             <AlertCircle className="w-12 h-12 text-slate-400 mx-auto mb-3" />
-                                            <p className="text-white mb-2">No Eligible Deposits</p>
-                                            <p className="text-slate-400 text-sm">You don't have any deposits available for refund.</p>
+                                            <p className="text-white mb-2">{t('refund.noEligibleDeposits')}</p>
+                                            <p className="text-slate-400 text-sm">{t('refund.noDepositsAvailable')}</p>
                                         </div>
                                     ) : (
                                         <div className="space-y-2">
@@ -207,7 +209,7 @@ export default function RefundModal({
                                                     </div>
                                                     {tx.refund_status === 'PARTIAL' && (
                                                         <div className="mt-2 text-xs text-yellow-400">
-                                                            Partially refunded
+                                                            {t('refund.partiallyRefunded')}
                                                         </div>
                                                     )}
                                                 </motion.button>
@@ -226,7 +228,7 @@ export default function RefundModal({
                                 className="space-y-4"
                             >
                                 <div className="glass-panel p-4 border-cyan-500/30">
-                                    <p className="label-tactical mb-2">Selected Deposit</p>
+                                    <p className="label-tactical mb-2">{t('refund.selectedDeposit')}</p>
                                     <div className="flex items-center justify-between">
                                         <span className="data-mono text-lg">
                                             ${(selectedTransaction.amount_cents / 100).toFixed(2)}
@@ -242,7 +244,7 @@ export default function RefundModal({
 
                                 <div>
                                     <label className="label-tactical mb-2 block">
-                                        Refund Amount
+                                        {t('refund.refundAmount')}
                                     </label>
                                     <div className="relative">
                                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-cyan-400 text-xl font-mono">
@@ -271,13 +273,13 @@ export default function RefundModal({
 
                                 <div className="glass-panel p-4 border-cyan-500/30">
                                     <div className="flex justify-between items-center mb-2">
-                                        <span className="label-tactical">Current Balance</span>
+                                        <span className="label-tactical">{t('refund.currentBalance')}</span>
                                         <span className="data-mono text-lg">
                                             ${(currentBalance / 100).toFixed(2)}
                                         </span>
                                     </div>
                                     <p className="text-xs text-slate-400">
-                                        Refunds are processed to your original payment method within 3-5 business days.
+                                        {t('refund.refundsProcessed')}
                                     </p>
                                 </div>
 
@@ -286,13 +288,13 @@ export default function RefundModal({
                                         onClick={() => setStep('select')}
                                         className="flex-1 glass-panel px-6 py-3 font-medium text-white hover:bg-white/10 transition-all"
                                     >
-                                        BACK
+                                        {t('common.back')}
                                     </button>
                                     <button
                                         onClick={handleContinue}
                                         className="flex-1 btn-primary"
                                     >
-                                        CONTINUE
+                                        {t('common.confirm')}
                                     </button>
                                 </div>
                             </motion.div>
@@ -306,20 +308,20 @@ export default function RefundModal({
                                 className="space-y-4"
                             >
                                 <div className="glass-panel p-4 space-y-3">
-                                    <h3 className="label-tactical text-white">Confirm Refund Details</h3>
+                                    <h3 className="label-tactical text-white">{t('refund.confirmRefundDetails')}</h3>
                                     <div className="space-y-2 font-mono">
                                         <div className="flex justify-between items-center">
-                                            <span className="text-slate-400 text-sm">Refund Amount:</span>
+                                            <span className="text-slate-400 text-sm">{t('refund.refundAmount')}:</span>
                                             <span className="text-cyan-400 text-lg font-bold">${amount}</span>
                                         </div>
                                         <div className="flex justify-between items-center">
-                                            <span className="text-slate-400 text-sm">Original Deposit:</span>
+                                            <span className="text-slate-400 text-sm">{t('refund.originalDeposit')}:</span>
                                             <span className="text-white text-sm">
                                                 ${(selectedTransaction.amount_cents / 100).toFixed(2)}
                                             </span>
                                         </div>
                                         <div className="flex justify-between items-center">
-                                            <span className="text-slate-400 text-sm">New Balance:</span>
+                                            <span className="text-slate-400 text-sm">{t('refund.newBalance')}:</span>
                                             <span className="text-white text-lg font-bold">
                                                 ${((currentBalance - amountCents) / 100).toFixed(2)}
                                             </span>
@@ -330,7 +332,7 @@ export default function RefundModal({
                                 <div className="glass-panel p-4 border-red-500/30 bg-red-500/5">
                                     <p className="text-sm text-red-400 flex items-start gap-2">
                                         <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                                        <span>This action cannot be undone. The refund will be processed to your original payment method.</span>
+                                        <span>{t('refund.cannotUndo')}</span>
                                     </p>
                                 </div>
 
@@ -339,13 +341,13 @@ export default function RefundModal({
                                         onClick={() => setStep('input')}
                                         className="flex-1 glass-panel px-6 py-3 font-medium text-white hover:bg-white/10 transition-all"
                                     >
-                                        BACK
+                                        {t('common.back')}
                                     </button>
                                     <button
                                         onClick={handleConfirmRefund}
                                         className="flex-1 btn-primary"
                                     >
-                                        CONFIRM REFUND
+                                        {t('refund.confirmRefund')}
                                     </button>
                                 </div>
                             </motion.div>
@@ -359,8 +361,8 @@ export default function RefundModal({
                                 className="text-center py-12"
                             >
                                 <div className="loading-spinner w-16 h-16 mx-auto mb-6"></div>
-                                <p className="text-white font-medium text-lg mb-2">Processing Refund...</p>
-                                <p className="text-slate-400 text-sm">Please wait</p>
+                                <p className="text-white font-medium text-lg mb-2">{t('refund.processingRefund')}</p>
+                                <p className="text-slate-400 text-sm">{t('common.processing')}</p>
                             </motion.div>
                         )}
 
@@ -379,16 +381,16 @@ export default function RefundModal({
                                 >
                                     <CheckCircle className="w-12 h-12 text-emerald-400 neon-glow-emerald" />
                                 </motion.div>
-                                <h3 className="text-2xl font-bold text-white mb-3">REFUND INITIATED</h3>
+                                <h3 className="text-2xl font-bold text-white mb-3">{t('refund.refundInitiated')}</h3>
                                 <p className="text-slate-300 mb-4">{refundResponse.message}</p>
                                 {refundResponse.estimated_arrival && (
                                     <p className="text-sm text-cyan-400 mb-4">
-                                        Estimated arrival: {refundResponse.estimated_arrival}
+                                        {t('refund.estimatedArrival')}: {refundResponse.estimated_arrival}
                                     </p>
                                 )}
                                 {refundResponse.refund_id && (
                                     <div className="glass-panel p-3 inline-block">
-                                        <p className="label-tactical mb-1">Reference ID</p>
+                                        <p className="label-tactical mb-1">{t('refund.referenceId')}</p>
                                         <p className="font-mono text-xs text-slate-400">
                                             {refundResponse.refund_id.slice(0, 8)}...
                                         </p>
@@ -412,13 +414,13 @@ export default function RefundModal({
                                 >
                                     <AlertCircle className="w-12 h-12 text-red-400 neon-glow-red" />
                                 </motion.div>
-                                <h3 className="text-2xl font-bold text-white mb-3">REFUND FAILED</h3>
+                                <h3 className="text-2xl font-bold text-white mb-3">{t('refund.refundFailed')}</h3>
                                 <p className="text-slate-300 mb-6">{error}</p>
                                 <button
                                     onClick={() => setStep('select')}
                                     className="btn-primary px-8"
                                 >
-                                    TRY AGAIN
+                                    {t('refund.tryAgain')}
                                 </button>
                             </motion.div>
                         )}

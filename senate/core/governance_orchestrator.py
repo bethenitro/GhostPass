@@ -11,14 +11,14 @@ import logging
 from typing import Dict, Any, Optional
 from datetime import datetime
 
-from senate.models.governance import GovernanceRequest, GovernanceVerdict, VetoResult
-from senate.models.config import GovernanceConfig
-from senate.core.senator_dispatcher import SenatorDispatcher
-from senate.core.executive_secretary import ExecutiveSecretary
-from senate.core.judge import Judge
-from senate.core.config_loader import ConfigurationLoader
-from senate.utils.errors import GovernanceError, ValidationError
-from senate.utils.logging import get_logger
+from models.governance import GovernanceRequest, GovernanceVerdict, VetoResult
+from models.config import GovernanceConfig
+from core.senator_dispatcher import SenatorDispatcher
+from core.executive_secretary import ExecutiveSecretary
+from core.judge import Judge
+from core.config_loader import ConfigurationLoader
+from utils.errors import GovernanceError, ValidationError
+from utils.logging import get_logger
 
 
 logger = get_logger("orchestrator")

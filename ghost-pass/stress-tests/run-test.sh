@@ -7,11 +7,13 @@ set +a
 
 # Run the test passed as argument
 if [ -z "$1" ]; then
-  echo "Usage: ./run-test.sh [entry|concession|wallet|full|chaos]"
+  echo "Usage: ./run-test.sh [entry|concession|wallet|reentry|realistic|full|chaos]"
   echo ""
   echo "Examples:"
-  echo "  ./run-test.sh entry    # Run entry scan test"
-  echo "  ./run-test.sh full     # Run full system test"
+  echo "  ./run-test.sh entry      # Run entry scan test"
+  echo "  ./run-test.sh reentry    # Run re-entry test"
+  echo "  ./run-test.sh realistic  # Run realistic venue test (RECOMMENDED)"
+  echo "  ./run-test.sh full       # Run full system test"
   exit 1
 fi
 
@@ -34,9 +36,15 @@ case "$1" in
   reentry)
     npm run test:reentry
     ;;
+  realistic)
+    npm run test:realistic
+    ;;
+  concurrency)
+    npm run test:concurrency
+    ;;
   *)
     echo "Unknown test: $1"
-    echo "Valid options: entry, concession, wallet, full, chaos"
+    echo "Valid options: entry, concession, wallet, reentry, realistic, concurrency, full, chaos"
     exit 1
     ;;
 esac

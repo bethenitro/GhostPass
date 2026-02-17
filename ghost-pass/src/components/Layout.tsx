@@ -1,6 +1,8 @@
 import React from 'react';
 import { Wallet, Scan, Shield, History, Zap, Ticket } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
+import LanguageSelector from './LanguageSelector';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -17,14 +19,16 @@ const Layout: React.FC<LayoutProps> = ({
   fastEntryMode = false,
   onRecoverWallet
 }) => {
+  const { t } = useTranslation();
+  
   const tabs = [
-    { id: 'wallet' as const, icon: Wallet, label: 'Wallet' },
-    { id: 'scan' as const, icon: Scan, label: 'Scan' },
-    { id: 'tickets' as const, icon: Ticket, label: 'Tickets' },
-    { id: 'session' as const, icon: Zap, label: 'Session' },
+    { id: 'wallet' as const, icon: Wallet, label: t('nav.wallet') },
+    { id: 'scan' as const, icon: Scan, label: t('nav.scan') },
+    { id: 'tickets' as const, icon: Ticket, label: t('nav.tickets') },
+    { id: 'session' as const, icon: Zap, label: t('nav.session') },
     // Hide TopUp tab in fast entry mode (funding is integrated in wallet)
-    ...(!fastEntryMode ? [{ id: 'trust' as const, icon: Shield, label: 'TopUp' }] : []),
-    { id: 'history' as const, icon: History, label: 'History' },
+    ...(!fastEntryMode ? [{ id: 'trust' as const, icon: Shield, label: t('nav.topup') }] : []),
+    { id: 'history' as const, icon: History, label: t('nav.history') },
   ];
 
   const handleTabChange = (tabId: 'wallet' | 'scan' | 'session' | 'trust' | 'history' | 'tickets' | 'modes' | 'entry-test') => {
@@ -54,7 +58,7 @@ const Layout: React.FC<LayoutProps> = ({
               <div className="w-4 h-4 bg-cyan-400 rounded-sm"></div>
             </div>
             <div>
-              <h1 className="text-lg font-bold text-white">GHOSTPASS</h1>
+              <h1 className="text-lg font-bold text-white">{t('app.title')}</h1>
             </div>
           </div>
           
@@ -63,10 +67,10 @@ const Layout: React.FC<LayoutProps> = ({
             <button
               onClick={onRecoverWallet}
               className="flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400"
-              title="Recover Wallet or Operator Access"
+              title={t('nav.walletAccess')}
             >
               <Shield size={20} />
-              <span className="text-[10px] font-medium mt-0.5">Wallet & Access</span>
+              <span className="text-[10px] font-medium mt-0.5">{t('nav.walletAccess')}</span>
             </button>
           )}
         </div>
@@ -102,8 +106,8 @@ const Layout: React.FC<LayoutProps> = ({
               <div className="w-4 h-4 lg:w-5 lg:h-5 bg-cyan-400 rounded-sm"></div>
             </div>
             <div className="hidden lg:block">
-              <h1 className="text-lg font-bold text-white">GHOSTPASS</h1>
-              <p className="text-xs text-slate-400 uppercase tracking-wider">Secure Access</p>
+              <h1 className="text-lg font-bold text-white">{t('app.title')}</h1>
+              <p className="text-xs text-slate-400 uppercase tracking-wider">{t('app.subtitle')}</p>
             </div>
           </div>
         </div>
@@ -137,6 +141,9 @@ const Layout: React.FC<LayoutProps> = ({
 
         {/* Footer */}
         <div className="p-4 lg:p-6 border-t border-slate-700 space-y-3">
+          {/* Language Selector */}
+          <LanguageSelector />
+          
           {/* Recover Wallet / Operator Access Button */}
           {onRecoverWallet && (
             <button
@@ -144,12 +151,12 @@ const Layout: React.FC<LayoutProps> = ({
               className="w-full flex items-center justify-center space-x-2 p-3 lg:p-4 rounded-lg transition-all duration-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400"
             >
               <Shield size={20} />
-              <span className="hidden lg:block font-medium">Wallet & Access</span>
+              <span className="hidden lg:block font-medium">{t('nav.walletAccess')}</span>
             </button>
           )}
           
           <div className="hidden lg:block text-xs text-slate-500 text-center">
-            <p>Secure • Encrypted • Private</p>
+            <p>{t('nav.secure')}</p>
           </div>
         </div>
       </nav>

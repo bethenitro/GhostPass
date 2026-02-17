@@ -11,10 +11,10 @@ import logging
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
 
-from senate.models.governance import GovernanceVerdict, VetoResult
-from senate.core.audit_logger import AuditLogger
-from senate.utils.errors import VetoError, ValidationError
-from senate.utils.logging import get_logger
+from models.governance import GovernanceVerdict, VetoResult
+from core.audit_logger import AuditLogger
+from utils.errors import VetoError, ValidationError
+from utils.logging import get_logger
 
 
 logger = get_logger("veto")

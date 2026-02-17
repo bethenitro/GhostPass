@@ -54,16 +54,17 @@
 ✅ Test Data Seeding Complete
 ═══════════════════════════════════════════════
 
-WALLET TEST
 
 
+
+WALLET
   █ THRESHOLDS
 
     funding_success_rate
-    ✓ 'rate>0.995' rate=99.94%
+    ✓ 'rate>0.995' rate=99.54%
 
     http_req_duration
-    ✓ 'p(95)<5000' p(95)=1.08s
+    ✓ 'p(95)<5000' p(95)=1.2s
 
     http_req_failed
     ✓ 'rate<0.005' rate=0.00%
@@ -71,39 +72,36 @@ WALLET TEST
 
   █ TOTAL RESULTS
 
-    checks_total.......: 17580  19.415098/s
-    checks_succeeded...: 99.98% 17578 out of 17580
-    checks_failed......: 0.01%  2 out of 17580
+    checks_total.......: 17500  19.275399/s
+    checks_succeeded...: 99.90% 17484 out of 17500
+    checks_failed......: 0.09%  16 out of 17500
 
     ✓ status is 200
     ✓ response has status field
     ✓ funding successful
     ✓ balance updated
     ✗ response time < 5s
-      ↳  99% — ✓ 3514 / ✗ 2
+      ↳  99% — ✓ 3484 / ✗ 16
 
     CUSTOM
-    funding_duration...............: avg=966.079067 min=619      med=964      max=8589   p(90)=1057.5 p(95)=1104
-    funding_success_rate...........: 99.94% 3514 out of 3516
+    funding_duration...............: avg=1010.318857 min=606      med=958      max=8304   p(90)=1085   p(95)=1327.2
+    funding_success_rate...........: 99.54% 3484 out of 3500
 
     HTTP
-    http_req_duration..............: avg=953.87ms   min=619.03ms med=961.55ms max=8.58s  p(90)=1.05s  p(95)=1.08s
-      { expected_response:true }...: avg=953.87ms   min=619.03ms med=961.55ms max=8.58s  p(90)=1.05s  p(95)=1.08s
-    http_req_failed................: 0.00%  0 out of 3516
-    http_reqs......................: 3516   3.88302/s
+    http_req_duration..............: avg=995.48ms    min=606.48ms med=956.16ms max=8.3s   p(90)=1.06s  p(95)=1.2s
+      { expected_response:true }...: avg=995.48ms    min=606.48ms med=956.16ms max=8.3s   p(90)=1.06s  p(95)=1.2s
+    http_req_failed................: 0.00%  0 out of 3500
+    http_reqs......................: 3500   3.85508/s
 
     EXECUTION
-    iteration_duration.............: avg=10.94s     min=5.66s    med=10.89s   max=17.66s p(90)=14.95s p(95)=15.45s
-    iterations.....................: 3516   3.88302/s
+    iteration_duration.............: avg=11s         min=5.76s    med=11.03s   max=20.89s p(90)=15.05s p(95)=15.54s
+    iterations.....................: 3500   3.85508/s
     vus............................: 1      min=1            max=50
     vus_max........................: 50     min=50           max=50
 
     NETWORK
     data_received..................: 1.5 MB 1.6 kB/s
-    data_sent......................: 536 kB 592 B/s
+    data_sent......................: 538 kB 592 B/s
 
 
-
-
-running (15m05.5s), 00/50 VUs, 3516 complete and 0 interrupted iterations
-default ✓ [======================================] 00/50 VUs  15m0s
+  

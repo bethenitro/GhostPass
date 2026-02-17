@@ -9,6 +9,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { CreditCard, Zap, CheckCircle, AlertCircle, Loader2, QrCode } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { walletApi } from '../lib/api';
 import { cn } from '@/lib/utils';
 import PushNotificationSettings from './PushNotificationSettings';
@@ -37,6 +38,7 @@ const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
   const [selectedQuickAmount, setSelectedQuickAmount] = useState<number | null>(null);
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const { t } = useTranslation();
   
   // Get wallet binding ID from prop or localStorage
   const walletBindingId = walletBindingIdProp || localStorage.getItem('wallet_binding_id') || '';
@@ -204,8 +206,8 @@ const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
         animate={{ opacity: 1, y: 0 }}
         className="text-center"
       >
-        <h1 className="text-2xl font-bold text-white mb-2">🎫 {eventName}</h1>
-        <p className="text-cyan-400 text-sm">{venueName}</p>
+        <h1 className="text-2xl font-bold text-white mb-2">{t('fastEntry.title', { eventName })}</h1>
+        <p className="text-cyan-400 text-sm">{t('fastEntry.venue', { venueName })}</p>
         <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent mx-auto mt-4"></div>
       </motion.div>
 
@@ -241,29 +243,29 @@ const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
             <>
               <CheckCircle className="w-12 h-12 text-green-400 mx-auto" />
               <div>
-                <p className="text-green-400 font-semibold text-lg">Ready for Entry</p>
-                <p className="text-slate-300 text-sm">You have sufficient balance</p>
+                <p className="text-green-400 font-semibold text-lg">{t('fastEntry.readyForEntry')}</p>
+                <p className="text-slate-300 text-sm">{t('fastEntry.sufficientBalance')}</p>
               </div>
             </>
           ) : (
             <>
               <AlertCircle className="w-12 h-12 text-cyan-400 mx-auto" />
               <div>
-                <p className="text-white font-semibold text-lg">Fund Your Wallet</p>
-                <p className="text-slate-300 text-sm">Add funds to enter the venue</p>
+                <p className="text-white font-semibold text-lg">{t('fastEntry.fundYourWallet')}</p>
+                <p className="text-slate-300 text-sm">{t('fastEntry.addFundsToEnter')}</p>
               </div>
             </>
           )}
           
           <div className="pt-3 border-t border-slate-700">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-slate-400 text-sm">Current Balance</span>
+              <span className="text-slate-400 text-sm">{t('fastEntry.currentBalance')}</span>
               <span className="text-white font-mono font-bold text-lg">
                 ${(currentBalance / 100).toFixed(2)}
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-slate-400 text-sm">Entry Fee</span>
+              <span className="text-slate-400 text-sm">{t('fastEntry.entryFee')}</span>
               <span className="text-cyan-400 font-mono font-semibold">
                 ${(entryFee / 100).toFixed(2)}
               </span>
@@ -279,7 +281,7 @@ const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
           animate={{ opacity: 1, y: 0 }}
           className="space-y-3"
         >
-          <p className="text-white font-medium text-center">Quick Add</p>
+          <p className="text-white font-medium text-center">{t('fastEntry.quickAdd')}</p>
           <div className="grid grid-cols-3 gap-3">
             {[
               { amount: suggestedAmount / 100, label: 'Exact' },

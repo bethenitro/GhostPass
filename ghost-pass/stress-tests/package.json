@@ -4,10 +4,12 @@
   "description": "Stress testing suite for GhostPass 5,000-user pilot",
   "type": "module",
   "scripts": {
-    "test:entry": "k6 run --env API_BASE_URL=$API_BASE_URL --env TEST_VENUE_ID=$TEST_VENUE_ID --env TEST_GATEWAY_1_ID=$TEST_GATEWAY_1_ID --env TEST_GATEWAY_2_ID=$TEST_GATEWAY_2_ID scenarios/entry-scan-test.js",
+    "test:entry": "k6 run --env API_BASE_URL=$API_BASE_URL --env TEST_VENUE_ID=$TEST_VENUE_ID --env TEST_GATEWAY_1_ID=$TEST_GATEWAY_1_ID --env TEST_GATEWAY_2_ID=$TEST_GATEWAY_2_ID --env SUPABASE_URL=$SUPABASE_URL --env SUPABASE_SERVICE_KEY=$SUPABASE_SERVICE_KEY scenarios/entry-scan-test.js",
     "test:concession": "k6 run --env API_BASE_URL=$API_BASE_URL --env TEST_VENUE_ID=$TEST_VENUE_ID scenarios/concession-test.js",
     "test:wallet": "k6 run --env API_BASE_URL=$API_BASE_URL scenarios/wallet-funding-test.js",
-    "test:reentry": "k6 run --env API_BASE_URL=$API_BASE_URL --env TEST_VENUE_ID=$TEST_VENUE_ID --env TEST_GATEWAY_1_ID=$TEST_GATEWAY_1_ID --env TEST_GATEWAY_2_ID=$TEST_GATEWAY_2_ID scenarios/reentry-test.js",
+    "test:reentry": "k6 run --env API_BASE_URL=$API_BASE_URL --env TEST_VENUE_ID=$TEST_VENUE_ID --env TEST_GATEWAY_1_ID=$TEST_GATEWAY_1_ID --env TEST_GATEWAY_2_ID=$TEST_GATEWAY_2_ID --env SUPABASE_URL=$SUPABASE_URL --env SUPABASE_SERVICE_KEY=$SUPABASE_SERVICE_KEY scenarios/reentry-test.js",
+    "test:realistic": "k6 run --env API_BASE_URL=$API_BASE_URL --env TEST_VENUE_ID=$TEST_VENUE_ID --env TEST_GATEWAY_1_ID=$TEST_GATEWAY_1_ID --env TEST_GATEWAY_2_ID=$TEST_GATEWAY_2_ID --env SUPABASE_URL=$SUPABASE_URL --env SUPABASE_SERVICE_KEY=$SUPABASE_SERVICE_KEY scenarios/realistic-venue-test.js",
+    "test:concurrency": "k6 run --env API_BASE_URL=$API_BASE_URL --env TEST_VENUE_ID=$TEST_VENUE_ID --env TEST_GATEWAY_1_ID=$TEST_GATEWAY_1_ID --env TEST_GATEWAY_2_ID=$TEST_GATEWAY_2_ID --env SUPABASE_URL=$SUPABASE_URL --env SUPABASE_SERVICE_KEY=$SUPABASE_SERVICE_KEY scenarios/high-concurrency-monitor-test.js",
     "test:full": "k6 run --env API_BASE_URL=$API_BASE_URL --env TEST_VENUE_ID=$TEST_VENUE_ID --env TEST_GATEWAY_1_ID=$TEST_GATEWAY_1_ID --env TEST_GATEWAY_2_ID=$TEST_GATEWAY_2_ID scenarios/full-system-test.js",
     "test:chaos": "k6 run --env API_BASE_URL=$API_BASE_URL --env TEST_VENUE_ID=$TEST_VENUE_ID --env TEST_GATEWAY_1_ID=$TEST_GATEWAY_1_ID --env TEST_GATEWAY_2_ID=$TEST_GATEWAY_2_ID scenarios/failure-simulation-test.js",
     "test:all": "npm run test:entry && npm run test:concession && npm run test:wallet && npm run test:reentry",
@@ -16,6 +18,7 @@
     "health-check": "node scripts/health-check.js",
     "rollback-test-data": "node scripts/rollback-test-data.js",
     "seed-test-data": "node scripts/seed-test-data.js",
+    "refill-wallets": "node scripts/refill-wallets.js",
     "monitor:db": "node monitoring/db-monitor.js",
     "analyze-logs": "node monitoring/log-analyzer.js"
   },

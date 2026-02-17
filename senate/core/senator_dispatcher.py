@@ -12,11 +12,11 @@ import logging
 from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime
 
-from senate.models.governance import SenatorResponse
-from senate.models.config import GovernanceConfig, SenatorConfig
-from senate.core.llm_provider import LLMProvider, LLMProviderFactory
-from senate.core.response_normalizer import ResponseNormalizer
-from senate.utils.errors import GovernanceError, TimeoutError
+from models.governance import SenatorResponse
+from models.config import GovernanceConfig, SenatorConfig
+from core.llm_provider import LLMProvider, LLMProviderFactory
+from core.response_normalizer import ResponseNormalizer
+from utils.errors import GovernanceError, TimeoutError
 
 
 logger = logging.getLogger(__name__)

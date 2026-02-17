@@ -9,6 +9,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, Copy, Download, Eye, EyeOff, CheckCircle, AlertTriangle, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface WalletRecoveryCodeProps {
   walletBindingId: string;
@@ -23,6 +24,7 @@ const WalletRecoveryCode: React.FC<WalletRecoveryCodeProps> = ({
   onDismiss,
   compact = false
 }) => {
+  const { t } = useTranslation();
   const [showCode, setShowCode] = useState(false);
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -37,10 +39,10 @@ const WalletRecoveryCode: React.FC<WalletRecoveryCodeProps> = ({
           setSaved(true);
         }
       } catch (error) {
-        console.error('Failed to parse saved codes:', error);
+        console.error(t('walletRecovery.failedToParse'), error);
       }
     }
-  }, [walletBindingId]);
+  }, [walletBindingId, t]);
 
   const handleCopy = async () => {
     try {
@@ -48,27 +50,27 @@ const WalletRecoveryCode: React.FC<WalletRecoveryCodeProps> = ({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error('Failed to copy:', error);
+      console.error(t('walletRecovery.failedToCopy'), error);
     }
   };
 
   const handleDownload = () => {
     const content = `GHOSTPASS WALLET RECOVERY
     
-⚠️ KEEP THIS SAFE - DO NOT SHARE ⚠️
+${t('walletRecovery.keepSafe')}
 
 Wallet ID: ${walletBindingId}
 Recovery Code: ${recoveryCode}
 
-Use these credentials to recover your wallet on any device.
+${t('walletRecovery.useTheseCredentials')}
 
-Instructions:
-1. Open GhostPass on your new device
-2. Click "Recover Wallet" 
-3. Enter your Wallet ID and Recovery Code
-4. Your wallet and funds will be restored
+${t('walletRecovery.instructions')}
+1. ${t('walletRecovery.step1')}
+2. ${t('walletRecovery.step2')}
+3. ${t('walletRecovery.step3')}
+4. ${t('walletRecovery.step4')}
 
-Generated: ${new Date().toLocaleString()}
+${t('walletRecovery.generated')} ${new Date().toLocaleString()}
 `;
 
     const blob = new Blob([content], { type: 'text/plain' });
@@ -111,19 +113,19 @@ Generated: ${new Date().toLocaleString()}
         <div className="flex items-start space-x-3">
           <Shield className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-amber-400 font-medium text-sm mb-1">Backup Your Wallet</p>
+            <p className="text-amber-400 font-medium text-sm mb-1">{t('walletRecovery.backupWallet')}</p>
             <p className="text-slate-300 text-xs mb-2">
-              Save your Wallet ID and recovery code to access your wallet from any device
+              {t('walletRecovery.backupDescription')}
             </p>
             {/* Show Wallet ID in compact mode */}
             <div className="bg-slate-900/50 border border-slate-700 rounded px-2 py-1 mb-2">
-              <p className="text-[10px] text-slate-400 mb-0.5">Wallet ID</p>
+              <p className="text-[10px] text-slate-400 mb-0.5">{t('walletRecovery.walletId')}</p>
               <p className="text-cyan-400 font-mono text-xs break-all">{walletBindingId}</p>
             </div>
             {/* Show Recovery Code in compact mode */}
             <div className="bg-slate-900/50 border border-slate-700 rounded px-2 py-1 mb-2">
               <div className="flex items-center justify-between mb-0.5">
-                <p className="text-[10px] text-slate-400">Recovery Code</p>
+                <p className="text-[10px] text-slate-400">{t('walletRecovery.recoveryCode')}</p>
                 <button
                   onClick={() => setShowCode(!showCode)}
                   className="p-0.5 hover:bg-slate-700 rounded transition-colors text-slate-400"
@@ -141,14 +143,14 @@ Generated: ${new Date().toLocaleString()}
                 className="flex items-center space-x-1 px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 rounded-lg text-amber-400 text-xs font-medium transition-all"
               >
                 <Download className="w-3 h-3" />
-                <span>Save</span>
+                <span>{t('walletRecovery.save')}</span>
               </button>
               <button
                 onClick={handleCopy}
                 className="flex items-center space-x-1 px-3 py-1.5 bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600 rounded-lg text-slate-300 text-xs font-medium transition-all"
               >
                 {copied ? <CheckCircle className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                <span>{copied ? 'Copied!' : 'Copy'}</span>
+                <span>{copied ? t('walletRecovery.copied') : t('walletRecovery.copy')}</span>
               </button>
             </div>
           </div>
@@ -178,14 +180,14 @@ Generated: ${new Date().toLocaleString()}
             <Shield className="w-5 h-5 text-amber-400" />
           </div>
           <div>
-            <h3 className="text-white font-semibold">Wallet Recovery</h3>
-            <p className="text-slate-400 text-sm">Backup your wallet access</p>
+            <h3 className="text-white font-semibold">{t('walletRecovery.title')}</h3>
+            <p className="text-slate-400 text-sm">{t('walletRecovery.subtitle')}</p>
           </div>
         </div>
         {saved && (
           <div className="flex items-center space-x-2 text-green-400 text-sm">
             <CheckCircle className="w-4 h-4" />
-            <span>Saved</span>
+            <span>{t('walletRecovery.saved')}</span>
           </div>
         )}
       </div>
@@ -195,10 +197,9 @@ Generated: ${new Date().toLocaleString()}
         <div className="flex items-start space-x-3">
           <AlertTriangle className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
           <div className="text-sm text-slate-300">
-            <p className="font-medium text-amber-400 mb-1">Important: Save Your Recovery Code</p>
+            <p className="font-medium text-amber-400 mb-1">{t('walletRecovery.important')}</p>
             <p>
-              Your wallet is device-bound. Use this recovery code to access your funds from any device.
-              Keep it safe and never share it with anyone.
+              {t('walletRecovery.importantDescription')}
             </p>
           </div>
         </div>
@@ -206,7 +207,7 @@ Generated: ${new Date().toLocaleString()}
 
       {/* Wallet ID */}
       <div className="space-y-2">
-        <label className="text-slate-400 text-sm font-medium">Wallet ID</label>
+        <label className="text-slate-400 text-sm font-medium">{t('walletRecovery.walletId')}</label>
         <div className="bg-slate-900/50 border border-slate-700 rounded-lg p-3">
           <p className="text-cyan-400 font-mono text-sm break-all">{walletBindingId}</p>
         </div>
@@ -214,7 +215,7 @@ Generated: ${new Date().toLocaleString()}
 
       {/* Recovery Code */}
       <div className="space-y-2">
-        <label className="text-slate-400 text-sm font-medium">Recovery Code</label>
+        <label className="text-slate-400 text-sm font-medium">{t('walletRecovery.recoveryCode')}</label>
         <div className="bg-slate-900/50 border border-slate-700 rounded-lg p-3">
           <div className="flex items-center justify-between">
             <p className="text-cyan-400 font-mono text-sm">
@@ -237,25 +238,25 @@ Generated: ${new Date().toLocaleString()}
           className="flex items-center justify-center space-x-2 px-4 py-3 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 rounded-lg text-amber-400 font-medium transition-all"
         >
           <Download className="w-4 h-4" />
-          <span>Download</span>
+          <span>{t('walletRecovery.download')}</span>
         </button>
         <button
           onClick={handleCopy}
           className="flex items-center justify-center space-x-2 px-4 py-3 bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600 rounded-lg text-slate-300 font-medium transition-all"
         >
           {copied ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-          <span>{copied ? 'Copied!' : 'Copy'}</span>
+          <span>{copied ? t('walletRecovery.copied') : t('walletRecovery.copy')}</span>
         </button>
       </div>
 
       {/* Instructions */}
       <div className="text-xs text-slate-400 space-y-1">
-        <p className="font-medium text-slate-300">To recover your wallet:</p>
+        <p className="font-medium text-slate-300">{t('walletRecovery.instructions')}</p>
         <ol className="list-decimal list-inside space-y-1 ml-2">
-          <li>Open GhostPass on your new device</li>
-          <li>Click "Recover Wallet"</li>
-          <li>Enter your Wallet ID and Recovery Code</li>
-          <li>Your wallet and funds will be restored</li>
+          <li>{t('walletRecovery.step1')}</li>
+          <li>{t('walletRecovery.step2')}</li>
+          <li>{t('walletRecovery.step3')}</li>
+          <li>{t('walletRecovery.step4')}</li>
         </ol>
       </div>
     </motion.div>

@@ -7,14 +7,14 @@ and compliance with requirements.
 
 import pytest
 from datetime import datetime
-from senate.models.governance import (
+from models.governance import (
     GovernanceRequest,
     SenatorResponse,
     GovernanceVerdict,
     AuditRecord,
     VetoResult
 )
-from senate.models.config import (
+from models.config import (
     LLMConfig,
     SenatorConfig,
     GovernanceConfig

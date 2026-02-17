@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, DollarSign, Users, TrendingUp, FileText, ToggleLeft, ToggleRight, Save, QrCode, Package, Eye, Download, Trash2, Edit } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { venueApi, authApi, gatewayApi } from '@/lib/api';
 import type { VenueDashboard, VenueEntryConfig } from '@/types';
 import QRCodeLib from 'qrcode';
@@ -11,6 +12,7 @@ interface VenueCommandCenterProps {
 }
 
 const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId, eventId }) => {
+  const { t } = useTranslation();
   const [dashboard, setDashboard] = useState<VenueDashboard | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -116,13 +118,13 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-8">
           <div className="bg-slate-900/50 backdrop-blur-sm border border-red-500/20 rounded-lg p-8 text-center">
-            <p className="text-red-400 text-lg mb-4">Error Loading Dashboard</p>
+            <p className="text-red-400 text-lg mb-4">{t('venue.errorLoadingDashboard')}</p>
             <p className="text-slate-400 mb-6">{error}</p>
             <button
               onClick={loadDashboard}
               className="px-6 py-3 bg-purple-500/20 border border-purple-500 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors touch-manipulation min-h-[44px] active:scale-95"
             >
-              Retry
+              {t('venue.retry')}
             </button>
           </div>
         </div>
@@ -194,26 +196,26 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
 
         {/* Event Statistics */}
         <div className="bg-slate-900/50 backdrop-blur-sm border border-purple-500/20 rounded-lg p-4 sm:p-6">
-          <h2 className="text-lg sm:text-xl font-bold text-purple-400 mb-4">Event Totals</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-purple-400 mb-4">{t('venue.eventTotals')}</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             <div className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
               <div className="flex items-center space-x-2 mb-2">
                 <Users className="text-blue-400" size={18} />
-                <p className="text-xs sm:text-sm text-slate-400">Total Entries</p>
+                <p className="text-xs sm:text-sm text-slate-400">{t('venue.totalEntries')}</p>
               </div>
               <p className="text-xl sm:text-2xl font-bold text-white">{dashboard?.stats?.total_entries || 0}</p>
             </div>
             <div className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
               <div className="flex items-center space-x-2 mb-2">
                 <TrendingUp className="text-emerald-400" size={18} />
-                <p className="text-xs sm:text-sm text-slate-400">Re-entries</p>
+                <p className="text-xs sm:text-sm text-slate-400">{t('venue.reEntries')}</p>
               </div>
               <p className="text-xl sm:text-2xl font-bold text-white">{dashboard?.stats?.total_reentries || 0}</p>
             </div>
             <div className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
               <div className="flex items-center space-x-2 mb-2">
                 <DollarSign className="text-amber-400" size={18} />
-                <p className="text-xs sm:text-sm text-slate-400">Total Revenue</p>
+                <p className="text-xs sm:text-sm text-slate-400">{t('venue.totalRevenue')}</p>
               </div>
               <p className="text-xl sm:text-2xl font-bold text-white">
                 {formatCurrency(dashboard?.stats?.total_revenue_cents || 0)}
@@ -222,7 +224,7 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
             <div className="bg-slate-800/50 rounded-lg p-3 sm:p-4">
               <div className="flex items-center space-x-2 mb-2">
                 <Users className="text-purple-400" size={18} />
-                <p className="text-xs sm:text-sm text-slate-400">Unique Attendees</p>
+                <p className="text-xs sm:text-sm text-slate-400">{t('venue.uniqueAttendees')}</p>
               </div>
               <p className="text-xl sm:text-2xl font-bold text-white">{dashboard?.stats?.unique_attendees || 0}</p>
             </div>
@@ -231,14 +233,14 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
 
         {/* Entry Configuration */}
         <div className="bg-slate-900/50 backdrop-blur-sm border border-purple-500/20 rounded-lg p-4 sm:p-6">
-          <h2 className="text-lg sm:text-xl font-bold text-purple-400 mb-4">Event Configuration</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-purple-400 mb-4">{t('venue.eventConfiguration')}</h2>
           
           <div className="space-y-4 sm:space-y-6">
             {/* Re-entry Toggle */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-slate-800/50 rounded-lg">
               <div className="flex-1">
-                <h3 className="text-base font-semibold text-white mb-1">Re-Entry Permission</h3>
-                <p className="text-sm text-slate-400">Allow attendees to re-enter the event</p>
+                <h3 className="text-base font-semibold text-white mb-1">{t('venue.reEntryPermission')}</h3>
+                <p className="text-sm text-slate-400">{t('venue.allowReEntry')}</p>
               </div>
               <button
                 onClick={() => setConfig(prev => ({ ...prev, re_entry_allowed: !prev.re_entry_allowed }))}
@@ -249,7 +251,7 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
                 }`}
               >
                 {config.re_entry_allowed ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
-                <span className="font-medium">{config.re_entry_allowed ? 'Allowed' : 'Not Allowed'}</span>
+                <span className="font-medium">{config.re_entry_allowed ? t('venue.allowed') : t('venue.notAllowed')}</span>
               </button>
             </div>
 
@@ -257,7 +259,7 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Initial Entry Fee
+                  {t('venue.initialEntryFee')}
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
@@ -282,12 +284,12 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
                     className="w-full pl-8 pr-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-purple-500 focus:outline-none text-base"
                   />
                 </div>
-                <p className="text-xs text-slate-500 mt-1">Maximum: $50.00</p>
+                <p className="text-xs text-slate-500 mt-1">{t('venue.maximum')}: $50.00</p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Venue Re-Entry Fee
+                  {t('venue.venueReEntryFee')}
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
@@ -313,12 +315,12 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
                     className="w-full pl-8 pr-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-purple-500 focus:outline-none text-base disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
-                <p className="text-xs text-slate-500 mt-1">Maximum: $20.00</p>
+                <p className="text-xs text-slate-500 mt-1">{t('venue.maximum')}: $20.00</p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  VALID Re-Entry Scan Fee
+                  {t('venue.validReEntryScanFee')}
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
@@ -344,12 +346,12 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
                     className="w-full pl-8 pr-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-purple-500 focus:outline-none text-base disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
-                <p className="text-xs text-slate-500 mt-1">Platform fee per re-entry scan</p>
+                <p className="text-xs text-slate-500 mt-1">{t('venue.platformFeePerReEntry')}</p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Max Re-Entries (Optional)
+                  {t('venue.maxReEntries')}
                 </label>
                 <input
                   type="number"
@@ -358,7 +360,7 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
                     ...prev, 
                     max_reentries: e.target.value ? parseInt(e.target.value) : undefined 
                   }))}
-                  placeholder="Unlimited"
+                  placeholder={t('venue.unlimited')}
                   disabled={!config.re_entry_allowed}
                   className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-purple-500 focus:outline-none text-base disabled:opacity-50 disabled:cursor-not-allowed"
                 />
@@ -373,7 +375,7 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
                 className="inline-flex items-center space-x-2 px-6 py-3 bg-purple-500/20 border border-purple-500 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors touch-manipulation min-h-[44px] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Save size={18} />
-                <span>{updating ? 'Saving...' : 'Save Configuration'}</span>
+                <span>{updating ? t('venue.saving') : t('venue.saveConfiguration')}</span>
               </button>
             </div>
           </div>
@@ -381,7 +383,7 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
 
         {/* Vendor Payouts */}
         <div className="bg-slate-900/50 backdrop-blur-sm border border-purple-500/20 rounded-lg p-4 sm:p-6">
-          <h2 className="text-lg sm:text-xl font-bold text-purple-400 mb-4">Vendor Payouts</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-purple-400 mb-4">{t('venue.vendorPayouts')}</h2>
           
           {dashboard?.vendor_payouts && dashboard.vendor_payouts.length > 0 ? (
             <div className="space-y-3">
@@ -389,7 +391,7 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
                 <div key={payout.vendor_id} className="bg-slate-800/50 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div className="flex-1">
                     <h3 className="text-base font-semibold text-white">{payout.vendor_name}</h3>
-                    <p className="text-sm text-slate-400">{payout.transaction_count} transactions</p>
+                    <p className="text-sm text-slate-400">{payout.transaction_count} {t('venue.transactions')}</p>
                   </div>
                   <div className="flex items-center space-x-4">
                     <div className="text-right">
@@ -401,13 +403,13 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
               ))}
             </div>
           ) : (
-            <p className="text-slate-400 text-center py-8">No vendor payouts yet</p>
+            <p className="text-slate-400 text-center py-8">{t('venue.noVendorPayouts')}</p>
           )}
         </div>
 
         {/* Recent Activity */}
         <div className="bg-slate-900/50 backdrop-blur-sm border border-purple-500/20 rounded-lg p-4 sm:p-6">
-          <h2 className="text-lg sm:text-xl font-bold text-purple-400 mb-4">Recent Activity</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-purple-400 mb-4">{t('venue.recentActivity')}</h2>
           
           {dashboard?.recent_audit_logs && dashboard.recent_audit_logs.length > 0 ? (
             <div className="space-y-2">
@@ -423,7 +425,7 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
               ))}
             </div>
           ) : (
-            <p className="text-slate-400 text-center py-8">No recent activity</p>
+            <p className="text-slate-400 text-center py-8">{t('venue.noRecentActivity')}</p>
           )}
         </div>
 
@@ -442,6 +444,7 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
 
 // Entry Point QR Code Generator Section
 const EntryPointQRSection: React.FC<{ venueId?: string; eventId?: string }> = ({ venueId, eventId }) => {
+  const { t } = useTranslation();
   const [entryPoints, setEntryPoints] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedPoint, setSelectedPoint] = useState<string | null>(null);
@@ -501,7 +504,7 @@ const EntryPointQRSection: React.FC<{ venueId?: string; eventId?: string }> = ({
   return (
     <div className="bg-slate-900/50 backdrop-blur-sm border border-purple-500/20 rounded-lg p-4 sm:p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg sm:text-xl font-bold text-purple-400">Entry Point QR Codes</h2>
+        <h2 className="text-lg sm:text-xl font-bold text-purple-400">{t('venue.entryPointQRCodes')}</h2>
         <QrCode className="text-purple-400" size={24} />
       </div>
 
@@ -531,7 +534,7 @@ const EntryPointQRSection: React.FC<{ venueId?: string; eventId?: string }> = ({
                   onClick={() => generateQRCode(point.id, point.name)}
                   className="w-full mt-2 px-4 py-2 bg-purple-500/20 border border-purple-500 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors text-sm"
                 >
-                  Generate QR Code
+                  {t('venue.generateQRCode')}
                 </button>
               </div>
             ))}
@@ -540,7 +543,7 @@ const EntryPointQRSection: React.FC<{ venueId?: string; eventId?: string }> = ({
           {qrDataUrl && selectedPoint && (
             <div className="bg-slate-800/50 rounded-lg p-6 text-center">
               <h3 className="text-lg font-semibold text-white mb-4">
-                QR Code for {entryPoints.find(p => p.id === selectedPoint)?.name}
+                {t('venue.qrCodeFor')} {entryPoints.find(p => p.id === selectedPoint)?.name}
               </h3>
               <div className="inline-block bg-white p-4 rounded-lg mb-4">
                 <img src={qrDataUrl} alt="Entry Point QR Code" className="w-64 h-64" />
@@ -551,7 +554,7 @@ const EntryPointQRSection: React.FC<{ venueId?: string; eventId?: string }> = ({
                   className="inline-flex items-center space-x-2 px-4 py-2 bg-emerald-500/20 border border-emerald-500 text-emerald-400 rounded-lg hover:bg-emerald-500/30 transition-colors"
                 >
                   <Download size={18} />
-                  <span>Download QR Code</span>
+                  <span>{t('venue.downloadQRCode')}</span>
                 </button>
                 <button
                   onClick={() => {
@@ -560,14 +563,14 @@ const EntryPointQRSection: React.FC<{ venueId?: string; eventId?: string }> = ({
                   }}
                   className="px-4 py-2 bg-slate-700 border border-slate-600 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors"
                 >
-                  Close
+                  {t('venue.close')}
                 </button>
               </div>
             </div>
           )}
         </div>
       ) : (
-        <p className="text-slate-400 text-center py-8">No entry points configured</p>
+        <p className="text-slate-400 text-center py-8">{t('venue.noEntryPoints')}</p>
       )}
     </div>
   );
@@ -575,6 +578,7 @@ const EntryPointQRSection: React.FC<{ venueId?: string; eventId?: string }> = ({
 
 // Vendor Item Configuration Section
 const VendorItemSection: React.FC<{ venueId?: string; eventId?: string }> = ({ venueId, eventId }) => {
+  const { t } = useTranslation();
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -630,7 +634,7 @@ const VendorItemSection: React.FC<{ venueId?: string; eventId?: string }> = ({ v
   };
 
   const handleDeleteItem = async (itemId: string) => {
-    if (!confirm('Are you sure you want to delete this item?')) return;
+    if (!confirm(t('venue.deleteConfirmation'))) return;
     
     try {
       await venueApi.deleteVendorItem(itemId);
@@ -647,13 +651,13 @@ const VendorItemSection: React.FC<{ venueId?: string; eventId?: string }> = ({ v
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">
           <Package className="text-purple-400" size={24} />
-          <h2 className="text-lg sm:text-xl font-bold text-purple-400">Vendor Items</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-purple-400">{t('venue.vendorItems')}</h2>
         </div>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
           className="px-4 py-2 bg-purple-500/20 border border-purple-500 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors text-sm"
         >
-          {showAddForm ? 'Cancel' : 'Add Item'}
+          {showAddForm ? t('venue.cancel') : t('venue.addItem')}
         </button>
       </div>
 
@@ -661,7 +665,7 @@ const VendorItemSection: React.FC<{ venueId?: string; eventId?: string }> = ({ v
         <div className="bg-slate-800/50 rounded-lg p-4 mb-4 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Item Name</label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">{t('venue.itemName')}</label>
               <input
                 type="text"
                 value={newItem.name}
@@ -671,7 +675,7 @@ const VendorItemSection: React.FC<{ venueId?: string; eventId?: string }> = ({ v
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Price</label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">{t('venue.price')}</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
                 <input
@@ -699,12 +703,12 @@ const VendorItemSection: React.FC<{ venueId?: string; eventId?: string }> = ({ v
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Description (Optional)</label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">{t('venue.description')}</label>
               <input
                 type="text"
                 value={newItem.description}
                 onChange={(e) => setNewItem(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Item description"
+                placeholder={t('venue.itemDescription')}
                 className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-purple-500 focus:outline-none"
               />
             </div>

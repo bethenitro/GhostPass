@@ -12,8 +12,8 @@ import json
 import logging
 from typing import Dict, Any, Optional, List, Union
 
-from senate.models.governance import SenatorResponse
-from senate.utils.errors import ValidationError
+from models.governance import SenatorResponse
+from utils.errors import ValidationError
 
 
 logger = logging.getLogger(__name__)

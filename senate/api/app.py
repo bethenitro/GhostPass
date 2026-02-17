@@ -14,8 +14,8 @@ import logging
 import time
 from typing import Dict, Any
 
-from senate.utils.logging import setup_logging
-from senate.utils.errors import SenateError, ValidationError, ConfigurationError
+from utils.logging import setup_logging
+from utils.errors import SenateError, ValidationError, ConfigurationError
 
 
 def create_app() -> FastAPI:
@@ -133,7 +133,7 @@ def create_app() -> FastAPI:
     
     # Import and include governance routes
     try:
-        from senate.api.routes import governance_router, veto_router, audit_router
+        from api.routes import governance_router, veto_router, audit_router
         
         app.include_router(governance_router, prefix="/api/v1")
         app.include_router(veto_router, prefix="/api/v1")

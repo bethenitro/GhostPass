@@ -13,8 +13,8 @@ import logging
 from pathlib import Path
 from typing import Dict, Any, Optional, Union
 
-from senate.models.config import GovernanceConfig, SenatorConfig, LLMConfig
-from senate.utils.errors import ConfigurationError
+from models.config import GovernanceConfig, SenatorConfig, LLMConfig
+from utils.errors import ConfigurationError
 
 
 logger = logging.getLogger(__name__)

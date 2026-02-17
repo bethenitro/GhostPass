@@ -13,6 +13,7 @@ pydantic>=2.5.0
 
 # Configuration management
 pyyaml>=6.0.1
+python-dotenv>=1.0.0
 
 # Demo and presentation
 rich>=13.0.0
@@ -33,3 +34,6 @@ flake8>=6.1.0
 
 # Logging and monitoring
 structlog>=23.2.0
+
+# Supabase client for database operations
+supabase>=2.0.0

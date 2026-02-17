@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import Layout from './components/Layout';
 import WalletDashboard from './components/WalletDashboard';
 import FastEntryWallet from './components/FastEntryWallet';
@@ -29,6 +30,7 @@ const queryClient = new QueryClient({
 });
 
 const AppContent: React.FC = () => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'wallet' | 'scan' | 'session' | 'trust' | 'history' | 'tickets' | 'modes' | 'entry-test'>('scan'); // Start on scan for new users
   const [purchasingDuration, setPurchasingDuration] = useState<number | null>(null);
   const [fastEntryMode, setFastEntryMode] = useState(false);
@@ -61,7 +63,7 @@ const AppContent: React.FC = () => {
         // CRITICAL: Always load wallet context if session exists, regardless of expiration
         // User's money is in the wallet, so they must always have access
         if (import.meta.env.DEV) {
-          console.log('🎫 Wallet session found');
+          console.log(t('appContent.fastEntry'));
         }
         
         // Load fast entry context if available
@@ -82,20 +84,20 @@ const AppContent: React.FC = () => {
         if (!window.location.hash || window.location.hash === '#/') {
           if (isExpired) {
             if (import.meta.env.DEV) {
-              console.log('⚠️ Session expired, but wallet access maintained');
+              console.log(t('appContent.sessionExpired'));
             }
             // Expired session - navigate to scan for re-entry
             window.location.hash = '#/scan';
           } else {
             if (import.meta.env.DEV) {
-              console.log('✅ Active session - navigating to wallet');
+              console.log(t('appContent.activeSession'));
             }
             // Active session - navigate to wallet
             window.location.hash = '#/wallet';
           }
         }
       } catch (error) {
-        console.error('Failed to parse wallet session:', error);
+        console.error(t('appContent.errorParsingSession'), error);
         // Error parsing session - navigate to scanner
         if (!window.location.hash || window.location.hash === '#/') {
           window.location.hash = '#/scan';
@@ -104,12 +106,13 @@ const AppContent: React.FC = () => {
     } else {
       // No session - new user, navigate to scanner
       if (import.meta.env.DEV) {
+        console.log(t('appContent.noSession'));
       }
       if (!window.location.hash || window.location.hash === '#/') {
         window.location.hash = '#/scan';
       }
     }
-  }, []);
+  }, [t]);
 
   // Check if we're on special routes
   const [currentRoute, setCurrentRoute] = useState(window.location.hash);
@@ -188,7 +191,7 @@ const AppContent: React.FC = () => {
   };
 
   const handleRecoverySuccess = () => {
-    console.log('✅ Wallet recovered successfully');
+    console.log(t('appContent.walletRecovered'));
     setShowRecovery(false);
     setActiveTab('wallet');
     // Reload the page to refresh wallet data
@@ -196,7 +199,7 @@ const AppContent: React.FC = () => {
   };
 
   const handleOperatorPortal = () => {
-    console.log('🏢 Opening Operator Portal');
+    console.log(t('appContent.operatorPortal'));
     setShowRecovery(false);
     
     // Check if already authenticated
@@ -208,7 +211,7 @@ const AppContent: React.FC = () => {
   };
 
   const handleOperatorLoginSuccess = (_token: string, user: any) => {
-    console.log('✅ Operator login successful:', user);
+    console.log(t('appContent.operatorLoginSuccess'), user);
     setShowOperatorLogin(false);
     setShowOperatorPortal(true);
   };
@@ -238,7 +241,7 @@ const AppContent: React.FC = () => {
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-slate-400">Loading GhostPass...</p>
+          <p className="text-slate-400">{t('common.loading')}</p>
         </div>
       </div>
     );

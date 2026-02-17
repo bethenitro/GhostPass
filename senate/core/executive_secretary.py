@@ -11,11 +11,11 @@ import logging
 from typing import List, Dict, Any, Set, Optional
 from collections import Counter
 
-from senate.models.governance import SenatorResponse, GovernanceVerdict
-from senate.models.config import GovernanceConfig
-from senate.core.llm_provider import LLMProvider, LLMProviderFactory
-from senate.core.response_normalizer import ResponseValidator
-from senate.utils.errors import GovernanceError
+from models.governance import SenatorResponse, GovernanceVerdict
+from models.config import GovernanceConfig
+from core.llm_provider import LLMProvider, LLMProviderFactory
+from core.response_normalizer import ResponseValidator
+from utils.errors import GovernanceError
 
 
 logger = logging.getLogger(__name__)

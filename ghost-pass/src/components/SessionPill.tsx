@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, QrCode, Zap, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import QRCodeLib from 'react-qr-code';
 import { useSession } from '../hooks/useSession';
@@ -12,6 +13,7 @@ interface SessionPillProps {
 }
 
 const SessionPill: React.FC<SessionPillProps> = ({ className = '' }) => {
+  const { t } = useTranslation();
   const [showQRModal, setShowQRModal] = useState(false);
   const [isVaporizing, setIsVaporizing] = useState(false);
   const { activeSession, sessionTimeRemaining, isSessionExpiringSoon, vaporizeSession } = useSession();
@@ -31,7 +33,7 @@ const SessionPill: React.FC<SessionPillProps> = ({ className = '' }) => {
       await vaporizeSession();
       setShowQRModal(false);
     } catch (error) {
-      console.error('Failed to vaporize session:', error);
+      console.error(t('session.failedToVaporize'), error);
     } finally {
       setIsVaporizing(false);
     }
@@ -76,7 +78,7 @@ const SessionPill: React.FC<SessionPillProps> = ({ className = '' }) => {
                 isSessionExpiringSoon ? "bg-red-400" : "bg-cyan-400"
               )} />
               <span className="text-[8px] sm:text-[10px] md:text-xs font-medium text-slate-300 uppercase tracking-wider">
-                Ghost
+                {t('session.ghost')}
               </span>
             </div>
             <div className={cn(
@@ -85,7 +87,7 @@ const SessionPill: React.FC<SessionPillProps> = ({ className = '' }) => {
                 ? "bg-red-500/20 text-red-400 border-red-500/50"
                 : "bg-cyan-500/20 text-cyan-400 border-cyan-500/50"
             )}>
-              LIVE
+              {t('session.live')}
             </div>
           </div>
 
@@ -162,7 +164,7 @@ const SessionPill: React.FC<SessionPillProps> = ({ className = '' }) => {
               animate={{ opacity: 1, height: 'auto' }}
               className="hidden sm:block mt-1.5 md:mt-2 text-xs text-red-400 text-center"
             >
-              ⚠️ Vaporizing soon!
+              {t('session.vaporizingSoon')}
             </motion.div>
           )}
         </div>
@@ -201,7 +203,7 @@ const SessionPill: React.FC<SessionPillProps> = ({ className = '' }) => {
                     "w-5 h-5",
                     isSessionExpiringSoon ? "text-red-400" : "text-cyan-400"
                   )} />
-                  <h3 className="text-lg font-bold text-white">Ghost Session</h3>
+                  <h3 className="text-lg font-bold text-white">{t('session.ghostSession')}</h3>
                 </div>
                 <button
                   onClick={() => setShowQRModal(false)}
@@ -216,7 +218,7 @@ const SessionPill: React.FC<SessionPillProps> = ({ className = '' }) => {
                 <div className="flex items-center justify-center space-x-2 mb-2">
                   <Clock size={16} className="text-slate-400" />
                   <span className="text-xs uppercase tracking-widest text-slate-400 font-medium">
-                    Vaporizes in
+                    {t('session.vaporizesIn')}
                   </span>
                 </div>
                 <motion.div
@@ -300,10 +302,10 @@ const SessionPill: React.FC<SessionPillProps> = ({ className = '' }) => {
               {/* Instructions */}
               <div className="text-center mb-4">
                 <p className="text-slate-400 text-sm mb-2">
-                  Present this QR code at venue entrance
+                  {t('session.presentQRCode')}
                 </p>
                 <div className="text-xs text-slate-500 font-mono break-all">
-                  SESSION: {activeSession.id.slice(0, 8)}...
+                  {t('session.session')}: {activeSession.id.slice(0, 8)}...
                 </div>
               </div>
 
@@ -322,11 +324,11 @@ const SessionPill: React.FC<SessionPillProps> = ({ className = '' }) => {
                 >
                   <Zap size={16} className={isVaporizing ? "animate-spin" : ""} />
                   <span className="text-sm font-semibold">
-                    {isVaporizing ? "VAPORIZING..." : "INSTANT VAPORIZATION"}
+                    {isVaporizing ? t('session.vaporizing') : t('session.instantVaporization')}
                   </span>
                 </motion.button>
                 <p className="text-xs text-slate-500 text-center mt-2">
-                  Immediately end this session
+                  {t('session.immediatelyEnd')}
                 </p>
               </div>
 
@@ -340,7 +342,7 @@ const SessionPill: React.FC<SessionPillProps> = ({ className = '' }) => {
                   <div className="flex items-center space-x-2">
                     <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse" />
                     <span className="text-red-400 text-sm font-medium">
-                      Critical: Session vaporizes in less than 30 seconds!
+                      {t('session.criticalSessionExpiring')}
                     </span>
                   </div>
                 </motion.div>

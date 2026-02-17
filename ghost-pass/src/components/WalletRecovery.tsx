@@ -11,6 +11,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, ArrowRight, Loader2, CheckCircle, AlertTriangle, Building2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 
 interface WalletRecoveryProps {
@@ -20,6 +21,7 @@ interface WalletRecoveryProps {
 }
 
 const WalletRecovery: React.FC<WalletRecoveryProps> = ({ onRecoverySuccess, onCancel, onOperatorPortal }) => {
+  const { t } = useTranslation();
   const [walletId, setWalletId] = useState('');
   const [recoveryCode, setRecoveryCode] = useState('');
   const [isRecovering, setIsRecovering] = useState(false);
@@ -28,7 +30,7 @@ const WalletRecovery: React.FC<WalletRecoveryProps> = ({ onRecoverySuccess, onCa
 
   const handleRecover = async () => {
     if (!walletId.trim() || !recoveryCode.trim()) {
-      setError('Please enter both Wallet ID and Recovery Code');
+      setError(t('walletRecovery.enterBothFields'));
       return;
     }
 
@@ -52,7 +54,7 @@ const WalletRecovery: React.FC<WalletRecoveryProps> = ({ onRecoverySuccess, onCa
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Recovery failed');
+        throw new Error(errorData.error || t('walletRecovery.recoveryFailed'));
       }
 
       await response.json();
@@ -77,7 +79,7 @@ const WalletRecovery: React.FC<WalletRecoveryProps> = ({ onRecoverySuccess, onCa
       }, 1500);
     } catch (error) {
       console.error('Recovery error:', error);
-      setError(error instanceof Error ? error.message : 'Recovery failed. Please check your credentials.');
+      setError(error instanceof Error ? error.message : t('walletRecovery.checkCredentials'));
     } finally {
       setIsRecovering(false);
     }
@@ -100,8 +102,8 @@ const WalletRecovery: React.FC<WalletRecoveryProps> = ({ onRecoverySuccess, onCa
             <CheckCircle className="w-8 h-8 text-green-400" />
           </motion.div>
           <div>
-            <h3 className="text-xl font-bold text-white mb-2">Wallet Recovered!</h3>
-            <p className="text-slate-300">Your wallet has been successfully restored on this device.</p>
+            <h3 className="text-xl font-bold text-white mb-2">{t('walletRecovery.walletRecovered')}</h3>
+            <p className="text-slate-300">{t('walletRecovery.walletRestoredSuccessfully')}</p>
           </div>
         </div>
       </motion.div>
@@ -119,15 +121,15 @@ const WalletRecovery: React.FC<WalletRecoveryProps> = ({ onRecoverySuccess, onCa
         <div className="w-16 h-16 bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
           <Shield className="w-8 h-8 text-cyan-400" />
         </div>
-        <h2 className="text-2xl font-bold text-white mb-2">Recover Your Wallet</h2>
-        <p className="text-slate-400">Enter your credentials to restore wallet access</p>
+        <h2 className="text-2xl font-bold text-white mb-2">{t('walletRecovery.recoverWallet')}</h2>
+        <p className="text-slate-400">{t('walletRecovery.enterCredentials')}</p>
       </div>
 
       {/* Form */}
       <div className="space-y-4">
         {/* Wallet ID Input */}
         <div className="space-y-2">
-          <label className="text-slate-300 text-sm font-medium">Wallet ID</label>
+          <label className="text-slate-300 text-sm font-medium">{t('walletRecovery.walletId')}</label>
           <input
             type="text"
             value={walletId}
@@ -140,12 +142,12 @@ const WalletRecovery: React.FC<WalletRecoveryProps> = ({ onRecoverySuccess, onCa
 
         {/* Recovery Code Input */}
         <div className="space-y-2">
-          <label className="text-slate-300 text-sm font-medium">Recovery Code</label>
+          <label className="text-slate-300 text-sm font-medium">{t('walletRecovery.recoveryCode')}</label>
           <input
             type="text"
             value={recoveryCode}
             onChange={(e) => setRecoveryCode(e.target.value)}
-            placeholder="Enter your recovery code"
+            placeholder={t('walletRecovery.enterCredentials')}
             className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all font-mono text-sm"
             disabled={isRecovering}
           />
@@ -168,8 +170,7 @@ const WalletRecovery: React.FC<WalletRecoveryProps> = ({ onRecoverySuccess, onCa
         {/* Info */}
         <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-3">
           <p className="text-cyan-400 text-xs">
-            💡 Your recovery credentials were provided when you first created your wallet. 
-            Check your saved recovery file or backup.
+            💡 {t('walletRecovery.importantDescription')}
           </p>
         </div>
 
@@ -178,10 +179,10 @@ const WalletRecovery: React.FC<WalletRecoveryProps> = ({ onRecoverySuccess, onCa
           <div className="border-t border-slate-700 pt-4 mt-2">
             <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 mb-3">
               <p className="text-amber-400 text-xs font-medium mb-1">
-                Venue/Event Administrator?
+                {t('walletRecovery.venueAdministrator')}
               </p>
               <p className="text-amber-300/80 text-xs">
-                Access the Operator Portal to manage your venues, gateways, and revenue.
+                {t('walletRecovery.accessOperatorPortal')}
               </p>
             </div>
             <button
@@ -189,7 +190,7 @@ const WalletRecovery: React.FC<WalletRecoveryProps> = ({ onRecoverySuccess, onCa
               className="w-full px-4 py-3 bg-amber-500/20 border border-amber-500/50 text-amber-400 rounded-lg font-medium hover:bg-amber-500/30 transition-all flex items-center justify-center space-x-2"
             >
               <Building2 className="w-4 h-4" />
-              <span>Open Operator Portal</span>
+              <span>{t('walletRecovery.openOperatorPortal')}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -202,7 +203,7 @@ const WalletRecovery: React.FC<WalletRecoveryProps> = ({ onRecoverySuccess, onCa
             disabled={isRecovering}
             className="px-4 py-3 bg-slate-700/50 hover:bg-slate-600/50 disabled:bg-slate-800/50 disabled:cursor-not-allowed border border-slate-600 rounded-lg text-slate-300 font-medium transition-all"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             onClick={handleRecover}
@@ -217,11 +218,11 @@ const WalletRecovery: React.FC<WalletRecoveryProps> = ({ onRecoverySuccess, onCa
             {isRecovering ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Recovering...</span>
+                <span>{t('walletRecovery.recovering')}</span>
               </>
             ) : (
               <>
-                <span>Recover</span>
+                <span>{t('walletRecovery.recover')}</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}

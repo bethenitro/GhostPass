@@ -65,9 +65,31 @@ safety_bias_threshold: 0.5
 max_concurrent_requests: 100
 audit_retention_days: 365
 
-# HARDENING PARAMETERS
+# ============================================================================
+# HARDENING PARAMETERS (LOCKED - DO NOT MODIFY WITHOUT SECURITY REVIEW)
+# ============================================================================
+
 # Minimum valid quorum - at least this many non-abstained senators required for Senate decision
+# If fewer valid responses, automatically escalates to Judge
 minimum_quorum: 2
 
 # Minimum confidence threshold for APPROVE decisions - below this triggers escalation/DENY
+# Implements safety bias: uncertain APPROVE decisions are escalated to Judge
 min_approve_confidence: 60
+
+# High-value transaction threshold (in cents) - triggers automatic Judge review
+high_value_threshold_cents: 100000  # $1,000
+
+# Maximum execution time before timeout (milliseconds)
+max_execution_time_ms: 10000  # 10 seconds
+
+# Enable Supabase audit logging (REQUIRED for production)
+enable_supabase_audit: true
+
+# Monitoring alert thresholds
+monitoring:
+  judge_invocation_rate_threshold: 0.3  # Alert if > 30%
+  abstention_rate_threshold: 0.4  # Alert if > 40%
+  variance_rate_threshold: 0.5  # Alert if > 50%
+  execution_time_threshold_ms: 5000  # Alert if > 5 seconds
+  protected_flag_rate_threshold: 0.1  # Alert if > 10%

@@ -40,10 +40,10 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, parent_dir)
 
-from senate.core.governance_orchestrator import GovernanceOrchestrator
-from senate.models.governance import GovernanceRequest, SenatorResponse
-from senate.models.config import GovernanceConfig, SenatorConfig, LLMConfig
-from senate.core.llm_provider import MockLLMProvider, LLMProviderFactory
+from core.governance_orchestrator import GovernanceOrchestrator
+from models.governance import GovernanceRequest, SenatorResponse
+from models.config import GovernanceConfig, SenatorConfig, LLMConfig
+from core.llm_provider import MockLLMProvider, LLMProviderFactory
 
 
 class DeterministicMockProvider(MockLLMProvider):

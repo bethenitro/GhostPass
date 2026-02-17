@@ -13,20 +13,32 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException, Depends, Query
 from pydantic import BaseModel, Field
 
-from senate.models.governance import GovernanceRequest, GovernanceVerdict
-from senate.core.governance_orchestrator import GovernanceOrchestrator
-from senate.core.audit_logger import AuditLogger
-from senate.core.veto_system import VetoSystem, VetoInterface
-from senate.core.security_manager import get_security_manager
-from senate.utils.errors import ValidationError, GovernanceError
-from senate.utils.logging import get_logger
+from models.governance import GovernanceRequest, GovernanceVerdict
+from core.governance_orchestrator import GovernanceOrchestrator
+from core.audit_logger import AuditLogger
+from core.supabase_audit_logger import SupabaseAuditLogger
+from core.supabase_client import get_supabase_client
+from core.veto_system import VetoSystem, VetoInterface
+from core.security_manager import get_security_manager
+from utils.errors import ValidationError, GovernanceError
+from utils.logging import get_logger
 
 
 logger = get_logger("api")
 
+# Initialize Supabase client
+try:
+    supabase_client = get_supabase_client()
+    supabase_audit_logger = SupabaseAuditLogger(supabase_client)
+    logger.info("Supabase audit logger initialized successfully")
+except Exception as e:
+    logger.error(f"Failed to initialize Supabase audit logger: {e}")
+    logger.warning("Falling back to file-based audit logger")
+    supabase_audit_logger = None
+
 # Initialize core components
 orchestrator = GovernanceOrchestrator()
-audit_logger = AuditLogger()
+audit_logger = AuditLogger()  # File-based fallback
 veto_system = VetoSystem(audit_logger)
 veto_interface = VetoInterface(veto_system)
 

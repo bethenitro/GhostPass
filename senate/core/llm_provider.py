@@ -15,8 +15,8 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 
-from senate.models.config import LLMConfig
-from senate.utils.errors import LLMProviderError, TimeoutError
+from models.config import LLMConfig
+from utils.errors import LLMProviderError, TimeoutError
 
 
 logger = logging.getLogger(__name__)

@@ -11,9 +11,9 @@ import logging
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
-from senate.models.governance import GovernanceVerdict, SenatorResponse
-from senate.utils.errors import ValidationError
-from senate.utils.logging import get_logger
+from models.governance import GovernanceVerdict, SenatorResponse
+from utils.errors import ValidationError
+from utils.logging import get_logger
 
 
 logger = get_logger("verdict")

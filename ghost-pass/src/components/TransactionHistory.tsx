@@ -2,10 +2,12 @@ import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, ArrowUpRight, ArrowDownLeft, X, Calendar, MapPin, Hash, DoorOpen, ArrowLeftRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { walletApi } from '../lib/api';
 import { type Transaction, type GatewayType } from '../types';
 
 const TransactionHistory: React.FC = () => {
+  const { t } = useTranslation();
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   const { data: transactionsData, isLoading } = useQuery({
@@ -41,7 +43,7 @@ const TransactionHistory: React.FC = () => {
       };
 
       // Create properly formatted CSV content
-      const csvHeader = 'Date,Time,Type,Description,Amount (USD),Payment Method,Location,Location Type,Venue ID,Transaction ID\n';
+      const csvHeader = t('history.csvHeader') + '\n';
       const csvRows = transactions.map((t: Transaction) => {
         const date = escapeCSV(formatDate(t.timestamp));
         const time = escapeCSV(formatTime(t.timestamp));
@@ -62,13 +64,13 @@ const TransactionHistory: React.FC = () => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `ghostpass-transactions-${new Date().toISOString().split('T')[0]}.csv`;
+      a.download = t('history.csvFilename', { date: new Date().toISOString().split('T')[0] });
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      console.error('Download failed:', error);
+      console.error(t('history.downloadFailed'), error);
     }
   };
 
@@ -108,13 +110,13 @@ const TransactionHistory: React.FC = () => {
 
     switch (transaction.type) {
       case 'FUND':
-        return `Wallet Funding${transaction.gateway_id ? ` (${transaction.gateway_id})` : ''}`;
+        return `${t('history.walletFunding')}${transaction.gateway_id ? ` (${transaction.gateway_id})` : ''}`;
       case 'SPEND':
-        return transaction.metadata?.pass_id ? 'GhostPass Purchase' : 'Purchase';
+        return transaction.metadata?.pass_id ? t('history.ghostPassPurchase') : t('history.purchase');
       case 'FEE':
-        return 'Transaction Fee';
+        return t('history.transactionFee');
       case 'REFUND':
-        return `Refund to ${transaction.gateway_id || 'Original Source'}`;
+        return `${t('history.refundTo')} ${transaction.gateway_id || t('history.originalSource')}`;
       default:
         return transaction.type;
     }
@@ -124,11 +126,11 @@ const TransactionHistory: React.FC = () => {
     if (!type) return null;
     switch (type) {
       case 'ENTRY_POINT':
-        return 'Entry';
+        return t('history.entry');
       case 'INTERNAL_AREA':
-        return 'Area';
+        return t('history.area');
       case 'TABLE_SEAT':
-        return 'Table';
+        return t('history.table');
       default:
         return null;
     }
@@ -154,15 +156,15 @@ const TransactionHistory: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white">TRANSACTION LEDGER</h1>
-          <p className="text-white/60 text-sm">Complete transaction history</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-white">{t('history.title')}</h1>
+          <p className="text-white/60 text-sm">{t('history.subtitle')}</p>
         </div>
         <button
           onClick={handleDownload}
           className="glass-button flex items-center space-x-2 px-3 py-2 sm:px-4 sm:py-2"
         >
           <Download size={16} />
-          <span className="hidden sm:inline">CSV</span>
+          <span className="hidden sm:inline">{t('history.downloadCSV')}</span>
         </button>
       </div>
 
@@ -175,7 +177,7 @@ const TransactionHistory: React.FC = () => {
             className="glass-card p-8 text-center"
           >
             <div className="w-8 h-8 border-2 border-neon-cyan border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-white/60">Loading transactions...</p>
+            <p className="text-white/60">{t('history.loading')}</p>
           </motion.div>
         ) : transactions.length === 0 ? (
           <motion.div
@@ -183,7 +185,7 @@ const TransactionHistory: React.FC = () => {
             animate={{ opacity: 1 }}
             className="glass-card p-8 text-center"
           >
-            <p className="text-white/60">No transactions yet</p>
+            <p className="text-white/60">{t('history.noTransactions')}</p>
           </motion.div>
         ) : (
           transactions.map((transaction: Transaction, index: number) => {
@@ -230,14 +232,14 @@ const TransactionHistory: React.FC = () => {
                         {transaction.type === 'FUND' ? '+' : transaction.type === 'REFUND' ? '' : '-'}${Math.abs(transaction.amount_cents / 100).toFixed(2)}
                       </p>
                       <p className="text-xs text-neon-green">
-                        completed
+                        {t('history.completed')}
                       </p>
                     </div>
                     <button
                       onClick={() => setSelectedTransaction(transaction)}
                       className="px-2 py-1 sm:px-3 sm:py-1 bg-neon-cyan/20 border border-neon-cyan text-neon-cyan text-xs sm:text-sm font-medium rounded hover:bg-neon-cyan/30 transition-colors min-h-[32px]"
                     >
-                      <span className="hidden sm:inline">View</span>
+                      <span className="hidden sm:inline">{t('history.view')}</span>
                       <span className="sm:hidden">•••</span>
                     </button>
                   </div>
@@ -267,7 +269,7 @@ const TransactionHistory: React.FC = () => {
             >
               {/* Header */}
               <div className="flex items-center justify-between">
-                <h2 className="text-lg sm:text-xl font-bold text-white">Digital Receipt</h2>
+                <h2 className="text-lg sm:text-xl font-bold text-white">{t('history.digitalReceipt')}</h2>
                 <button
                   onClick={() => setSelectedTransaction(null)}
                   className="p-2 hover:bg-white/10 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
@@ -281,7 +283,7 @@ const TransactionHistory: React.FC = () => {
                 <div className="border-b border-white/20 pb-3 sm:pb-4">
                   <div className="text-center">
                     <p className="text-neon-cyan font-bold text-base sm:text-lg">GHOSTPASS WALLET</p>
-                    <p className="text-white/60 text-sm">Digital Transaction Receipt</p>
+                    <p className="text-white/60 text-sm">{t('history.digitalReceipt')}</p>
                   </div>
                 </div>
 
@@ -289,7 +291,7 @@ const TransactionHistory: React.FC = () => {
                   <div className="flex items-center space-x-3">
                     <Hash size={16} className="text-white/60 flex-shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-white/60 text-xs">Transaction ID</p>
+                      <p className="text-white/60 text-xs">{t('history.transactionId')}</p>
                       <p className="text-white text-sm break-all">{selectedTransaction.id.slice(0, 8)}...</p>
                     </div>
                   </div>
@@ -297,7 +299,7 @@ const TransactionHistory: React.FC = () => {
                   <div className="flex items-center space-x-3">
                     <Calendar size={16} className="text-white/60 flex-shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-white/60 text-xs">Date & Time</p>
+                      <p className="text-white/60 text-xs">{t('history.dateTime')}</p>
                       <p className="text-white text-sm">
                         {formatDate(selectedTransaction.timestamp)} {formatTime(selectedTransaction.timestamp)}
                       </p>
@@ -308,7 +310,7 @@ const TransactionHistory: React.FC = () => {
                     <div className="flex items-center space-x-3">
                       <MapPin size={16} className="text-white/60 flex-shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-white/60 text-xs">Payment Method</p>
+                        <p className="text-white/60 text-xs">{t('history.paymentMethod')}</p>
                         <p className="text-white text-sm capitalize">{selectedTransaction.gateway_id}</p>
                       </div>
                     </div>
@@ -318,7 +320,7 @@ const TransactionHistory: React.FC = () => {
                     <div className="flex items-center space-x-3">
                       <MapPin size={16} className="text-white/60 flex-shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-white/60 text-xs">Venue ID</p>
+                        <p className="text-white/60 text-xs">{t('history.venueId')}</p>
                         <p className="text-white text-sm break-all">{selectedTransaction.venue_id}</p>
                       </div>
                     </div>
@@ -328,7 +330,7 @@ const TransactionHistory: React.FC = () => {
                     <div className="flex items-center space-x-3">
                       <MapPin size={16} className="text-white/60 flex-shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-white/60 text-xs">Vendor</p>
+                        <p className="text-white/60 text-xs">{t('history.vendor')}</p>
                         <p className="text-white text-sm">{selectedTransaction.vendor_name}</p>
                       </div>
                     </div>
@@ -338,7 +340,7 @@ const TransactionHistory: React.FC = () => {
                     <div className="flex items-center space-x-3">
                       <DoorOpen size={16} className="text-white/60 flex-shrink-0" />
                       <div className="min-w-0 flex-1">
-                        <p className="text-white/60 text-xs">Location</p>
+                        <p className="text-white/60 text-xs">{t('history.location')}</p>
                         <div className="flex items-center space-x-2">
                           <p className="text-white text-sm">{selectedTransaction.gateway_name}</p>
                           {selectedTransaction.gateway_type && (
@@ -354,13 +356,13 @@ const TransactionHistory: React.FC = () => {
                   {selectedTransaction.balance_before_cents !== null && selectedTransaction.balance_before_cents !== undefined && (
                     <div className="space-y-2 border-t border-white/20 pt-3">
                       <div className="flex justify-between items-center">
-                        <span className="text-white/60 text-xs">Balance Before</span>
+                        <span className="text-white/60 text-xs">{t('history.balanceBefore')}</span>
                         <span className="text-white text-sm font-mono">
                           ${(selectedTransaction.balance_before_cents / 100).toFixed(2)}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-white/60 text-xs">Balance After</span>
+                        <span className="text-white/60 text-xs">{t('history.balanceAfter')}</span>
                         <span className="text-neon-green text-sm font-mono font-bold">
                           ${(selectedTransaction.balance_after_cents! / 100).toFixed(2)}
                         </span>
@@ -370,21 +372,21 @@ const TransactionHistory: React.FC = () => {
 
                   <div className="border-t border-white/20 pt-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-white/60 text-sm">Amount:</span>
+                      <span className="text-white/60 text-sm">{t('history.amount')}:</span>
                       <span className={`font-bold text-base sm:text-lg ${getTransactionColor(selectedTransaction.type)}`}>
                         {selectedTransaction.type === 'FUND' ? '+' : selectedTransaction.type === 'REFUND' ? '' : '-'}${Math.abs(selectedTransaction.amount_cents / 100).toFixed(2)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-white/60 text-sm">Type:</span>
+                      <span className="text-white/60 text-sm">{t('history.type')}:</span>
                       <span className="text-white capitalize text-sm">
                         {getTransactionLabel(selectedTransaction)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-white/60 text-sm">Status:</span>
+                      <span className="text-white/60 text-sm">{t('history.status')}:</span>
                       <span className="text-neon-green text-sm">
-                        Completed
+                        {t('history.completed')}
                       </span>
                     </div>
                   </div>
@@ -392,7 +394,7 @@ const TransactionHistory: React.FC = () => {
 
                 <div className="border-t border-white/20 pt-3 sm:pt-4 text-center">
                   <p className="text-white/40 text-xs">
-                    Thank you for using GhostPass
+                    {t('history.thankYou')}
                   </p>
                 </div>
               </div>

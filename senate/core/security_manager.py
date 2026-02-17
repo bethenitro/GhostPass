@@ -14,8 +14,8 @@ from typing import Any, Dict, Optional, List
 from datetime import datetime
 import weakref
 
-from senate.utils.errors import SecurityError
-from senate.utils.logging import get_logger
+from utils.errors import SecurityError
+from utils.logging import get_logger
 
 
 logger = get_logger("security")

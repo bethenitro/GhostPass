@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Clock, Zap, ArrowLeftRight, Wallet } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { walletApi, ghostPassApi } from '../lib/api';
 import { cn } from '@/lib/utils';
 import RefundModal from './RefundModal';
@@ -16,6 +17,7 @@ interface WalletDashboardProps {
 }
 
 const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchasing = false, purchasingDuration: _purchasingDuration }) => {
+  const { t } = useTranslation();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [selectedDuration, setSelectedDuration] = useState(1);
@@ -126,7 +128,7 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
             )}
           >
             <Wallet className="w-4 h-4 inline mr-2" />
-            Ghost Pass Wallet
+            {t('wallet.ghostPassWallet')}
           </button>
           <button
             onClick={() => setActiveView('traditional')}
@@ -138,7 +140,7 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
             )}
           >
             <Zap className="w-4 h-4 inline mr-2" />
-            Traditional Wallet
+            {t('wallet.traditionalWallet')}
           </button>
         </div>
       </motion.div>
@@ -169,10 +171,9 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
               </div>
               
               <div className="space-y-2">
-                <h2 className="text-xl font-bold text-white">No Wallet Found</h2>
+                <h2 className="text-xl font-bold text-white">{t('wallet.noWalletFound')}</h2>
                 <p className="text-slate-400 max-w-md mx-auto">
-                  Create a wallet to purchase Ghost Pass and manage your balance. 
-                  Your wallet will be tied to this device.
+                  {t('wallet.noWalletDescription')}
                 </p>
               </div>
 
@@ -184,16 +185,16 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
                 }}
                 className="px-8 py-4 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-semibold transition-all transform hover:scale-105"
               >
-                Create Traditional Wallet
+                {t('wallet.createWallet')}
               </button>
 
               <div className="text-xs text-slate-500 max-w-sm mx-auto">
-                <p>Your wallet will be:</p>
+                <p>{t('wallet.walletFeatures.title')}</p>
                 <ul className="mt-2 space-y-1 text-left">
-                  <li>• Bound to this device</li>
-                  <li>• Used for Ghost Pass purchases</li>
-                  <li>• Refundable at any time</li>
-                  <li>• Secure and encrypted</li>
+                  <li>• {t('wallet.walletFeatures.boundToDevice')}</li>
+                  <li>• {t('wallet.walletFeatures.usedForPurchases')}</li>
+                  <li>• {t('wallet.walletFeatures.refundable')}</li>
+                  <li>• {t('wallet.walletFeatures.secure')}</li>
                 </ul>
               </div>
             </motion.div>
@@ -206,8 +207,8 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
                 animate={{ opacity: 1, y: 0 }}
                 className="text-center"
               >
-                <h1 className="text-2xl font-bold text-white mb-2">TRADITIONAL WALLET</h1>
-                <p className="text-cyan-400 text-sm">Ghost Pass Purchase & Management</p>
+                <h1 className="text-2xl font-bold text-white mb-2">{t('wallet.title')}</h1>
+                <p className="text-cyan-400 text-sm">{t('wallet.subtitle')}</p>
                 <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent mx-auto mt-4"></div>
               </motion.div>
 
@@ -218,7 +219,7 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
                 transition={{ delay: 0.1 }}
                 className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-xl p-4 sm:p-6 lg:p-8 text-center"
               >
-                <div className="text-xs uppercase tracking-widest text-slate-400 font-medium mb-4">Current Balance</div>
+                <div className="text-xs uppercase tracking-widest text-slate-400 font-medium mb-4">{t('wallet.currentBalance')}</div>
                 <motion.div
                   key={balance?.balance_dollars}
                   initial={{ scale: 0.9, opacity: 0 }}
@@ -239,7 +240,7 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
                     className="mt-8 mx-auto w-fit flex items-center justify-center gap-2 px-4 py-2 bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600 hover:border-slate-500 rounded-lg text-slate-300 hover:text-white transition-all text-sm font-medium"
                   >
                     <ArrowLeftRight className="w-4 h-4" />
-                    Request Refund
+                    {t('wallet.requestRefund')}
                   </motion.button>
                 )}
               </motion.div>
@@ -257,7 +258,7 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-3">
                       <Zap className="text-cyan-400" size={20} />
-                      <span className="text-base sm:text-lg font-semibold text-white">GHOST PASS</span>
+                      <span className="text-base sm:text-lg font-semibold text-white">{t('ghostPass.title')}</span>
                     </div>
                     <div className={cn(
                       "px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium border",
@@ -265,7 +266,7 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
                         ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                         : 'bg-red-500/10 text-red-400 border-red-500/20'
                     )}>
-                      {ghostPass?.status === 'ACTIVE' ? 'ACTIVE' : 'EXPIRED'}
+                      {ghostPass?.status === 'ACTIVE' ? t('ghostPass.active') : t('ghostPass.expired')}
                     </div>
                   </div>
 
@@ -273,7 +274,7 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2">
                         <Clock size={14} className="text-slate-400" />
-                        <span className="text-xs uppercase tracking-widest text-slate-400 font-medium">Time Remaining</span>
+                        <span className="text-xs uppercase tracking-widest text-slate-400 font-medium">{t('ghostPass.timeRemaining')}</span>
                       </div>
                       <motion.div
                         key={`${timeRemaining.hours}:${timeRemaining.minutes}:${timeRemaining.seconds}`}
@@ -290,14 +291,14 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
                       </motion.div>
                       {ghostPass.venue_name && (
                         <p className="text-slate-400 text-sm">
-                          Active at: <span className="text-cyan-400">{ghostPass.venue_name}</span>
+                          {t('ghostPass.activeAt')} <span className="text-cyan-400">{ghostPass.venue_name}</span>
                         </p>
                   )}
                 </div>
               )}
 
               {ghostPass?.status !== 'ACTIVE' && (
-                <p className="text-slate-400 text-center">No active pass</p>
+                <p className="text-slate-400 text-center">{t('ghostPass.noActivePass')}</p>
               )}
             </div>
           </motion.div>
@@ -309,7 +310,7 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
             transition={{ delay: 0.3 }}
             className="space-y-4"
           >
-            <h2 className="text-xl sm:text-2xl font-semibold text-white text-center">Purchase Ghost Pass</h2>
+            <h2 className="text-xl sm:text-2xl font-semibold text-white text-center">{t('ghostPass.purchase')}</h2>
             
             <DurationWheelSelector
               onSelect={handleDurationSelect}
@@ -333,12 +334,16 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
               {isPurchasing ? (
                 <div className="flex items-center justify-center space-x-2">
                   <div className="w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
-                  <span>PROCESSING PURCHASE...</span>
+                  <span>{t('ghostPass.processing')}</span>
                 </div>
               ) : (balance?.balance_dollars || 0) < selectedPrice ? (
-                'INSUFFICIENT BALANCE'
+                t('ghostPass.insufficientBalance')
               ) : (
-                `PURCHASE ${selectedDuration} ${selectedDuration === 1 ? 'DAY' : 'DAYS'} PASS - $${selectedPrice}`
+                t('ghostPass.purchaseButton', {
+                  duration: selectedDuration,
+                  unit: selectedDuration === 1 ? t('ghostPass.day') : t('ghostPass.days'),
+                  price: selectedPrice
+                })
               )}
             </motion.button>
           </motion.div>
