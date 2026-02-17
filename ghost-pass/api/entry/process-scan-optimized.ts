@@ -222,9 +222,9 @@ async function processEntryManual(
     gateway_id,
     receipt_id: receiptId,
     created_at: entryTimestamp
-  }).then(() => {
+  }).select().then(() => {
     console.log('Transaction logged');
-  }).catch(err => {
+  }, (err) => {
     console.error('Transaction log failed:', err);
   });
 

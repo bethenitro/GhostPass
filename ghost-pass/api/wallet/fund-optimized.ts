@@ -105,9 +105,9 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         balance_after_cents: finalWallet.balance_cents,
         vendor_name: 'Wallet Funding',
         metadata: { sources }
-      }).then(() => {
+      }).select().then(() => {
         console.log('Transaction logged');
-      }).catch((err) => {
+      }, (err) => {
         console.error('Transaction log failed:', err);
       });
 

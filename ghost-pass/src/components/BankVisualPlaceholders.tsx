@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Building2, Check } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 
 interface Bank {
@@ -84,6 +85,7 @@ interface BankVisualPlaceholdersProps {
 }
 
 export const BankVisualPlaceholders: React.FC<BankVisualPlaceholdersProps> = ({ className }) => {
+  const { t } = useTranslation();
   const [selectedBank, setSelectedBank] = useState<string | null>(null);
   const [showAccountForm, setShowAccountForm] = useState(false);
 
@@ -108,7 +110,7 @@ export const BankVisualPlaceholders: React.FC<BankVisualPlaceholdersProps> = ({ 
       <div>
         <h3 className="text-slate-300 font-medium mb-3 flex items-center space-x-2">
           <Building2 size={16} />
-          <span>Select Your Bank</span>
+          <span>{t('bankVisualPlaceholders.selectYourBank')}</span>
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {popularBanks.map((bank) => (
@@ -150,7 +152,7 @@ export const BankVisualPlaceholders: React.FC<BankVisualPlaceholdersProps> = ({ 
                 </div>
                 <div>
                   <p className="text-white font-medium text-sm">{bank.name}</p>
-                  <p className="text-slate-400 text-xs">Connect account</p>
+                  <p className="text-slate-400 text-xs">{t('bankVisualPlaceholders.connectAccount')}</p>
                 </div>
               </div>
             </motion.button>
@@ -160,7 +162,7 @@ export const BankVisualPlaceholders: React.FC<BankVisualPlaceholdersProps> = ({ 
 
       {/* Other Banks */}
       <div>
-        <h3 className="text-slate-300 font-medium mb-3">Other Banks</h3>
+        <h3 className="text-slate-300 font-medium mb-3">{t('bankVisualPlaceholders.otherBanks')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {otherBanks.slice(0, -1).map((bank) => (
             <motion.button
@@ -226,7 +228,7 @@ export const BankVisualPlaceholders: React.FC<BankVisualPlaceholdersProps> = ({ 
               <div className="w-8 h-8 rounded bg-slate-600 flex items-center justify-center text-white font-bold text-xs">
                 ?
               </div>
-              <p className="text-white text-sm">Other Bank</p>
+              <p className="text-white text-sm">{t('bankVisualPlaceholders.otherBank')}</p>
             </div>
           </motion.button>
         </div>
@@ -241,24 +243,24 @@ export const BankVisualPlaceholders: React.FC<BankVisualPlaceholdersProps> = ({ 
         >
           <h4 className="text-slate-300 font-medium mb-3 flex items-center space-x-2">
             <Building2 size={16} />
-            <span>Account Information</span>
+            <span>{t('bankVisualPlaceholders.accountInformation')}</span>
           </h4>
           
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm text-slate-400 mb-2">Account Holder Name</label>
+                <label className="block text-sm text-slate-400 mb-2">{t('bankVisualPlaceholders.accountHolderName')}</label>
                 <input
                   type="text"
-                  placeholder="Enter full name as it appears on account"
+                  placeholder={t('bankVisualPlaceholders.enterFullName')}
                   className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white text-sm focus:border-emerald-500 focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-400 mb-2">Account Number</label>
+                <label className="block text-sm text-slate-400 mb-2">{t('bankVisualPlaceholders.accountNumber')}</label>
                 <input
                   type="text"
-                  placeholder="Enter account number"
+                  placeholder={t('bankVisualPlaceholders.enterAccountNumber')}
                   className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white text-sm focus:border-emerald-500 focus:outline-none"
                 />
               </div>
@@ -266,29 +268,29 @@ export const BankVisualPlaceholders: React.FC<BankVisualPlaceholdersProps> = ({ 
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm text-slate-400 mb-2">Routing Number</label>
+                <label className="block text-sm text-slate-400 mb-2">{t('bankVisualPlaceholders.routingNumber')}</label>
                 <input
                   type="text"
-                  placeholder="9-digit routing number"
+                  placeholder={t('bankVisualPlaceholders.nineDigitRoutingNumber')}
                   className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white text-sm focus:border-emerald-500 focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-400 mb-2">Account Type</label>
+                <label className="block text-sm text-slate-400 mb-2">{t('bankVisualPlaceholders.accountType')}</label>
                 <select className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white text-sm focus:border-emerald-500 focus:outline-none">
-                  <option value="">Select account type</option>
-                  <option value="checking">Checking</option>
-                  <option value="savings">Savings</option>
+                  <option value="">{t('bankVisualPlaceholders.selectAccountType')}</option>
+                  <option value="checking">{t('bankVisualPlaceholders.checking')}</option>
+                  <option value="savings">{t('bankVisualPlaceholders.savings')}</option>
                 </select>
               </div>
             </div>
 
             {selectedBank === 'other' && (
               <div>
-                <label className="block text-sm text-slate-400 mb-2">Bank Name</label>
+                <label className="block text-sm text-slate-400 mb-2">{t('bankVisualPlaceholders.bankName')}</label>
                 <input
                   type="text"
-                  placeholder="Enter your bank name"
+                  placeholder={t('bankVisualPlaceholders.enterYourBankName')}
                   className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white text-sm focus:border-emerald-500 focus:outline-none"
                 />
               </div>
@@ -296,7 +298,7 @@ export const BankVisualPlaceholders: React.FC<BankVisualPlaceholdersProps> = ({ 
 
             <div className="pt-2">
               <button className="w-full md:w-auto px-6 py-2 bg-emerald-500/20 border border-emerald-500 text-emerald-400 rounded-lg font-medium hover:bg-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/20 transition-all duration-300">
-                Save Account Information
+                {t('bankVisualPlaceholders.saveAccountInformation')}
               </button>
             </div>
           </div>
@@ -313,7 +315,7 @@ export const BankVisualPlaceholders: React.FC<BankVisualPlaceholdersProps> = ({ 
             }}
             className="text-slate-400 hover:text-slate-300 text-sm underline transition-colors"
           >
-            Clear Selection
+            {t('bankVisualPlaceholders.clearSelection')}
           </button>
         </div>
       )}

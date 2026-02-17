@@ -82,8 +82,8 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
                 <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
               </button>
               <div>
-                <h1 className="text-lg sm:text-xl md:text-3xl font-bold text-purple-400">Venue Command Center</h1>
-                <p className="text-xs sm:text-sm md:text-base text-slate-400 mt-1">Event-scoped controls</p>
+                <h1 className="text-lg sm:text-xl md:text-3xl font-bold text-purple-400">{t('venueCommandCenter.title')}</h1>
+                <p className="text-xs sm:text-sm md:text-base text-slate-400 mt-1">{t('venueCommandCenter.eventScopedControls')}</p>
               </div>
             </div>
           </div>
@@ -110,8 +110,8 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
                 <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
               </button>
               <div>
-                <h1 className="text-lg sm:text-xl md:text-3xl font-bold text-purple-400">Venue Command Center</h1>
-                <p className="text-xs sm:text-sm md:text-base text-slate-400 mt-1">Event-scoped controls</p>
+                <h1 className="text-lg sm:text-xl md:text-3xl font-bold text-purple-400">{t('venueCommandCenter.title')}</h1>
+                <p className="text-xs sm:text-sm md:text-base text-slate-400 mt-1">{t('venueCommandCenter.eventScopedControls')}</p>
               </div>
             </div>
           </div>
@@ -147,9 +147,9 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
                 <ArrowLeft size={20} />
               </button>
               <div className="min-w-0 flex-1">
-                <h1 className="text-lg md:text-2xl font-bold text-purple-400 truncate">Venue Command Center</h1>
+                <h1 className="text-lg md:text-2xl font-bold text-purple-400 truncate">{t('venueCommandCenter.title')}</h1>
                 <p className="text-xs md:text-sm text-slate-400 mt-0.5 truncate">
-                  Event-scoped controls {eventId && `• Event: ${eventId}`}
+                  {t('venueCommandCenter.eventScopedControls')} {eventId && `• ${t('venueCommandCenter.eventLabel', { eventId })}`}
                 </p>
               </div>
             </div>
@@ -169,7 +169,7 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
                 }}
                 className="px-3 py-2 md:px-4 bg-cyan-500/20 border border-cyan-500 text-cyan-400 rounded-lg text-sm font-medium hover:bg-cyan-500/30 transition-colors whitespace-nowrap"
               >
-                beVALID
+                {t('venueCommandCenter.beValid')}
               </button>
               <button
                 onClick={async () => {
@@ -178,7 +178,7 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
                 }}
                 className="px-3 py-2 md:px-4 bg-purple-500/20 border border-purple-500 text-purple-400 rounded-lg text-sm font-medium hover:bg-purple-500/30 transition-colors whitespace-nowrap"
               >
-                Logout
+                {t('venueCommandCenter.logout')}
               </button>
             </div>
           </div>
@@ -814,8 +814,8 @@ const VendorItemSection: React.FC<{ venueId?: string; eventId?: string }> = ({ v
       ) : (
         <div className="text-slate-400 text-center py-8">
           <Package className="mx-auto mb-2 text-slate-600" size={48} />
-          <p>No vendor items configured</p>
-          <p className="text-sm text-slate-500 mt-1">Add items available for sale at your venue</p>
+          <p>{t('venueCommandCenter.noVendorItems')}</p>
+          <p className="text-sm text-slate-500 mt-1">{t('venueCommandCenter.addItemsDescription')}</p>
         </div>
       )}
     </div>
@@ -824,6 +824,7 @@ const VendorItemSection: React.FC<{ venueId?: string; eventId?: string }> = ({ v
 
 // Revenue Visibility Section
 const RevenueVisibilitySection: React.FC<{ venueId?: string; eventId?: string }> = ({ venueId }) => {
+  const { t } = useTranslation();
   const [revenueData, setRevenueData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [timeRange] = useState<'today' | 'week' | 'month' | 'all'>('today');
@@ -867,7 +868,7 @@ const RevenueVisibilitySection: React.FC<{ venueId?: string; eventId?: string }>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">
           <Eye className="text-purple-400" size={24} />
-          <h2 className="text-lg sm:text-xl font-bold text-purple-400">Revenue Breakdown</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-purple-400">{t('venueCommandCenter.revenueBreakdown')}</h2>
         </div>
       </div>
 
@@ -878,42 +879,42 @@ const RevenueVisibilitySection: React.FC<{ venueId?: string; eventId?: string }>
       ) : (
         <div className="space-y-4">
           <div className="bg-gradient-to-r from-purple-500/20 to-transparent rounded-lg p-4 border border-purple-500/30">
-            <p className="text-sm text-slate-400 mb-1">Total Revenue</p>
+            <p className="text-sm text-slate-400 mb-1">{t('venueCommandCenter.totalRevenue')}</p>
             <p className="text-3xl font-bold text-white">{formatCurrency(revenueData?.total_revenue || 0)}</p>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="bg-slate-800/50 rounded-lg p-3">
-              <p className="text-xs text-slate-400 mb-1">Entry Fees</p>
+              <p className="text-xs text-slate-400 mb-1">{t('venueCommandCenter.entryFees')}</p>
               <p className="text-lg font-bold text-emerald-400">{formatCurrency(revenueData?.entry_fees || 0)}</p>
             </div>
             <div className="bg-slate-800/50 rounded-lg p-3">
-              <p className="text-xs text-slate-400 mb-1">Re-Entry Fees</p>
+              <p className="text-xs text-slate-400 mb-1">{t('venueCommandCenter.reEntryFees')}</p>
               <p className="text-lg font-bold text-blue-400">{formatCurrency(revenueData?.reentry_fees || 0)}</p>
             </div>
             <div className="bg-slate-800/50 rounded-lg p-3">
-              <p className="text-xs text-slate-400 mb-1">Vendor Sales</p>
+              <p className="text-xs text-slate-400 mb-1">{t('venueCommandCenter.vendorSales')}</p>
               <p className="text-lg font-bold text-amber-400">{formatCurrency(revenueData?.vendor_sales || 0)}</p>
             </div>
             <div className="bg-slate-800/50 rounded-lg p-3">
-              <p className="text-xs text-slate-400 mb-1">Platform Fees</p>
+              <p className="text-xs text-slate-400 mb-1">{t('venueCommandCenter.platformFees')}</p>
               <p className="text-lg font-bold text-purple-400">{formatCurrency(revenueData?.platform_fees || 0)}</p>
             </div>
           </div>
 
           <div className="bg-slate-800/50 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-white mb-3">Revenue Distribution</h3>
+            <h3 className="text-sm font-semibold text-white mb-3">{t('venueCommandCenter.revenueDistribution')}</h3>
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-400">Your Share (Venue)</span>
+                <span className="text-slate-400">{t('venueCommandCenter.yourShare')}</span>
                 <span className="text-white font-medium">{formatCurrency(revenueData?.entry_fees || 0)}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-400">VALID Platform Fee</span>
+                <span className="text-slate-400">{t('venueCommandCenter.validPlatformFee')}</span>
                 <span className="text-white font-medium">{formatCurrency(revenueData?.platform_fees || 0)}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-400">Vendor Earnings</span>
+                <span className="text-slate-400">{t('venueCommandCenter.vendorEarnings')}</span>
                 <span className="text-white font-medium">{formatCurrency(revenueData?.vendor_sales || 0)}</span>
               </div>
             </div>

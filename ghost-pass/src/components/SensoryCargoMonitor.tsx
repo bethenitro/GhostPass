@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { 
   Eye, Ear, Hand, Compass, Wind, Droplet, 
   CheckCircle, XCircle, Clock, ArrowLeft,
@@ -133,6 +134,8 @@ const SENSORY_RECEPTOR_TEMPLATES: Omit<SensoryReceptor, 'state' | 'locked' | 'au
 ];
 
 const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => {
+  const { t } = useTranslation();
+  
   // State management
   const [selectedSignal, setSelectedSignal] = useState<Signal | null>(null);
   const [loading, setLoading] = useState(true);
@@ -572,7 +575,7 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-slate-400">Loading Sensory Cargo Monitor...</p>
+          <p className="text-slate-400">{t('sensoryCargoMonitor.loading')}</p>
         </div>
       </div>
     );
@@ -594,8 +597,8 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
               <ArrowLeft className="text-cyan-400" size={18} />
             </motion.button>
             <div className="min-w-0 flex-1">
-              <h1 className="heading-primary text-xl sm:text-2xl truncate">SCU Details</h1>
-              <p className="label-tactical text-xs sm:text-sm truncate">Complete SCU information and validation results</p>
+              <h1 className="heading-primary text-xl sm:text-2xl truncate">{t('sensoryCargoMonitor.scuDetails')}</h1>
+              <p className="label-tactical text-xs sm:text-sm truncate">{t('sensoryCargoMonitor.completeScuInfo')}</p>
             </div>
           </div>
 
@@ -611,15 +614,15 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
                   )}
                   <div className="min-w-0 flex-1">
                     <p className={`text-lg sm:text-xl font-bold ${selectedSignal.ghost_pass_approved ? 'text-emerald-400' : 'text-red-400'}`}>
-                      {selectedSignal.ghost_pass_approved ? 'Ghost Pass Approved' : 'Ghost Pass Rejected'}
+                      {selectedSignal.ghost_pass_approved ? t('sensoryCargoMonitor.ghostPassApproved') : t('sensoryCargoMonitor.ghostPassRejected')}
                     </p>
                     <p className="text-xs sm:text-sm text-slate-400">
-                      {selectedSignal.ghost_pass_approved ? 'SCU forwarded to Senate' : 'SCU blocked by validation'}
+                      {selectedSignal.ghost_pass_approved ? t('sensoryCargoMonitor.scuForwardedToSenate') : t('sensoryCargoMonitor.scuBlockedByValidation')}
                     </p>
                   </div>
                 </div>
                 <div className="text-left sm:text-right">
-                  <p className="label-tactical text-xs sm:text-sm">Status</p>
+                  <p className="label-tactical text-xs sm:text-sm">{t('sensoryCargoMonitor.status')}</p>
                   <p className="data-mono text-sm sm:text-base">{selectedSignal.status}</p>
                 </div>
               </div>
@@ -629,43 +632,43 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
           {/* SCU Metadata */}
           <Card className="glass-card mb-4 sm:mb-6">
             <CardHeader>
-              <CardTitle className="heading-primary text-lg sm:text-xl">SCU Metadata</CardTitle>
-              <p className="label-tactical text-sm">Complete SCU information and validation results</p>
+              <CardTitle className="heading-primary text-lg sm:text-xl">{t('sensoryCargoMonitor.scuMetadata')}</CardTitle>
+              <p className="label-tactical text-sm">{t('sensoryCargoMonitor.completeScuInfo')}</p>
             </CardHeader>
             <CardContent className="space-y-3 sm:space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <p className="label-tactical text-xs sm:text-sm">SCU ID</p>
+                  <p className="label-tactical text-xs sm:text-sm">{t('sensoryCargoMonitor.scuId')}</p>
                   <p className="data-mono text-xs sm:text-sm break-all">{selectedSignal.signal_id}</p>
                 </div>
                 <div>
-                  <p className="label-tactical text-xs sm:text-sm">Sensory Type</p>
+                  <p className="label-tactical text-xs sm:text-sm">{t('sensoryCargoMonitor.sensoryType')}</p>
                   <p className="data-mono text-sm sm:text-base">
                     {selectedSignal.payload_type === 'capsule' 
-                      ? selectedSignal.sensory_types?.join(', ') || 'Multiple'
-                      : selectedSignal.sensory_type || 'Unknown'
+                      ? selectedSignal.sensory_types?.join(', ') || t('sensoryCargoMonitor.multiple')
+                      : selectedSignal.sensory_type || t('sensoryCargoMonitor.unknown')
                     }
                   </p>
                 </div>
                 <div>
-                  <p className="label-tactical text-xs sm:text-sm">Source ID</p>
+                  <p className="label-tactical text-xs sm:text-sm">{t('sensoryCargoMonitor.sourceId')}</p>
                   <p className="data-mono text-sm sm:text-base">{selectedSignal.source_id}</p>
                 </div>
                 <div>
-                  <p className="label-tactical text-xs sm:text-sm">Payload Type</p>
+                  <p className="label-tactical text-xs sm:text-sm">{t('sensoryCargoMonitor.payloadType')}</p>
                   <p className="data-mono text-sm sm:text-base uppercase">{selectedSignal.payload_type}</p>
                 </div>
                 <div>
-                  <p className="label-tactical text-xs sm:text-sm">Timestamp</p>
+                  <p className="label-tactical text-xs sm:text-sm">{t('sensoryCargoMonitor.timestamp')}</p>
                   <p className="data-mono text-xs sm:text-sm">{formatTimestamp(selectedSignal.timestamp)}</p>
                 </div>
                 <div>
-                  <p className="label-tactical text-xs sm:text-sm">Received At</p>
+                  <p className="label-tactical text-xs sm:text-sm">{t('sensoryCargoMonitor.receivedAt')}</p>
                   <p className="data-mono text-xs sm:text-sm">{formatTimestamp(selectedSignal.received_at)}</p>
                 </div>
                 {selectedSignal.metadata?.integrity_hash && (
                   <div className="sm:col-span-2">
-                    <p className="label-tactical text-xs sm:text-sm">Payload Hash</p>
+                    <p className="label-tactical text-xs sm:text-sm">{t('sensoryCargoMonitor.payloadHash')}</p>
                     <p className="data-mono text-xs break-all">{selectedSignal.metadata.integrity_hash}</p>
                   </div>
                 )}
@@ -675,7 +678,7 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
               <div className="border-t border-slate-700 pt-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
-                    <p className="label-tactical text-xs sm:text-sm">Ghost Pass Validation</p>
+                    <p className="label-tactical text-xs sm:text-sm">{t('sensoryCargoMonitor.ghostPassValidation')}</p>
                     <div className="flex items-center space-x-2">
                       {selectedSignal.ghost_pass_approved ? (
                         <CheckCircle className="text-emerald-400" size={16} />
@@ -683,16 +686,16 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
                         <XCircle className="text-red-400" size={16} />
                       )}
                       <span className={`text-sm font-semibold ${selectedSignal.ghost_pass_approved ? 'text-emerald-400' : 'text-red-400'}`}>
-                        {selectedSignal.ghost_pass_approved ? 'APPROVED' : 'REJECTED'}
+                        {selectedSignal.ghost_pass_approved ? t('sensoryCargoMonitor.approved') : t('sensoryCargoMonitor.rejected')}
                       </span>
                     </div>
                   </div>
                   <div>
-                    <p className="label-tactical text-xs sm:text-sm">Senate Status</p>
+                    <p className="label-tactical text-xs sm:text-sm">{t('sensoryCargoMonitor.senateStatus')}</p>
                     <div className="flex items-center space-x-2">
                       <Scale className="text-purple-400" size={16} />
                       <span className="text-sm text-purple-400 uppercase">
-                        {selectedSignal.ghost_pass_approved ? 'Pending Evaluation' : 'Blocked'}
+                        {selectedSignal.ghost_pass_approved ? t('sensoryCargoMonitor.pendingEvaluation') : t('sensoryCargoMonitor.blocked')}
                       </span>
                     </div>
                   </div>
@@ -704,7 +707,7 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
           {/* SCU Data */}
           <Card className="glass-card mb-6">
             <CardHeader>
-              <CardTitle className="heading-primary">SCU Data</CardTitle>
+              <CardTitle className="heading-primary">{t('sensoryCargo.scuData')}</CardTitle>
             </CardHeader>
             <CardContent>
               {selectedSignal.payload_type === 'capsule' && selectedSignal.scus ? (
@@ -734,7 +737,7 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
           {selectedSignal.validation_result && (
             <Card className="glass-card">
               <CardHeader>
-                <CardTitle className="heading-primary">Validation Results</CardTitle>
+                <CardTitle className="heading-primary">{t('sensoryCargo.validationResults')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <pre className="p-4 bg-slate-950/50 rounded text-sm overflow-x-auto">
@@ -763,7 +766,7 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
             </motion.button>
             <div className="min-w-0 flex-1">
               <div className="flex items-center space-x-3">
-                <h1 className="heading-primary text-2xl sm:text-2xl lg:text-3xl">Sensory Cargo Monitor</h1>
+                <h1 className="heading-primary text-2xl sm:text-2xl lg:text-3xl">{t('sensoryCargo.title')}</h1>
                 {environmentConfig && (
                   <div className={`px-2 py-1 rounded text-xs font-semibold ${
                     environmentConfig.is_sandbox 
@@ -834,8 +837,8 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
         {/* TOP SECTION - Sensory Receptor Panel */}
         <Card className="glass-card mb-6">
           <CardHeader>
-            <CardTitle className="heading-primary text-lg">Sensory Receptor Panel</CardTitle>
-            <p className="label-tactical text-sm">6 fixed Sensory Types and their current state</p>
+            <CardTitle className="heading-primary text-lg">{t('sensoryCargo.sensorReceptorPanel')}</CardTitle>
+            <p className="label-tactical text-sm">{t('sensoryCargo.fixedSensoryTypes')}</p>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -879,13 +882,13 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
                             {receptor.authority_bypassed ? (
                               <p className="text-xs text-yellow-400">Authority Required (Sandbox: bypassed)</p>
                             ) : (
-                              <p className="text-xs text-orange-400">Authority Required</p>
+                              <p className="text-xs text-orange-400">{t('sensoryCargo.authorityRequired')}</p>
                             )}
                           </div>
                         )}
                         
                         {receptor.locked && (
-                          <p className="text-xs text-red-400 mt-1">Locked</p>
+                          <p className="text-xs text-red-400 mt-1">{t('sensoryCargo.locked')}</p>
                         )}
                         
                         {receptor.last_seen_at && receptor.state === 'active' && (
@@ -908,10 +911,10 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
             <CardTitle className="heading-primary text-lg flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <BarChart3 className="text-cyan-400" size={20} />
-                <span>Live Sensory Feed</span>
+                <span>{t('sensoryCargo.liveSensoryFeed')}</span>
                 {selectedSensoryFilter && (
                   <span className="text-sm text-slate-400">
-                    - Filtered by {selectedSensoryFilter}
+                    - {t('sensoryCargo.filteredBy', { type: selectedSensoryFilter })}
                   </span>
                 )}
               </div>
@@ -1049,9 +1052,9 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
           <CardHeader>
             <CardTitle className="heading-primary text-lg flex items-center space-x-2">
               <Shield className="text-purple-400" size={20} />
-              <span>Governance & Audit Status</span>
+              <span>{t('sensoryCargo.governanceAuditStatus')}</span>
             </CardTitle>
-            <p className="label-tactical text-sm">System status and traceability overview</p>
+            <p className="label-tactical text-sm">{t('sensoryCargo.systemStatusOverview')}</p>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1059,7 +1062,7 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
               <div className="glass-panel p-4 border-l-4 border-emerald-500/50">
                 <div className="flex items-center space-x-2 mb-2">
                   <Shield className="text-emerald-400" size={16} />
-                  <span className="font-semibold text-emerald-400">Ghost Pass Summary</span>
+                  <span className="font-semibold text-emerald-400">{t('sensoryCargo.ghostPassSummary')}</span>
                 </div>
                 {ghostPassSummary ? (
                   <div className="space-y-1 text-sm">
@@ -1085,7 +1088,7 @@ const SensoryCargoMonitor: React.FC<SensoryCargoMonitorProps> = ({ onBack }) => 
               <div className="glass-panel p-4 border-l-4 border-purple-500/50">
                 <div className="flex items-center space-x-2 mb-2">
                   <Scale className="text-purple-400" size={16} />
-                  <span className="font-semibold text-purple-400">Senate Queue Status</span>
+                  <span className="font-semibold text-purple-400">{t('sensoryCargo.senateQueueStatus')}</span>
                 </div>
                 <div className="space-y-1 text-sm">
                   <div className="flex justify-between">

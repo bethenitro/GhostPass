@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Filter, ArrowLeft, Search, Activity, Eye } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { auditApi } from '../lib/api';
 import type { 
   EntryPointAuditLog, 
@@ -14,6 +15,7 @@ interface AuditTrailProps {
 }
 
 export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }) => {
+  const { t } = useTranslation();
   const rootClass = `min-h-screen bg-slate-950 ${className}`.trim();
   const [auditLogs, setAuditLogs] = useState<EntryPointAuditLog[]>([]);
   const [summaryStats, setSummaryStats] = useState<AuditSummaryStats | null>(null);
@@ -52,7 +54,7 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
       }
     } catch (err) {
       console.error('Error loading audit data:', err);
-      setError('Failed to load audit trail data');
+      setError(t('auditTrail.errors.failedToLoadData'));
     } finally {
       setLoading(false);
     }
@@ -113,17 +115,17 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
                 <button
                   onClick={onBack}
                   className="p-2 hover:bg-red-500/10 rounded-lg transition-colors text-red-400 flex-shrink-0 touch-manipulation active:scale-95"
-                  aria-label="Back to Dashboard"
+                  aria-label={t('auditTrail.backToDashboard')}
                 >
                   <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
                 </button>
               )}
               <div className="flex-1 min-w-0">
                 <h1 className="text-lg sm:text-xl md:text-3xl font-bold text-red-400 truncate">
-                  Entry Point Audit Trail
+                  {t('auditTrail.title')}
                 </h1>
                 <p className="text-xs sm:text-sm md:text-base text-slate-400 mt-1 truncate">
-                  Track all QR code scans and entry point actions
+                  {t('auditTrail.subtitle')}
                 </p>
               </div>
             </div>
@@ -151,17 +153,17 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
                 <button
                   onClick={onBack}
                   className="p-2 hover:bg-red-500/10 rounded-lg transition-colors text-red-400 flex-shrink-0 touch-manipulation active:scale-95"
-                  aria-label="Back to Dashboard"
+                  aria-label={t('auditTrail.backToDashboard')}
                 >
                   <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
                 </button>
               )}
               <div className="flex-1 min-w-0">
                 <h1 className="text-lg sm:text-xl md:text-3xl font-bold text-red-400 truncate">
-                  Entry Point Audit Trail
+                  {t('auditTrail.title')}
                 </h1>
                 <p className="text-xs sm:text-sm md:text-base text-slate-400 mt-1 truncate">
-                  Track all QR code scans and entry point actions
+                  {t('auditTrail.subtitle')}
                 </p>
               </div>
             </div>
@@ -172,14 +174,14 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-8">
           <div className="bg-slate-900/50 backdrop-blur-sm border border-red-500/20 rounded-lg p-8 sm:p-12 text-center">
             <FileText className="mx-auto text-red-600 mb-4" size={48} />
-            <p className="text-red-400 text-base sm:text-lg mb-2">Error Loading Audit Trail</p>
+            <p className="text-red-400 text-base sm:text-lg mb-2">{t('auditTrail.errors.loadingError')}</p>
             <p className="text-slate-500 text-xs sm:text-sm mb-6">{error}</p>
             <button 
               onClick={loadAuditData} 
               className="px-6 py-3 bg-red-500/20 border border-red-500 text-red-400 rounded-lg font-medium hover:bg-red-500/30 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-300 inline-flex items-center space-x-2 touch-manipulation min-h-[44px] active:scale-95"
             >
               <Activity size={18} />
-              <span>Retry</span>
+              <span>{t('auditTrail.retry')}</span>
             </button>
           </div>
         </div>
@@ -197,17 +199,17 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
               <button
                 onClick={onBack}
                 className="p-2 hover:bg-red-500/10 rounded-lg transition-colors text-red-400 flex-shrink-0 touch-manipulation active:scale-95"
-                aria-label="Back to Dashboard"
+                aria-label={t('auditTrail.backToDashboard')}
               >
                 <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
               </button>
             )}
             <div className="flex-1 min-w-0">
               <h1 className="text-lg sm:text-xl md:text-3xl font-bold text-red-400 truncate">
-                Entry Point Audit Trail
+                {t('auditTrail.title')}
               </h1>
               <p className="text-xs sm:text-sm md:text-base text-slate-400 mt-1 truncate">
-                Track all QR code scans and entry point actions
+                {t('auditTrail.subtitle')}
               </p>
             </div>
             <button
@@ -219,8 +221,8 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
               }`}
             >
               <Filter size={18} />
-              <span className="text-sm sm:text-base hidden sm:inline">{showFilters ? 'HIDE' : 'SHOW'}</span>
-              <span className="text-sm sm:text-base sm:hidden">FILTER</span>
+              <span className="text-sm sm:text-base hidden sm:inline">{showFilters ? t('auditTrail.hide') : t('auditTrail.show')}</span>
+              <span className="text-sm sm:text-base sm:hidden">{t('auditTrail.filter')}</span>
             </button>
           </div>
         </div>
@@ -233,19 +235,19 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
             <div className="bg-slate-900/50 backdrop-blur-sm border border-red-500/20 rounded-lg p-3 sm:p-4">
               <div className="text-xl sm:text-2xl font-bold text-blue-400">{summaryStats.total_scans}</div>
-              <div className="text-xs sm:text-sm text-slate-400">Total Scans (30d)</div>
+              <div className="text-xs sm:text-sm text-slate-400">{t('auditTrail.stats.totalScans')}</div>
             </div>
             <div className="bg-slate-900/50 backdrop-blur-sm border border-red-500/20 rounded-lg p-3 sm:p-4">
               <div className="text-xl sm:text-2xl font-bold text-amber-400">{summaryStats.total_edits}</div>
-              <div className="text-xs sm:text-sm text-slate-400">Edits (30d)</div>
+              <div className="text-xs sm:text-sm text-slate-400">{t('auditTrail.stats.edits')}</div>
             </div>
             <div className="bg-slate-900/50 backdrop-blur-sm border border-red-500/20 rounded-lg p-3 sm:p-4">
               <div className="text-xl sm:text-2xl font-bold text-emerald-400">{summaryStats.unique_entry_points}</div>
-              <div className="text-xs sm:text-sm text-slate-400">Active Entry Points</div>
+              <div className="text-xs sm:text-sm text-slate-400">{t('auditTrail.stats.activeEntryPoints')}</div>
             </div>
             <div className="bg-slate-900/50 backdrop-blur-sm border border-red-500/20 rounded-lg p-3 sm:p-4">
               <div className="text-xl sm:text-2xl font-bold text-purple-400">{summaryStats.unique_employees}</div>
-              <div className="text-xs sm:text-sm text-slate-400">Active Employees</div>
+              <div className="text-xs sm:text-sm text-slate-400">{t('auditTrail.stats.activeEmployees')}</div>
             </div>
           </div>
         )}
@@ -255,16 +257,16 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
           <div className="bg-slate-900/50 backdrop-blur-sm border border-red-500/20 rounded-lg p-4 sm:p-6 mb-6">
             <h3 className="text-base sm:text-lg font-semibold text-red-400 mb-4 flex items-center space-x-2">
               <Search size={18} />
-              <span>Filter Audit Logs</span>
+              <span>{t('auditTrail.filterAuditLogs')}</span>
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Employee Name
+                  {t('auditTrail.filters.employeeName')}
                 </label>
                 <input
                   type="text"
-                  placeholder="Search by employee..."
+                  placeholder={t('auditTrail.filters.searchByEmployee')}
                   value={filters.employee_name || ''}
                   onChange={(e) => handleFilterChange('employee_name', e.target.value || undefined)}
                   className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-base"
@@ -272,32 +274,32 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Action Type
+                  {t('auditTrail.filters.actionType')}
                 </label>
                 <select
                   className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-base"
                   value={filters.action_type || ''}
                   onChange={(e) => handleFilterChange('action_type', e.target.value || undefined)}
                 >
-                  <option value="">All Actions</option>
-                  <option value="SCAN">Scans</option>
-                  <option value="CREATE">Creates</option>
-                  <option value="EDIT">Edits</option>
-                  <option value="ACTIVATE">Activations</option>
-                  <option value="DEACTIVATE">Deactivations</option>
-                  <option value="DELETE">Deletions</option>
+                  <option value="">{t('auditTrail.filters.allActions')}</option>
+                  <option value="SCAN">{t('auditTrail.filters.scans')}</option>
+                  <option value="CREATE">{t('auditTrail.filters.creates')}</option>
+                  <option value="EDIT">{t('auditTrail.filters.edits')}</option>
+                  <option value="ACTIVATE">{t('auditTrail.filters.activations')}</option>
+                  <option value="DEACTIVATE">{t('auditTrail.filters.deactivations')}</option>
+                  <option value="DELETE">{t('auditTrail.filters.deletions')}</option>
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Source Location
+                  {t('auditTrail.filters.sourceLocation')}
                 </label>
                 <select
                   className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-base"
                   value={filters.source_location || ''}
                   onChange={(e) => handleFilterChange('source_location', e.target.value || undefined)}
                 >
-                  <option value="">All Sources</option>
+                  <option value="">{t('auditTrail.filters.allSources')}</option>
                   <option value="Scan UI">Scan UI</option>
                   <option value="Command Center">Command Center</option>
                   <option value="PCGM">PCGM</option>
@@ -312,7 +314,7 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
                 }}
                 className="px-4 py-2 bg-slate-700 border border-slate-600 text-slate-300 rounded-lg font-medium hover:bg-slate-600 active:bg-slate-600 transition-colors touch-manipulation min-h-[44px]"
               >
-                Clear Filters
+                {t('auditTrail.clearFilters')}
               </button>
             </div>
           </div>
@@ -323,9 +325,9 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
             <div className="flex-1 min-w-0">
-              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-red-400">Audit Log Entries</h2>
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-red-400">{t('auditTrail.auditLogEntries')}</h2>
               <p className="text-slate-400 text-xs sm:text-sm mt-1">
-                Complete history of all entry point and QR code activities
+                {t('auditTrail.completeHistory')}
               </p>
             </div>
           </div>
@@ -333,9 +335,9 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
           {auditLogs.length === 0 ? (
             <div className="bg-slate-900/50 backdrop-blur-sm border border-red-500/20 rounded-lg p-8 sm:p-12 text-center">
               <FileText className="mx-auto text-slate-600 mb-4" size={48} />
-              <p className="text-slate-400 text-base sm:text-lg mb-2">No audit entries found</p>
+              <p className="text-slate-400 text-base sm:text-lg mb-2">{t('auditTrail.noEntriesFound')}</p>
               <p className="text-slate-500 text-xs sm:text-sm mb-6">
-                No audit entries match your current filter criteria
+                {t('auditTrail.noEntriesMatchFilter')}
               </p>
             </div>
           ) : (
@@ -345,12 +347,12 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-red-500/20 bg-slate-800/50">
-                      <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Action</th>
-                      <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Entry Point</th>
-                      <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Employee</th>
-                      <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Source</th>
-                      <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Timestamp</th>
-                      <th className="text-right py-3 px-4 text-slate-300 font-semibold text-sm">Details</th>
+                      <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">{t('auditTrail.table.action')}</th>
+                      <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">{t('auditTrail.table.entryPoint')}</th>
+                      <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">{t('auditTrail.table.employee')}</th>
+                      <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">{t('auditTrail.table.source')}</th>
+                      <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">{t('auditTrail.table.timestamp')}</th>
+                      <th className="text-right py-3 px-4 text-slate-300 font-semibold text-sm">{t('auditTrail.table.details')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -384,7 +386,7 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
                         <td className="py-3 px-4">
                           <div className="text-sm text-slate-300">{formatTimestamp(log.created_at)}</div>
                           {log.admin_email && (
-                            <div className="text-xs text-purple-400">Admin: {log.admin_email}</div>
+                            <div className="text-xs text-purple-400">{t('auditTrail.admin')}: {log.admin_email}</div>
                           )}
                         </td>
                         <td className="py-3 px-4">
@@ -392,7 +394,7 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
                             {(log.action_type === 'EDIT' && log.metadata?.changes) && (
                               <button
                                 className="p-2 text-blue-400 hover:bg-blue-500/10 rounded transition-colors touch-manipulation"
-                                title="View Changes"
+                                title={t('auditTrail.viewChanges')}
                               >
                                 <Eye size={16} />
                               </button>
@@ -429,23 +431,23 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
                     
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between gap-2">
-                        <span className="text-slate-400">Employee:</span>
+                        <span className="text-slate-400">{t('auditTrail.mobile.employee')}:</span>
                         <span className="text-white text-right">{log.employee_name} ({log.employee_id})</span>
                       </div>
                       <div className="flex justify-between gap-2">
-                        <span className="text-slate-400">Source:</span>
+                        <span className="text-slate-400">{t('auditTrail.mobile.source')}:</span>
                         <span className="text-slate-300 flex items-center space-x-1">
                           <span>{getSourceLocationIcon(log.source_location)}</span>
                           <span>{log.source_location}</span>
                         </span>
                       </div>
                       <div className="flex justify-between gap-2">
-                        <span className="text-slate-400">Time:</span>
+                        <span className="text-slate-400">{t('auditTrail.mobile.time')}:</span>
                         <span className="text-slate-300 text-right text-xs">{formatTimestamp(log.created_at)}</span>
                       </div>
                       {log.admin_email && (
                         <div className="flex justify-between gap-2">
-                          <span className="text-slate-400">Admin:</span>
+                          <span className="text-slate-400">{t('auditTrail.admin')}:</span>
                           <span className="text-purple-400 text-right break-all">{log.admin_email}</span>
                         </div>
                       )}
@@ -454,7 +456,7 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
                     {/* Show changes for edit actions */}
                     {log.action_type === 'EDIT' && log.metadata?.changes && (
                       <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/50 rounded-lg">
-                        <div className="text-xs font-medium text-amber-400 mb-2">Changes Made:</div>
+                        <div className="text-xs font-medium text-amber-400 mb-2">{t('auditTrail.changesMade')}:</div>
                         <div className="space-y-1 text-xs">
                           {Object.entries(log.metadata.changes).map(([field, change]: [string, any]) => (
                             <div key={field} className="flex flex-col space-y-1">
@@ -475,11 +477,11 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
                       <div className="mt-2 text-xs flex flex-wrap gap-2">
                         {log.metadata.is_session ? (
                           <span className="px-2 py-1 bg-purple-500/20 text-purple-400 border border-purple-500/50 rounded-full">
-                            Session Scan
+                            {t('auditTrail.sessionScan')}
                           </span>
                         ) : (
                           <span className="px-2 py-1 bg-blue-500/20 text-blue-400 border border-blue-500/50 rounded-full">
-                            Pass Scan
+                            {t('auditTrail.passScan')}
                           </span>
                         )}
                         {log.metadata.scan_result && (
@@ -500,7 +502,7 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
               {/* Pagination */}
               <div className="bg-slate-900/50 backdrop-blur-sm border border-red-500/20 rounded-lg px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
                 <div className="text-sm text-slate-400">
-                  Page {currentPage} • Showing {auditLogs.length} entries
+                  {t('auditTrail.pagination.page')} {currentPage} • {t('auditTrail.pagination.showing')} {auditLogs.length} {t('auditTrail.pagination.entries')}
                 </div>
                 <div className="flex space-x-2 w-full sm:w-auto">
                   <button
@@ -508,14 +510,14 @@ export const AuditTrail: React.FC<AuditTrailProps> = ({ className = '', onBack }
                     disabled={currentPage === 1}
                     className="flex-1 sm:flex-none px-4 py-2 bg-slate-700 border border-slate-600 text-slate-300 rounded-lg font-medium hover:bg-slate-600 active:bg-slate-600 transition-colors touch-manipulation min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Previous
+                    {t('auditTrail.pagination.previous')}
                   </button>
                   <button
                     onClick={() => handlePageChange('next')}
                     disabled={!hasMore}
                     className="flex-1 sm:flex-none px-4 py-2 bg-slate-700 border border-slate-600 text-slate-300 rounded-lg font-medium hover:bg-slate-600 active:bg-slate-600 transition-colors touch-manipulation min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Next
+                    {t('auditTrail.pagination.next')}
                   </button>
                 </div>
               </div>

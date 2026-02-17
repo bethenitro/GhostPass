@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -15,6 +16,7 @@ const AdminModeToggle: React.FC<AdminModeToggleProps> = ({
   userRole,
   compact = false
 }) => {
+  const { t } = useTranslation();
   // Only show for admin users
   if (userRole !== 'ADMIN') {
     return null;
@@ -65,7 +67,7 @@ const AdminModeToggle: React.FC<AdminModeToggleProps> = ({
           isAdminMode && "rotate-90"
         )} 
       />
-      <span>ADMIN MODE</span>
+      <span>{t('common.admin')}</span>
       {isAdminMode && (
         <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
       )}

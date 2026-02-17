@@ -198,9 +198,9 @@ async function processPurchaseManual(
       unit_price_cents: item.price_cents,
       purchase_type: 'vendor_item',
     },
-  }).then(() => {
+  }).select().then(() => {
     console.log('Transaction logged');
-  }).catch(err => {
+  }, (err) => {
     console.error('Transaction log failed:', err);
   });
 

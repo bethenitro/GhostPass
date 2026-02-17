@@ -114,7 +114,7 @@ const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
         // Check if wallet is set up
         if (!walletBindingId && !localStorage.getItem('wallet_binding_id')) {
           console.warn('Wallet not set up - no wallet_binding_id found');
-          showToast('Please set up your wallet first by scanning a QR code at the venue', 'warning', 6000);
+          showToast(t('fastEntry.errors.walletNotSetup'), 'warning', 6000);
           return;
         }
 
@@ -150,19 +150,19 @@ const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
           // Show specific error messages based on the actual error
           if (errorData.error) {
             if (errorData.error.includes('wallet_binding_id')) {
-              showToast('Wallet ID is missing. Please scan a QR code at the venue first.', 'warning', 6000);
+              showToast(t('fastEntry.errors.walletIdMissing'), 'warning', 6000);
             } else if (errorData.error.includes('Amount')) {
-              showToast(`Invalid amount: ${errorData.error}`, 'error');
+              showToast(t('fastEntry.errors.invalidAmount', { error: errorData.error }), 'error');
             } else if (errorData.error.includes('Stripe is not configured')) {
-              showToast('Payment system is not configured. Please contact support.', 'error');
+              showToast(t('fastEntry.errors.stripeNotConfigured'), 'error');
             } else if (errorData.error.includes('STRIPE_SECRET_KEY')) {
-              showToast('Payment system configuration error. Please contact support.', 'error');
+              showToast(t('fastEntry.errors.paymentConfigError'), 'error');
             } else {
               // Show the actual error message from the API
-              showToast(`Payment error: ${errorData.error}`, 'error', 7000);
+              showToast(t('fastEntry.errors.paymentError', { error: errorData.error }), 'error', 7000);
             }
           } else {
-            showToast(`Payment setup failed (${response.status}). Please try again or contact support.`, 'error');
+            showToast(t('fastEntry.errors.paymentSetupFailed', { status: response.status }), 'error');
           }
           return;
         }
@@ -176,7 +176,7 @@ const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
           window.location.href = data.url;
         } else {
           console.error('No checkout URL in response:', data);
-          showToast('Payment setup failed - no checkout URL received.', 'error');
+          showToast(t('fastEntry.errors.noCheckoutUrl'), 'error');
         }
       } catch (error) {
         console.error('Stripe checkout error (caught exception):', error);
@@ -186,9 +186,9 @@ const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
             message: error.message,
             stack: error.stack
           });
-          showToast(`Payment error: ${error.message}`, 'error', 7000);
+          showToast(t('fastEntry.errors.paymentError', { error: error.message }), 'error', 7000);
         } else {
-          showToast('Payment setup failed. Please check your connection and try again.', 'error');
+          showToast(t('fastEntry.errors.connectionError'), 'error');
         }
         return;
       }
@@ -312,7 +312,7 @@ const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
         transition={{ delay: 0.1 }}
         className="space-y-3"
       >
-        <p className="text-white font-medium">Payment Method</p>
+        <p className="text-white font-medium">{t('fastEntry.paymentMethod')}</p>
         <div className="grid grid-cols-3 gap-3">
           {paymentMethods.map((method) => {
             const Icon = method.icon;
@@ -327,9 +327,13 @@ const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
                     ? "border-cyan-400 bg-cyan-500/20 text-cyan-400"
                     : "border-slate-700 bg-slate-800/50 text-white hover:border-slate-500"
                 )}
+                title={!method.enabled ? t('fastEntry.comingSoon') : ''}
               >
                 <Icon size={24} />
-                <span className="text-sm font-medium">{method.name}</span>
+                <span className="text-sm font-medium">{t(`fastEntry.payment.${method.id}`)}</span>
+                {!method.enabled && (
+                  <span className="text-xs text-slate-400">{t('fastEntry.comingSoon')}</span>
+                )}
               </button>
             );
           })}
@@ -343,7 +347,7 @@ const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
         transition={{ delay: 0.2 }}
         className="space-y-3"
       >
-        <p className="text-white font-medium">Custom Amount</p>
+        <p className="text-white font-medium">{t('fastEntry.customAmount')}</p>
         <div className="relative">
           <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-cyan-400 font-mono text-lg">
             $
@@ -352,7 +356,7 @@ const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
             type="number"
             value={fundAmount}
             onChange={(e) => setFundAmount(e.target.value)}
-            placeholder="0.00"
+            placeholder={t('fastEntry.amountPlaceholder')}
             className="w-full pl-8 pr-4 py-4 text-lg bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all font-mono"
             min="0.01"
             step="0.01"
@@ -377,12 +381,12 @@ const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
         {fundMutation.isPending ? (
           <>
             <Loader2 className="w-5 h-5 animate-spin" />
-            <span>Processing...</span>
+            <span>{t('fastEntry.processing')}</span>
           </>
         ) : (
           <>
             <Zap className="w-5 h-5" />
-            <span>Add Funds</span>
+            <span>{t('fastEntry.addFunds')}</span>
           </>
         )}
       </motion.button>
@@ -398,8 +402,8 @@ const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
           <div className="flex items-center space-x-3">
             <CheckCircle className="w-5 h-5 text-green-400" />
             <div>
-              <p className="text-green-400 font-semibold">Funds Added!</p>
-              <p className="text-slate-300 text-sm">Your wallet has been updated</p>
+              <p className="text-green-400 font-semibold">{t('fastEntry.fundsAdded')}</p>
+              <p className="text-slate-300 text-sm">{t('fastEntry.walletUpdated')}</p>
             </div>
           </div>
         </motion.div>
@@ -426,8 +430,8 @@ const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
         <div className="flex items-start space-x-3">
           <QrCode className="w-5 h-5 text-cyan-400 mt-0.5 flex-shrink-0" />
           <div className="text-sm text-slate-300">
-            <p className="font-medium text-cyan-400 mb-1">Fast Entry</p>
-            <p>Once funded, your entry will be processed automatically. Keep this wallet accessible for re-entry.</p>
+            <p className="font-medium text-cyan-400 mb-1">{t('fastEntry.fastEntryTitle')}</p>
+            <p>{t('fastEntry.infoDescription')}</p>
           </div>
         </div>
       </motion.div>

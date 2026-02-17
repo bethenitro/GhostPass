@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ghostPassApi } from '@/lib/api';
@@ -49,6 +50,7 @@ export const DurationWheelSelector: React.FC<DurationWheelSelectorProps> = ({
   onSelect,
   disabled = false
 }) => {
+  const { t } = useTranslation();
   const [selectedDays, setSelectedDays] = useState(5); // Start at 5 days
   const [isDragging, setIsDragging] = useState(false);
   const [durationOptions, setDurationOptions] = useState<DurationOption[]>(defaultDurationOptions);
@@ -327,12 +329,12 @@ export const DurationWheelSelector: React.FC<DurationWheelSelectorProps> = ({
       {/* Helper Text */}
       <div className="text-center space-y-1">
         <p className="text-slate-400 text-sm">
-          <span className="hidden sm:inline">Scroll wheel, drag slider, or swipe to select</span>
-          <span className="sm:hidden">Drag slider or swipe to select</span>
+          <span className="hidden sm:inline">{t('scanner.instructions.steady')}</span>
+          <span className="sm:hidden">{t('scanner.instructions.steady')}</span>
         </p>
         <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
           <div className="w-2 h-2 rounded-full bg-cyan-500/50" />
-          <span>{selectedDays} of {maxDays} days</span>
+          <span>{selectedDays} {t('ghostPass.days')}</span>
         </div>
       </div>
 
@@ -346,13 +348,13 @@ export const DurationWheelSelector: React.FC<DurationWheelSelectorProps> = ({
         <div className="relative z-10">
           <div className="flex items-start justify-between mb-3">
             <div>
-              <div className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Selected Plan</div>
+              <div className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">{t('ghostPass.purchase')}</div>
               <div className="text-xl font-bold text-white">
-                {selectedDays} {selectedDays === 1 ? 'Day' : 'Days'} Pass
+                {selectedDays} {selectedDays === 1 ? t('ghostPass.day') : t('ghostPass.days')} {t('tickets.selectTicketType')}
               </div>
             </div>
             <div className="text-right">
-              <div className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Total</div>
+              <div className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">{t('common.total')}</div>
               <div className="text-xl font-bold text-cyan-400 font-mono">
                 ${selectedPrice}
               </div>
@@ -361,15 +363,15 @@ export const DurationWheelSelector: React.FC<DurationWheelSelectorProps> = ({
 
           <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-700">
             <div>
-              <div className="text-[10px] text-slate-500 mb-1">Daily Rate</div>
+              <div className="text-[10px] text-slate-500 mb-1">{t('ghostPassInteractionSimulator.fee')}</div>
               <div className="text-base font-semibold text-cyan-300 font-mono">
                 ${(selectedPrice / selectedDays).toFixed(2)}
               </div>
             </div>
             <div>
-              <div className="text-[10px] text-slate-500 mb-1">Duration</div>
+              <div className="text-[10px] text-slate-500 mb-1">{t('session.sessionId')}</div>
               <div className="text-base font-semibold text-white">
-                {selectedDays * 24} hours
+                {selectedDays * 24} {t('entryTester.hours')}
               </div>
             </div>
           </div>

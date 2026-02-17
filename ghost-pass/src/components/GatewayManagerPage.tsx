@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MapPin, Building2, Armchair, Plus, Edit2, Trash2, Power, ArrowLeft, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { gatewayApi } from '@/lib/api';
@@ -41,6 +42,7 @@ interface TableSeatFormData {
 }
 
 const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
+    const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<TabType>('entry-points');
 
     // Entry Points State
@@ -165,10 +167,10 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
     }, [activeTab]);
 
     const tabs = [
-        { id: 'entry-points' as TabType, label: 'Entry Points', icon: MapPin },
-        { id: 'internal-areas' as TabType, label: 'Internal Areas', icon: Building2 },
-        { id: 'tables-seats' as TabType, label: 'Tables & Seats', icon: Armchair },
-        { id: 'financial' as TabType, label: 'Financial', icon: DollarSign },
+        { id: 'entry-points' as TabType, label: t('gateway.entryPoints'), icon: MapPin },
+        { id: 'internal-areas' as TabType, label: t('gateway.internalAreas'), icon: Building2 },
+        { id: 'tables-seats' as TabType, label: t('gateway.tableSeats'), icon: Armchair },
+        { id: 'financial' as TabType, label: t('gateway.financial'), icon: DollarSign },
     ];
 
     // Entry Point CRUD Operations
@@ -200,23 +202,23 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
 
     const handleSaveEntryPoint = async () => {
         if (!entryPointForm.name.trim()) {
-            setFormError('Entry point name is required');
+            setFormError(t('gateway.entryPointNameRequired'));
             return;
         }
         
         if (!entryPointForm.employee_name.trim()) {
-            setFormError('Employee name is required');
+            setFormError(t('gateway.employeeNameRequired'));
             return;
         }
         
         if (!entryPointForm.employee_id.trim()) {
-            setFormError('Employee ID is required');
+            setFormError(t('gateway.employeeIdRequired'));
             return;
         }
         
         // Validate employee_id is alphanumeric
         if (!/^[a-zA-Z0-9]+$/.test(entryPointForm.employee_id)) {
-            setFormError('Employee ID must be alphanumeric');
+            setFormError(t('gateway.employeeIdAlphanumeric'));
             return;
         }
 
@@ -254,7 +256,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
             });
         } catch (err: any) {
             console.error('Error saving entry point:', err);
-            setFormError(err.response?.data?.detail || 'Failed to save entry point');
+            setFormError(err.response?.data?.detail || t('gateway.failedToSaveEntryPoint'));
         } finally {
             setSaving(false);
         }
@@ -268,7 +270,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
             setDeleteConfirmId(null);
         } catch (err: any) {
             console.error('Error deleting entry point:', err);
-            setError(err.response?.data?.detail || 'Failed to delete entry point');
+            setError(err.response?.data?.detail || t('gateway.failedToDeleteEntryPoint'));
         } finally {
             setDeletingEntryPoint(false);
         }
@@ -282,7 +284,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
             setEntryPoints(prev => prev.map(ep => ep.id === updated.id ? updated : ep));
         } catch (err: any) {
             console.error('Error toggling status:', err);
-            setError(err.response?.data?.detail || 'Failed to update status');
+            setError(err.response?.data?.detail || t('gateway.failedToUpdateStatus'));
         }
     };
 
@@ -319,23 +321,23 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
 
     const handleSaveArea = async () => {
         if (!areaForm.name.trim()) {
-            setAreaFormError('Area name is required');
+            setAreaFormError(t('gateway.areaNameRequired'));
             return;
         }
         
         if (!areaForm.employee_name.trim()) {
-            setAreaFormError('Employee name is required');
+            setAreaFormError(t('gateway.employeeNameRequired'));
             return;
         }
         
         if (!areaForm.employee_id.trim()) {
-            setAreaFormError('Employee ID is required');
+            setAreaFormError(t('gateway.employeeIdRequired'));
             return;
         }
         
         // Validate employee_id is alphanumeric
         if (!/^[a-zA-Z0-9]+$/.test(areaForm.employee_id)) {
-            setAreaFormError('Employee ID must be alphanumeric');
+            setAreaFormError(t('gateway.employeeIdAlphanumeric'));
             return;
         }
 
@@ -373,7 +375,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
             });
         } catch (err: any) {
             console.error('Error saving internal area:', err);
-            setAreaFormError(err.response?.data?.detail || 'Failed to save internal area');
+            setAreaFormError(err.response?.data?.detail || t('gateway.failedToSaveArea'));
         } finally {
             setSavingArea(false);
         }
@@ -387,7 +389,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
             setDeleteAreaConfirmId(null);
         } catch (err: any) {
             console.error('Error deleting internal area:', err);
-            setAreaError(err.response?.data?.detail || 'Failed to delete internal area');
+            setAreaError(err.response?.data?.detail || t('gateway.failedToDeleteArea'));
         } finally {
             setDeletingArea(false);
         }
@@ -401,14 +403,14 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
             setInternalAreas(prev => prev.map(a => a.id === updated.id ? updated : a));
         } catch (err: any) {
             console.error('Error toggling status:', err);
-            setAreaError(err.response?.data?.detail || 'Failed to update status');
+            setAreaError(err.response?.data?.detail || t('gateway.failedToUpdateStatus'));
         }
     };
 
     // Tables & Seats CRUD Operations
     const handleOpenAddTableModal = () => {
         if (internalAreas.length === 0) {
-            setTableError('Please create an Internal Area first before adding tables');
+            setTableError(t('gateway.createAreaFirst'));
             return;
         }
         setEditingTable(null);
@@ -442,28 +444,28 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
 
     const handleSaveTable = async () => {
         if (!tableForm.name.trim()) {
-            setTableFormError('Table/Seat name is required');
+            setTableFormError(t('gateway.tableNameRequired'));
             return;
         }
 
         if (!tableForm.linked_area_id) {
-            setTableFormError('Please select a linked area');
+            setTableFormError(t('gateway.selectLinkedArea'));
             return;
         }
         
         if (!tableForm.employee_name.trim()) {
-            setTableFormError('Employee name is required');
+            setTableFormError(t('gateway.employeeNameRequired'));
             return;
         }
         
         if (!tableForm.employee_id.trim()) {
-            setTableFormError('Employee ID is required');
+            setTableFormError(t('gateway.employeeIdRequired'));
             return;
         }
         
         // Validate employee_id is alphanumeric
         if (!/^[a-zA-Z0-9]+$/.test(tableForm.employee_id)) {
-            setTableFormError('Employee ID must be alphanumeric');
+            setTableFormError(t('gateway.employeeIdAlphanumeric'));
             return;
         }
 
@@ -501,7 +503,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
             });
         } catch (err: any) {
             console.error('Error saving table/seat:', err);
-            setTableFormError(err.response?.data?.detail || 'Failed to save table/seat');
+            setTableFormError(err.response?.data?.detail || t('gateway.failedToSaveTable'));
         } finally {
             setSavingTable(false);
         }
@@ -515,7 +517,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
             setDeleteTableConfirmId(null);
         } catch (err: any) {
             console.error('Error deleting table/seat:', err);
-            setTableError(err.response?.data?.detail || 'Failed to delete table/seat');
+            setTableError(err.response?.data?.detail || t('gateway.failedToDeleteTable'));
         } finally {
             setDeletingTable(false);
         }
@@ -529,7 +531,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
             setTableSeats(prev => prev.map(t => t.id === updated.id ? updated : t));
         } catch (err: any) {
             console.error('Error toggling status:', err);
-            setTableError(err.response?.data?.detail || 'Failed to update status');
+            setTableError(err.response?.data?.detail || t('gateway.failedToUpdateStatus'));
         }
     };
 
@@ -548,16 +550,16 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                         <button
                             onClick={onBack}
                             className="p-2 hover:bg-red-500/10 rounded-lg transition-colors text-red-400 flex-shrink-0 touch-manipulation"
-                            aria-label="Back to Command Center"
+                            aria-label={t('common.back')}
                         >
                             <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
                         </button>
                         <div className="flex-1 min-w-0">
                             <h1 className="text-lg sm:text-xl md:text-3xl font-bold text-red-400 truncate">
-                                Point Centric Gateway Manager
+                                {t('gateway.title')}
                             </h1>
                             <p className="text-xs sm:text-sm md:text-base text-slate-400 mt-1 truncate">
-                                Define where GhostPass can be used in your venue
+                                {t('gateway.subtitle')}
                             </p>
                         </div>
                     </div>
@@ -599,9 +601,9 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                         {/* Header with Add Button */}
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
                             <div className="flex-1 min-w-0">
-                                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-red-400">Entry Points</h2>
+                                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-red-400">{t('gateway.entryPoints')}</h2>
                                 <p className="text-slate-400 text-xs sm:text-sm mt-1">
-                                    Configure entry points where users can scan their GhostPass
+                                    {t('gateway.entryPointsDescription')}
                                 </p>
                             </div>
                             <button
@@ -609,7 +611,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                                 className="px-4 py-2.5 sm:py-2 bg-red-500/20 border border-red-500 text-red-400 rounded-lg font-medium hover:bg-red-500/30 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-300 flex items-center justify-center space-x-2 touch-manipulation min-h-[44px] active:scale-95"
                             >
                                 <Plus size={18} />
-                                <span className="text-sm sm:text-base">ADD ENTRY POINT</span>
+                                <span className="text-sm sm:text-base">{t('gateway.addEntryPoint')}</span>
                             </button>
                         </div>
 
@@ -638,10 +640,10 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                                     <table className="w-full">
                                         <thead>
                                             <tr className="border-b border-red-500/20 bg-slate-800/50">
-                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Name</th>
-                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Live Metrics</th>
-                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Status</th>
-                                                <th className="text-right py-3 px-4 text-slate-300 font-semibold text-sm">Actions</th>
+                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">{t('gatewayManager.name')}</th>
+                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">{t('gatewayManager.liveMetrics')}</th>
+                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">{t('gatewayManager.status')}</th>
+                                                <th className="text-right py-3 px-4 text-slate-300 font-semibold text-sm">{t('gatewayManager.actions')}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -687,14 +689,14 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                                                             <button
                                                                 onClick={() => handleOpenEditModal(entryPoint)}
                                                                 className="p-2 text-blue-400 hover:bg-blue-500/10 rounded transition-colors touch-manipulation"
-                                                                title="Edit"
+                                                                title={t('gatewayManager.edit')}
                                                             >
                                                                 <Edit2 size={16} />
                                                             </button>
                                                             <button
                                                                 onClick={() => setDeleteConfirmId(entryPoint.id)}
                                                                 className="p-2 text-red-400 hover:bg-red-500/10 rounded transition-colors touch-manipulation"
-                                                                title="Delete"
+                                                                title={t('gatewayManager.delete')}
                                                             >
                                                                 <Trash2 size={16} />
                                                             </button>
@@ -752,14 +754,14 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                                                     className="flex-1 px-3 py-2.5 bg-blue-500/20 border border-blue-500 text-blue-400 rounded text-sm hover:bg-blue-500/30 active:bg-blue-500/40 transition-colors flex items-center justify-center space-x-1 touch-manipulation min-h-[44px]"
                                                 >
                                                     <Edit2 size={14} />
-                                                    <span>Edit</span>
+                                                    <span>{t('gatewayManager.edit')}</span>
                                                 </button>
                                                 <button
                                                     onClick={() => setDeleteConfirmId(entryPoint.id)}
                                                     className="flex-1 px-3 py-2.5 bg-red-500/20 border border-red-500 text-red-400 rounded text-sm hover:bg-red-500/30 active:bg-red-500/40 transition-colors flex items-center justify-center space-x-1 touch-manipulation min-h-[44px]"
                                                 >
                                                     <Trash2 size={14} />
-                                                    <span>Delete</span>
+                                                    <span>{t('gatewayManager.delete')}</span>
                                                 </button>
                                             </div>
                                         </div>
@@ -772,16 +774,16 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                         {!loading && entryPoints.length === 0 && (
                             <div className="glass-panel border-red-500/20 p-8 sm:p-12 text-center">
                                 <MapPin className="mx-auto text-slate-600 mb-4" size={48} />
-                                <p className="text-slate-400 text-base sm:text-lg mb-2">No entry points configured</p>
+                                <p className="text-slate-400 text-base sm:text-lg mb-2">{t('gateway.noEntryPoints')}</p>
                                 <p className="text-slate-500 text-xs sm:text-sm mb-6">
-                                    Add your first entry point to start managing venue access
+                                    {t('gateway.noEntryPointsDescription')}
                                 </p>
                                 <button
                                     onClick={handleOpenAddModal}
                                     className="px-6 py-3 bg-red-500/20 border border-red-500 text-red-400 rounded-lg font-medium hover:bg-red-500/30 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-300 inline-flex items-center space-x-2 touch-manipulation min-h-[44px] active:scale-95"
                                 >
                                     <Plus size={18} />
-                                    <span>ADD ENTRY POINT</span>
+                                    <span>{t('gateway.addEntryPoint')}</span>
                                 </button>
                             </div>
                         )}
@@ -793,9 +795,9 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                         {/* Header with Add Button */}
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
                             <div className="flex-1 min-w-0">
-                                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-red-400">Internal Areas</h2>
+                                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-red-400">{t('gateway.internalAreas')}</h2>
                                 <p className="text-slate-400 text-xs sm:text-sm mt-1">
-                                    Configure internal areas where GhostPass can be used
+                                    {t('gateway.internalAreasDescription')}
                                 </p>
                             </div>
                             <button
@@ -803,7 +805,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                                 className="px-4 py-2.5 sm:py-2 bg-red-500/20 border border-red-500 text-red-400 rounded-lg font-medium hover:bg-red-500/30 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-300 flex items-center justify-center space-x-2 touch-manipulation min-h-[44px] active:scale-95"
                             >
                                 <Plus size={18} />
-                                <span className="text-sm sm:text-base">ADD AREA</span>
+                                <span className="text-sm sm:text-base">{t('gateway.addArea')}</span>
                             </button>
                         </div>
 
@@ -1015,9 +1017,9 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                         {/* Header with Add Button */}
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
                             <div className="flex-1 min-w-0">
-                                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-red-400">Tables & Seats</h2>
+                                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-red-400">{t('gateway.tableSeats')}</h2>
                                 <p className="text-slate-400 text-xs sm:text-sm mt-1">
-                                    Configure specific tables, booths, or seats within internal areas
+                                    {t('gateway.tableSeatsDescription')}
                                 </p>
                             </div>
                             <button
@@ -1025,7 +1027,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                                 className="px-4 py-2.5 sm:py-2 bg-red-500/20 border border-red-500 text-red-400 rounded-lg font-medium hover:bg-red-500/30 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-300 flex items-center justify-center space-x-2 touch-manipulation min-h-[44px] active:scale-95"
                             >
                                 <Plus size={18} />
-                                <span className="text-sm sm:text-base">ADD TABLE/SEAT</span>
+                                <span className="text-sm sm:text-base">{t('gateway.addTableSeat')}</span>
                             </button>
                         </div>
 
@@ -1053,16 +1055,16 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                         {!loadingTables && internalAreas.length === 0 && (
                             <div className="glass-panel border-amber-500/20 p-8 sm:p-12 text-center">
                                 <Building2 className="mx-auto text-amber-600 mb-4" size={48} />
-                                <p className="text-amber-400 text-base sm:text-lg mb-2">Create an Internal Area first</p>
+                                <p className="text-amber-400 text-base sm:text-lg mb-2">{t('gateway.createAreaFirst')}</p>
                                 <p className="text-slate-500 text-xs sm:text-sm mb-6">
-                                    Tables and seats must be linked to an internal area. Please create at least one internal area before adding tables.
+                                    {t('gateway.createAreaFirstDescription')}
                                 </p>
                                 <button
                                     onClick={() => setActiveTab('internal-areas')}
                                     className="px-6 py-3 bg-amber-500/20 border border-amber-500 text-amber-400 rounded-lg font-medium hover:bg-amber-500/30 hover:shadow-lg hover:shadow-amber-500/20 transition-all duration-300 inline-flex items-center space-x-2 touch-manipulation min-h-[44px] active:scale-95"
                                 >
                                     <Building2 size={18} />
-                                    <span>GO TO INTERNAL AREAS</span>
+                                    <span>{t('gateway.goToInternalAreas')}</span>
                                 </button>
                             </div>
                         )}
@@ -1228,16 +1230,16 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                         {!loadingTables && internalAreas.length > 0 && tableSeats.length === 0 && (
                             <div className="glass-panel border-red-500/20 p-8 sm:p-12 text-center">
                                 <Armchair className="mx-auto text-slate-600 mb-4" size={48} />
-                                <p className="text-slate-400 text-base sm:text-lg mb-2">No tables or seats configured</p>
+                                <p className="text-slate-400 text-base sm:text-lg mb-2">{t('gateway.noTableSeats')}</p>
                                 <p className="text-slate-500 text-xs sm:text-sm mb-6">
-                                    Add your first table or seat to start managing specific locations
+                                    {t('gateway.noTableSeatsDescription')}
                                 </p>
                                 <button
                                     onClick={handleOpenAddTableModal}
                                     className="px-6 py-3 bg-red-500/20 border border-red-500 text-red-400 rounded-lg font-medium hover:bg-red-500/30 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-300 inline-flex items-center space-x-2 touch-manipulation min-h-[44px] active:scale-95"
                                 >
                                     <Plus size={18} />
-                                    <span>ADD TABLE/SEAT</span>
+                                    <span>{t('gateway.addTableSeat')}</span>
                                 </button>
                             </div>
                         )}
@@ -1261,7 +1263,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                     <div className="relative bg-slate-900 border-t sm:border border-red-500/30 sm:rounded-xl shadow-2xl shadow-red-500/20 w-full sm:max-w-md max-h-[90vh] overflow-y-auto">
                         <div className="p-4 sm:p-6">
                             <h3 className="text-lg sm:text-xl font-bold text-red-400 mb-4">
-                                {editingEntryPoint ? 'Edit Entry Point' : 'Add Entry Point'}
+                                {editingEntryPoint ? t('gateway.editEntryPoint') : t('gateway.addEntryPoint')}
                             </h3>
 
                             {formError && (
@@ -1273,7 +1275,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-300 mb-2">
-                                        Entry Point Name *
+                                        {t('gateway.entryPointName')} *
                                     </label>
                                     <input
                                         type="text"
@@ -1288,7 +1290,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
 
                                 <div>
                                     <label className="block text-sm font-medium text-slate-300 mb-2">
-                                        Employee Name *
+                                        {t('gateway.employeeName')} *
                                     </label>
                                     <input
                                         type="text"
@@ -1302,7 +1304,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
 
                                 <div>
                                     <label className="block text-sm font-medium text-slate-300 mb-2">
-                                        Employee ID *
+                                        {t('gateway.employeeId')} *
                                     </label>
                                     <input
                                         type="text"
@@ -1312,12 +1314,12 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                                         className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-base"
                                         disabled={saving}
                                     />
-                                    <p className="text-slate-400 text-xs mt-1">Alphanumeric characters only</p>
+                                    <p className="text-slate-400 text-xs mt-1">{t('gateway.alphanumericOnly')}</p>
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-slate-300 mb-2">
-                                        Visual Identifier (Optional)
+                                        {t('gateway.visualIdentifier')}
                                     </label>
                                     <input
                                         type="text"
@@ -1327,12 +1329,12 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                                         className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-base"
                                         disabled={saving}
                                     />
-                                    <p className="text-slate-400 text-xs mt-1">e.g., 🚪 or image URL for visual identification</p>
+                                    <p className="text-slate-400 text-xs mt-1">{t('gateway.visualIdentifierHint')}</p>
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-slate-300 mb-2">
-                                        Status
+                                        {t('gateway.status')}
                                     </label>
                                     <div className="flex gap-3">
                                         <button
@@ -1346,7 +1348,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                                             )}
                                         >
                                             <Power size={16} />
-                                            <span>ENABLED</span>
+                                            <span>{t('gateway.enabled')}</span>
                                         </button>
                                         <button
                                             onClick={() => setEntryPointForm(prev => ({ ...prev, status: 'DISABLED' }))}
@@ -1359,7 +1361,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                                             )}
                                         >
                                             <Power size={16} />
-                                            <span>DISABLED</span>
+                                            <span>{t('gateway.disabled')}</span>
                                         </button>
                                     </div>
                                 </div>
@@ -1371,7 +1373,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                                     disabled={saving}
                                     className="flex-1 px-4 py-3 bg-slate-700 border border-slate-600 text-slate-300 rounded-lg font-medium hover:bg-slate-600 active:bg-slate-600 transition-colors touch-manipulation min-h-[44px] disabled:opacity-50"
                                 >
-                                    Cancel
+                                    {t('common.cancel')}
                                 </button>
                                 <button
                                     onClick={handleSaveEntryPoint}
@@ -1379,7 +1381,7 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                                     className="flex-1 px-4 py-3 bg-red-500/20 border border-red-500 text-red-400 rounded-lg font-medium hover:bg-red-500/30 hover:shadow-lg hover:shadow-red-500/20 active:bg-red-500/40 transition-all duration-300 touch-manipulation min-h-[44px] disabled:opacity-50 flex items-center justify-center space-x-2"
                                 >
                                     {saving && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-400"></div>}
-                                    <span>{saving ? 'Saving...' : (editingEntryPoint ? 'Save Changes' : 'Add Entry Point')}</span>
+                                    <span>{saving ? t('common.saving') : (editingEntryPoint ? t('gateway.saveChanges') : t('gateway.addEntryPoint'))}</span>
                                 </button>
                             </div>
                         </div>
@@ -1400,11 +1402,11 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                                 <div className="p-3 bg-red-500/20 rounded-full">
                                     <Trash2 className="text-red-400" size={24} />
                                 </div>
-                                <h3 className="text-lg sm:text-xl font-bold text-red-400">Delete Entry Point</h3>
+                                <h3 className="text-lg sm:text-xl font-bold text-red-400">{t('gateway.deleteEntryPoint')}</h3>
                             </div>
 
                             <p className="text-slate-300 mb-6 text-sm sm:text-base">
-                                Are you sure you want to delete this entry point? <strong className="text-red-400">This cannot be undone.</strong>
+                                {t('gateway.deleteConfirmation')} <strong className="text-red-400">{t('gateway.cannotUndo')}</strong>
                             </p>
 
                             <div className="flex gap-3">

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Activity, TrendingUp, Clock, DollarSign } from 'lucide-react';
 import { gatewayApi } from '@/lib/api';
 import type { GatewayRealtimeMetrics } from '@/types';
@@ -15,6 +16,7 @@ export const GatewayMetrics: React.FC<GatewayMetricsProps> = ({
   gatewayType,
   refreshInterval = 30000
 }) => {
+  const { t } = useTranslation();
   const [metrics, setMetrics] = useState<GatewayRealtimeMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
@@ -81,16 +83,16 @@ export const GatewayMetrics: React.FC<GatewayMetricsProps> = ({
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center space-x-2 text-slate-400">
             <Activity size={14} className="text-emerald-400" />
-            <span>QR Scans</span>
+            <span>{t('gatewayMetrics.qrScans')}</span>
           </div>
           <div className="flex items-center space-x-3">
             <div className="text-right">
               <div className="text-white font-medium">{metrics.qr_scans_today}</div>
-              <div className="text-slate-500 text-[10px]">Today</div>
+              <div className="text-slate-500 text-[10px]">{t('gatewayMetrics.today')}</div>
             </div>
             <div className="text-right">
               <div className="text-white font-medium">{metrics.total_qr_scans}</div>
-              <div className="text-slate-500 text-[10px]">Total</div>
+              <div className="text-slate-500 text-[10px]">{t('gatewayMetrics.total')}</div>
             </div>
           </div>
         </div>
@@ -98,7 +100,7 @@ export const GatewayMetrics: React.FC<GatewayMetricsProps> = ({
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center space-x-2 text-slate-400">
             <Clock size={14} className="text-blue-400" />
-            <span>Last Scan</span>
+            <span>{t('gatewayMetrics.lastScan')}</span>
           </div>
           <div className="text-slate-300 font-medium">
             {formatTimestamp(metrics.last_qr_scan)}
@@ -126,16 +128,16 @@ export const GatewayMetrics: React.FC<GatewayMetricsProps> = ({
       <div className="flex items-center justify-between text-xs">
         <div className="flex items-center space-x-2 text-slate-400">
           <Activity size={14} className="text-emerald-400" />
-          <span>Transactions</span>
+          <span>{t('gatewayMetrics.transactions')}</span>
         </div>
         <div className="flex items-center space-x-3">
           <div className="text-right">
             <div className="text-white font-medium">{metrics.transactions_today}</div>
-            <div className="text-slate-500 text-[10px]">Today</div>
+            <div className="text-slate-500 text-[10px]">{t('gatewayMetrics.today')}</div>
           </div>
           <div className="text-right">
             <div className="text-white font-medium">{metrics.total_transactions}</div>
-            <div className="text-slate-500 text-[10px]">Total</div>
+            <div className="text-slate-500 text-[10px]">{t('gatewayMetrics.total')}</div>
           </div>
         </div>
       </div>
@@ -143,7 +145,7 @@ export const GatewayMetrics: React.FC<GatewayMetricsProps> = ({
       <div className="flex items-center justify-between text-xs">
         <div className="flex items-center space-x-2 text-slate-400">
           <DollarSign size={14} className="text-green-400" />
-          <span>Sales Today</span>
+          <span>{t('gatewayMetrics.sales')}</span>
         </div>
         <div className="text-green-400 font-medium">
           {formatCurrency(metrics.sales_today_cents)}
@@ -174,7 +176,7 @@ export const GatewayMetrics: React.FC<GatewayMetricsProps> = ({
 
       {metrics.total_sales_cents > 0 && (
         <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-700">
-          <div className="text-slate-400">Total Sales</div>
+          <div className="text-slate-400">{t('commandCenter.stats.revenue30Days')}</div>
           <div className="text-white font-semibold">
             {formatCurrency(metrics.total_sales_cents)}
           </div>
@@ -190,6 +192,7 @@ export const GatewayMetricsCompact: React.FC<GatewayMetricsProps> = ({
   gatewayType,
   refreshInterval = 30000
 }) => {
+  const { t } = useTranslation();
   const [metrics, setMetrics] = useState<GatewayRealtimeMetrics | null>(null);
 
   const loadMetrics = async () => {
@@ -230,7 +233,7 @@ export const GatewayMetricsCompact: React.FC<GatewayMetricsProps> = ({
         <div className="flex items-center space-x-1">
           <Activity size={12} className="text-emerald-400" />
           <span className="text-white font-medium">{metrics.qr_scans_today}</span>
-          <span className="text-slate-500">today</span>
+          <span className="text-slate-500">{t('gatewayMetrics.today')}</span>
         </div>
         {formatTimestamp(metrics.last_qr_scan) !== '—' && (
           <div className="flex items-center space-x-1">
@@ -247,7 +250,7 @@ export const GatewayMetricsCompact: React.FC<GatewayMetricsProps> = ({
       <div className="flex items-center space-x-1">
         <Activity size={12} className="text-emerald-400" />
         <span className="text-white font-medium">{metrics.transactions_today}</span>
-        <span className="text-slate-500">txns</span>
+        <span className="text-slate-500">{t('gatewayMetrics.txns')}</span>
       </div>
       <div className="flex items-center space-x-1">
         <span className="text-green-400 font-medium">

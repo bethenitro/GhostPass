@@ -62,6 +62,7 @@ interface EntryPermission {
 }
 
 const GhostPassScanner: React.FC = () => {
+  const { t } = useTranslation();
   const [scanState, setScanState] = useState<'idle' | 'scanning' | 'processing' | 'success' | 'error'>('idle');
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [entryPermission, setEntryPermission] = useState<EntryPermission | null>(null);
@@ -170,7 +171,7 @@ const GhostPassScanner: React.FC = () => {
           stream.getTracks().forEach(track => track.stop());
         } catch (permissionError) {
           console.error('Camera permission denied:', permissionError);
-          setErrorMessage('Camera permission required. Please allow camera access and try again.');
+          setErrorMessage(t('scanner.cameraPermissionRequired'));
           setScanState('error');
           setIsScanning(false);
           return;
@@ -218,20 +219,20 @@ const GhostPassScanner: React.FC = () => {
       
     } catch (error) {
       console.error('Camera access failed:', error);
-      let errorMsg = 'Camera access failed. ';
+      let errorMsg = t('scanner.cameraAccessFailed');
       
       if (error instanceof Error) {
         if (error.name === 'NotAllowedError') {
-          errorMsg += 'Please allow camera permissions and try again.';
+          errorMsg += ' ' + t('scanner.allowCameraPermissions');
         } else if (error.name === 'NotFoundError') {
-          errorMsg += 'No camera found on this device.';
+          errorMsg += ' ' + t('scanner.noCameraFound');
         } else if (error.name === 'NotSupportedError') {
-          errorMsg += 'Camera not supported on this device.';
+          errorMsg += ' ' + t('scanner.cameraNotSupported');
         } else {
-          errorMsg += 'Please check camera permissions and try again.';
+          errorMsg += ' ' + t('scanner.checkCameraPermissions');
         }
       } else {
-        errorMsg += 'Please check camera permissions and try again.';
+        errorMsg += ' ' + t('scanner.checkCameraPermissions');
       }
       
       setErrorMessage(errorMsg);
@@ -341,7 +342,7 @@ const GhostPassScanner: React.FC = () => {
             allowed: false,
             entry_type: 'initial' as const,
             entry_number: 1,
-            message: `API returned invalid response format`,
+            message: t('scanner.apiInvalidResponse'),
             reason: 'invalid_response'
           };
           setEntryPermission(fallbackPermission);
@@ -356,7 +357,7 @@ const GhostPassScanner: React.FC = () => {
           allowed: false,
           entry_type: 'initial' as const,
           entry_number: 1,
-          message: `API Error: ${response.status} - ${errorData || 'Unknown error'}`,
+          message: `${t('scanner.apiError')}: ${response.status}`,
           reason: 'api_error'
         };
         setEntryPermission(fallbackPermission);
@@ -370,7 +371,7 @@ const GhostPassScanner: React.FC = () => {
         allowed: false,
         entry_type: 'initial' as const,
         entry_number: 1,
-        message: `Network Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: t('scanner.networkError'),
         reason: 'network_error'
       };
       setEntryPermission(fallbackPermission);
@@ -405,7 +406,7 @@ const GhostPassScanner: React.FC = () => {
             valid_reentry_scan_fee_cents: 0,
             total_fees_cents: 500
           },
-          message: 'Initial entry allowed',
+          message: t('scanner.initialEntryAllowed'),
           current_balance_cents: 0
         };
       } else {
@@ -415,7 +416,7 @@ const GhostPassScanner: React.FC = () => {
         if (!permission?.allowed) {
           setScanResult({
             status: 'DENIED',
-            message: permission?.message || 'Entry denied',
+            message: permission?.message || t('scanner.entryDenied'),
             receipt_id: venueId
           });
           setScanState('error');
@@ -438,7 +439,7 @@ const GhostPassScanner: React.FC = () => {
       if (!uuidRegex.test(passId)) {
         setScanResult({
           status: 'DENIED',
-          message: 'Invalid QR code format',
+          message: t('scanner.invalidQRFormat'),
           receipt_id: venueId
         });
         setScanState('error');
@@ -464,7 +465,7 @@ const GhostPassScanner: React.FC = () => {
       const contentType = scanResponse.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         // Not JSON - API endpoint doesn't exist or returned HTML
-        throw new Error('Scan validation API returned invalid response');
+        throw new Error(t('scanner.scanValidationInvalid'));
       }
 
       const result = await scanResponse.json();
@@ -501,9 +502,9 @@ const GhostPassScanner: React.FC = () => {
 
       } else {
         // Handle specific error messages
-        let errorMessage = result.message || 'Scan failed';
+        let errorMessage = result.message || t('scanner.scanFailed');
         if (errorMessage.includes('Invalid gateway location')) {
-          errorMessage = 'Scanner not configured. Please contact administrator to set up gateway entry.';
+          errorMessage = t('scanner.scannerNotConfigured');
         }
         
         setScanResult({
@@ -515,7 +516,7 @@ const GhostPassScanner: React.FC = () => {
 
     } catch (error) {
       console.error('Scan failed:', error);
-      setErrorMessage('Scan processing failed');
+      setErrorMessage(t('scanner.scanProcessingFailed'));
       setScanState('error');
     } finally {
       processingRef.current = false;
@@ -556,7 +557,7 @@ const GhostPassScanner: React.FC = () => {
           
         } catch (error) {
           console.error('Paste scan failed:', error);
-          setErrorMessage('Failed to read QR code from pasted image. Please ensure the image contains a valid QR code.');
+          setErrorMessage(t('scanner.pasteQRFailed'));
           setScanState('error');
         }
         
@@ -631,9 +632,9 @@ const GhostPassScanner: React.FC = () => {
               </motion.div>
               
               <div className="space-y-1 sm:space-y-2">
-                <h2 className="text-xl sm:text-2xl font-bold text-white">GHOST PASS SCANNER</h2>
-                <p className="text-cyan-400 font-medium text-sm sm:text-base">TAP TO INITIATE SCAN</p>
-                <p className="text-slate-400 text-xs sm:text-sm">Secure venue entry validation</p>
+                <h2 className="text-xl sm:text-2xl font-bold text-white">{t('scanner.title')}</h2>
+                <p className="text-cyan-400 font-medium text-sm sm:text-base">{t('scanner.tapToScan')}</p>
+                <p className="text-slate-400 text-xs sm:text-sm">{t('scanner.subtitle')}</p>
               </div>
             </motion.div>
 
@@ -649,19 +650,19 @@ const GhostPassScanner: React.FC = () => {
                     "w-3 h-3 rounded-full animate-pulse",
                     entryPermission.allowed ? "bg-emerald-400" : "bg-red-400"
                   )} />
-                  <h3 className="text-lg font-semibold text-white">Entry Status</h3>
+                  <h3 className="text-lg font-semibold text-white">{t('scanner.entryStatus')}</h3>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-slate-400 block">Entry Type</span>
+                    <span className="text-slate-400 block">{t('scanner.entryType')}</span>
                     <span className="text-cyan-400 font-medium capitalize">
-                      {entryPermission.entry_type.replace('_', ' ')}
+                      {entryPermission.entry_type === 'initial' ? t('scanner.initial') : t('scanner.reEntry')}
                     </span>
                   </div>
                   {entryPermission.fees && entryPermission.fees.total_fees_cents > 0 && (
                     <div>
-                      <span className="text-slate-400 block">Total Fees</span>
+                      <span className="text-slate-400 block">{t('scanner.totalFees')}</span>
                       <span className="text-emerald-400 font-bold text-lg">
                         ${(entryPermission.fees.total_fees_cents / 100).toFixed(2)}
                       </span>
@@ -696,7 +697,7 @@ const GhostPassScanner: React.FC = () => {
                       <div className="flex items-center justify-center space-x-2">
                         <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-cyan-400 rounded-full animate-pulse" />
                         <span className="text-cyan-400 text-xs sm:text-sm font-medium">
-                          {isScanning ? 'SCANNING FOR QR CODES' : 'INITIALIZING CAMERA'}
+                          {isScanning ? t('scanner.scanning') : t('scanner.initializing')}
                         </span>
                       </div>
                     </div>
@@ -720,7 +721,7 @@ const GhostPassScanner: React.FC = () => {
                     className="flex items-center space-x-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 backdrop-blur-sm rounded-lg px-4 sm:px-6 py-2 sm:py-3 text-red-400 font-medium transition-all duration-300 text-sm sm:text-base"
                   >
                     <X className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span>STOP SCAN</span>
+                    <span>{t('scanner.stopScan')}</span>
                   </motion.button>
                 </div>
               </div>
@@ -730,7 +731,7 @@ const GhostPassScanner: React.FC = () => {
             {brightnessControlled && (
               <div className="flex items-center justify-center space-x-2 text-yellow-400 text-sm bg-yellow-500/10 border border-yellow-500/30 rounded-lg py-2 px-4">
                 <Sun className="w-4 h-4" />
-                <span>Brightness optimized for scanning</span>
+                <span>{t('scanner.brightnessOptimized')}</span>
               </div>
             )}
             
@@ -739,11 +740,11 @@ const GhostPassScanner: React.FC = () => {
               <div className="flex items-start space-x-3">
                 <Camera className="w-5 h-5 text-cyan-400 mt-0.5 flex-shrink-0" />
                 <div className="space-y-1">
-                  <p className="text-white font-medium">Scanning Instructions</p>
+                  <p className="text-white font-medium">{t('scanner.instructions.title')}</p>
                   <ul className="text-slate-400 text-sm space-y-1">
-                    <li>• Point camera at QR code</li>
-                    <li>• Ensure good lighting</li>
-                    <li>• Hold steady for best results</li>
+                    <li>• {t('scanner.instructions.point')}</li>
+                    <li>• {t('scanner.instructions.lighting')}</li>
+                    <li>• {t('scanner.instructions.steady')}</li>
                   </ul>
                 </div>
               </div>
@@ -774,8 +775,8 @@ const GhostPassScanner: React.FC = () => {
             </div>
             
             <div className="space-y-2">
-              <h3 className="text-xl font-bold text-white">PROCESSING SCAN</h3>
-              <p className="text-cyan-400">Validating entry permissions...</p>
+              <h3 className="text-xl font-bold text-white">{t('scanner.processing')}</h3>
+              <p className="text-cyan-400">{t('scanner.validating')}</p>
               <div className="flex items-center justify-center space-x-1">
                 {[0, 1, 2].map((i) => (
                   <motion.div
@@ -799,7 +800,7 @@ const GhostPassScanner: React.FC = () => {
             </div>
             
             <div className="space-y-2">
-              <h3 className="text-2xl font-bold text-emerald-400">ENTRY APPROVED</h3>
+              <h3 className="text-2xl font-bold text-emerald-400">{t('scanner.initialEntryAllowed')}</h3>
               <p className="text-slate-300">{scanResult?.message}</p>
             </div>
 
@@ -807,11 +808,11 @@ const GhostPassScanner: React.FC = () => {
             {scanResult?.entry_info && (
               <div className="bg-slate-800/50 backdrop-blur-xl border border-emerald-500/30 rounded-xl p-6 space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Entry Type</span>
+                  <span className="text-slate-400">{t('scanner.entryType')}</span>
                   <div className="flex items-center space-x-2">
                     <div className="w-2 h-2 bg-emerald-400 rounded-full" />
                     <span className="text-emerald-400 font-semibold capitalize">
-                      {scanResult.entry_info.entry_type === 'initial' ? 'Initial Entry' : 'Re-Entry'}
+                      {scanResult.entry_info.entry_type === 'initial' ? t('scanner.initial') : t('scanner.reEntry')}
                     </span>
                   </div>
                 </div>
@@ -820,33 +821,33 @@ const GhostPassScanner: React.FC = () => {
                   <div className="border-t border-slate-700 pt-4 space-y-3">
                     <h4 className="text-white font-semibold flex items-center space-x-2">
                       <Activity className="w-4 h-4 text-emerald-400" />
-                      <span>Fees Processed</span>
+                      <span>{t('scanner.feesProcessed')}</span>
                     </h4>
                     
                     <div className="space-y-2">
                       {scanResult.entry_info.fees.initial_entry_fee_cents > 0 && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-slate-400">Initial Entry</span>
+                          <span className="text-slate-400">{t('scanner.initialEntry')}</span>
                           <span className="text-white font-medium">${(scanResult.entry_info.fees.initial_entry_fee_cents / 100).toFixed(2)}</span>
                         </div>
                       )}
                       
                       {scanResult.entry_info.fees.venue_reentry_fee_cents > 0 && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-slate-400">Venue Re-entry</span>
+                          <span className="text-slate-400">{t('scanner.venueReentry')}</span>
                           <span className="text-white font-medium">${(scanResult.entry_info.fees.venue_reentry_fee_cents / 100).toFixed(2)}</span>
                         </div>
                       )}
                       
                       {scanResult.entry_info.fees.valid_reentry_scan_fee_cents > 0 && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-slate-400">Platform Fee</span>
+                          <span className="text-slate-400">{t('scanner.platformFee')}</span>
                           <span className="text-white font-medium">${(scanResult.entry_info.fees.valid_reentry_scan_fee_cents / 100).toFixed(2)}</span>
                         </div>
                       )}
                       
                       <div className="flex justify-between font-bold text-lg border-t border-slate-700 pt-2">
-                        <span className="text-white">Total Charged</span>
+                        <span className="text-white">{t('scanner.totalCharged')}</span>
                         <span className="text-emerald-400">${(scanResult.entry_info.fees.total_fees_cents / 100).toFixed(2)}</span>
                       </div>
                     </div>
@@ -861,7 +862,7 @@ const GhostPassScanner: React.FC = () => {
               onClick={resetScan}
               className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 shadow-lg shadow-cyan-500/25"
             >
-              SCAN ANOTHER PASS
+              {t('scanner.scanAnotherPass')}
             </motion.button>
           </div>
         );
@@ -876,10 +877,10 @@ const GhostPassScanner: React.FC = () => {
             
             <div className="space-y-2">
               <h3 className="text-2xl font-bold text-red-400">
-                {scanResult?.status === 'DENIED' ? 'ENTRY DENIED' : 'SCAN FAILED'}
+                {scanResult?.status === 'DENIED' ? t('scanner.entryDenied') : t('scanner.scanFailed')}
               </h3>
               <p className="text-slate-300 max-w-sm mx-auto">
-                {scanResult?.message || errorMessage || 'Please try scanning again'}
+                {scanResult?.message || errorMessage || t('scanner.tryAgainMessage')}
               </p>
             </div>
 
@@ -891,7 +892,7 @@ const GhostPassScanner: React.FC = () => {
                 onClick={resetScan}
                 className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 shadow-lg shadow-cyan-500/25"
               >
-                TRY AGAIN
+                {t('scanner.tryAgain')}
               </motion.button>
               
               <motion.button
@@ -908,10 +909,10 @@ const GhostPassScanner: React.FC = () => {
                       transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                       className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full"
                     />
-                    <span>CHECKING STATUS...</span>
+                    <span>{t('scanner.checkingStatus')}</span>
                   </div>
                 ) : (
-                  'CHECK ENTRY STATUS'
+                  t('scanner.checkEntryStatus')
                 )}
               </motion.button>
             </div>
@@ -943,8 +944,8 @@ const GhostPassScanner: React.FC = () => {
               <div className="absolute -top-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-emerald-400 rounded-full animate-pulse" />
             </div>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">GHOST PASS</h1>
-          <p className="text-cyan-400 font-medium text-sm sm:text-base">ENTRY SCANNER</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">{t('ghostPassScanner.ghostPass')}</h1>
+          <p className="text-cyan-400 font-medium text-sm sm:text-base">{t('ghostPassScanner.entryScanner')}</p>
           <div className="w-20 sm:w-24 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent mx-auto mt-3 sm:mt-4" />
         </motion.div>
 
@@ -957,23 +958,23 @@ const GhostPassScanner: React.FC = () => {
         >
           <div className="flex items-center space-x-2 sm:space-x-3 mb-3 sm:mb-4">
             <div className="w-2 h-2 sm:w-3 sm:h-3 bg-emerald-400 rounded-full animate-pulse" />
-            <h3 className="text-base sm:text-lg font-semibold text-white">Scanner Status</h3>
+            <h3 className="text-base sm:text-lg font-semibold text-white">{t('scanner.scannerStatus')}</h3>
           </div>
           
           <div className="grid grid-cols-1 gap-2 sm:gap-3 text-xs sm:text-sm">
             <div className="flex items-center justify-between">
-              <span className="text-slate-400">Venue</span>
-              <span className="text-white font-medium">Test Venue</span>
+              <span className="text-slate-400">{t('scanner.venue')}</span>
+              <span className="text-white font-medium">{t('scanner.testVenue')}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-400">Gateway</span>
+              <span className="text-slate-400">{t('scanner.gateway')}</span>
               <span className="text-cyan-400 font-mono text-xs">
                 {gatewayId.slice(0, 8)}...{gatewayId.slice(-4)}
               </span>
             </div>
             {walletBindingId && !walletBindingId.startsWith('wallet_temp_') && (
               <div className="flex items-center justify-between">
-                <span className="text-slate-400">Wallet</span>
+                <span className="text-slate-400">{t('scanner.wallet')}</span>
                 <span className="text-cyan-400 font-mono text-xs">
                   {walletBindingId.slice(0, 12)}...
                 </span>
@@ -981,9 +982,9 @@ const GhostPassScanner: React.FC = () => {
             )}
             {(!walletBindingId || walletBindingId.startsWith('wallet_temp_')) && (
               <div className="flex items-center justify-between">
-                <span className="text-slate-400">Wallet</span>
+                <span className="text-slate-400">{t('scanner.wallet')}</span>
                 <span className="text-slate-500 text-xs italic">
-                  Not created yet
+                  {t('scanner.walletNotCreated')}
                 </span>
               </div>
             )}
@@ -1030,7 +1031,7 @@ const GhostPassScanner: React.FC = () => {
           >
             <Wallet className="w-4 h-4" />
             <span className="text-sm font-medium">
-              {localStorage.getItem('ghost_pass_wallet_session') ? 'Open Wallet' : 'View Wallet'}
+              {localStorage.getItem('ghost_pass_wallet_session') ? t('scanner.openWallet') : t('scanner.viewWallet')}
             </span>
           </motion.button>
         </motion.div>

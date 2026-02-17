@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { 
   QrCode, 
   Wifi, 
@@ -33,6 +34,7 @@ interface TestResult {
 }
 
 const GhostPassModesTester: React.FC = () => {
+  const { t } = useTranslation();
   const [contexts, setContexts] = useState<Record<string, ContextInfo>>({});
   const [selectedContext, setSelectedContext] = useState<string>('club');
   const [walletBindingId, setWalletBindingId] = useState<string>('test_wallet_' + Math.random().toString(36).substring(2, 11));
@@ -57,7 +59,7 @@ const GhostPassModesTester: React.FC = () => {
       console.error('Failed to fetch contexts:', error);
       addTestResult({
         success: false,
-        message: 'Failed to fetch contexts',
+        message: t('ghostPassModesTester.failedToFetchContexts'),
         error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
@@ -94,7 +96,7 @@ const GhostPassModesTester: React.FC = () => {
     } catch (error) {
       addTestResult({
         success: false,
-        message: 'Context check failed',
+        message: t('ghostPassModesTester.contextCheckFailed'),
         error: error instanceof Error ? error.message : 'Unknown error'
       });
     } finally {
@@ -202,7 +204,7 @@ const GhostPassModesTester: React.FC = () => {
           className="flex items-center space-x-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-600 rounded-lg text-gray-300 hover:text-white transition-colors"
         >
           <ArrowLeft size={16} />
-          <span>Back to Command Center</span>
+          <span>{t('ghostPassModesTester.backToCommandCenter')}</span>
         </button>
       </div>
 
@@ -212,8 +214,8 @@ const GhostPassModesTester: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         className="text-center"
       >
-        <h1 className="text-3xl font-bold text-white mb-2">GHOST PASS MODES TESTER</h1>
-        <p className="text-cyan-400">Test Pay-Per-Scan vs Event Pass modes</p>
+        <h1 className="text-3xl font-bold text-white mb-2">{t('ghostPassModesTester.title')}</h1>
+        <p className="text-cyan-400">{t('ghostPassModesTester.subtitle')}</p>
         <div className="w-24 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent mx-auto mt-4"></div>
       </motion.div>
 
@@ -228,12 +230,12 @@ const GhostPassModesTester: React.FC = () => {
           <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
               <Settings className="w-5 h-5 text-cyan-400" />
-              Test Configuration
+              {t('ghostPassModesTester.testConfiguration')}
             </h3>
 
             {/* Context Selection */}
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-300">Context/Venue</label>
+              <label className="block text-sm font-medium text-gray-300">{t('forms.labels.context')}</label>
               <select
                 value={selectedContext}
                 onChange={(e) => setSelectedContext(e.target.value)}
@@ -249,7 +251,7 @@ const GhostPassModesTester: React.FC = () => {
 
             {/* Wallet Binding ID */}
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-300">Wallet Binding ID</label>
+              <label className="block text-sm font-medium text-gray-300">{t('forms.labels.walletBindingId')}</label>
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -261,26 +263,26 @@ const GhostPassModesTester: React.FC = () => {
                   onClick={resetWallet}
                   className="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white text-sm"
                 >
-                  Reset
+                  {t('ghostPassModesTester.reset')}
                 </button>
               </div>
             </div>
 
             {/* Ghost Pass Token */}
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-300">Ghost Pass Token</label>
+              <label className="block text-sm font-medium text-gray-300">{t('forms.labels.ghostPassToken')}</label>
               <input
                 type="text"
                 value={ghostPassToken}
                 onChange={(e) => setGhostPassToken(e.target.value)}
-                placeholder="Will be set after pass purchase"
+                placeholder={t('forms.placeholders.ghostPassToken')}
                 className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white text-sm font-mono"
               />
             </div>
 
             {/* Interaction Method */}
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-300">Interaction Method</label>
+              <label className="block text-sm font-medium text-gray-300">{t('forms.labels.interactionMethod')}</label>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => setInteractionMethod('NFC')}
@@ -292,7 +294,7 @@ const GhostPassModesTester: React.FC = () => {
                   )}
                 >
                   <Wifi className="w-4 h-4 mx-auto mb-1" />
-                  NFC
+                  {t('ghostPassInteractionSimulator.nfcTap')}
                 </button>
                 <button
                   onClick={() => setInteractionMethod('QR')}
@@ -304,7 +306,7 @@ const GhostPassModesTester: React.FC = () => {
                   )}
                 >
                   <QrCode className="w-4 h-4 mx-auto mb-1" />
-                  QR
+                  {t('ghostPassInteractionSimulator.qrScan')}
                 </button>
               </div>
             </div>
@@ -313,29 +315,29 @@ const GhostPassModesTester: React.FC = () => {
           {/* Context Info */}
           {currentContext && (
             <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-              <h3 className="text-lg font-semibold text-white mb-3">Current Context Info</h3>
+              <h3 className="text-lg font-semibold text-white mb-3">{t('ghostPassModesTester.currentContextInfo')}</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Mode:</span>
+                  <span className="text-gray-400">{t('common.status')}:</span>
                   <span className={cn(
                     "font-medium",
                     currentContext.mode === 'pay_per_scan' ? "text-green-400" : "text-blue-400"
                   )}>
-                    {currentContext.mode === 'pay_per_scan' ? 'Pay-Per-Scan' : 'Event Pass'}
+                    {currentContext.mode === 'pay_per_scan' ? t('ghostPassModesTester.scenario1') : t('ghostPassModesTester.scenario2')}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Pass Required:</span>
+                  <span className="text-gray-400">{t('revocationManager.revokePass')}:</span>
                   <span className={cn(
                     "font-medium",
                     currentContext.pass_required ? "text-red-400" : "text-green-400"
                   )}>
-                    {currentContext.pass_required ? 'Yes' : 'No'}
+                    {currentContext.pass_required ? t('revocationManager.yes') : t('revocationManager.no')}
                   </span>
                 </div>
                 {!currentContext.pass_required && (
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Per-Scan Fee:</span>
+                    <span className="text-gray-400">{t('ghostPassInteractionSimulator.fee')}:</span>
                     <span className="text-yellow-400 font-medium">
                       ${(currentContext.per_scan_fee_cents / 100).toFixed(2)}
                     </span>
@@ -343,7 +345,7 @@ const GhostPassModesTester: React.FC = () => {
                 )}
                 {currentContext.pass_required && currentContext.pass_options.length > 0 && (
                   <div className="mt-3">
-                    <span className="text-gray-400 text-xs">Pass Options:</span>
+                    <span className="text-gray-400 text-xs">{t('tickets.selectTicketType')}:</span>
                     <div className="mt-1 space-y-1">
                       {currentContext.pass_options.map(option => (
                         <div key={option.id} className="text-xs text-gray-300">
@@ -415,7 +417,7 @@ const GhostPassModesTester: React.FC = () => {
 
           {/* Quick Test Scenarios */}
           <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-            <h3 className="text-lg font-semibold text-white mb-3">Quick Test Scenarios</h3>
+            <h3 className="text-lg font-semibold text-white mb-3">{t('ghostPassModesTester.quickTestScenarios')}</h3>
             <div className="grid grid-cols-2 gap-2 text-xs">
               <button
                 onClick={() => {
@@ -464,11 +466,11 @@ const GhostPassModesTester: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         className="bg-gray-800 p-4 rounded-lg border border-gray-700"
       >
-        <h3 className="text-lg font-semibold text-white mb-4">Test Results</h3>
+        <h3 className="text-lg font-semibold text-white mb-4">{t('ghostPassModesTester.testResults')}</h3>
         
         {testResults.length === 0 ? (
           <div className="text-center text-gray-400 py-8">
-            No test results yet. Run some tests above to see results here.
+            {t('ghostPassModesTester.noActiveGhostPass')}
           </div>
         ) : (
           <div className="space-y-3 max-h-96 overflow-y-auto">

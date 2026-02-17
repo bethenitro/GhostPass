@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { 
   Wifi, 
   QrCode, 
@@ -34,6 +35,7 @@ const GhostPassInteractionSimulator: React.FC<GhostPassInteractionSimulatorProps
   walletBalance,
   onInteractionComplete
 }) => {
+  const { t } = useTranslation();
   const [selectedMethod, setSelectedMethod] = useState<'NFC' | 'QR'>('NFC');
   const [isProcessing, setIsProcessing] = useState(false);
   const [simulationResult, setSimulationResult] = useState<SimulationResult | null>(null);
@@ -146,10 +148,10 @@ const GhostPassInteractionSimulator: React.FC<GhostPassInteractionSimulatorProps
 
   const getContextLabel = (context: string) => {
     switch (context) {
-      case 'entry': return 'Entry Point';
-      case 'bar': return 'Bar Area';
-      case 'merch': return 'Merchandise';
-      case 'general': return 'General';
+      case 'entry': return t('ghostPassInteractionSimulator.entryPoint');
+      case 'bar': return t('ghostPassInteractionSimulator.barArea');
+      case 'merch': return t('ghostPassInteractionSimulator.merchandise');
+      case 'general': return t('ghostPassInteractionSimulator.general');
       default: return context;
     }
   };
@@ -162,7 +164,7 @@ const GhostPassInteractionSimulator: React.FC<GhostPassInteractionSimulatorProps
     <div className="space-y-6">
       {/* Method Selection */}
       <div className="space-y-3">
-        <h3 className="text-lg font-semibold text-white">Interaction Method</h3>
+        <h3 className="text-lg font-semibold text-white">{t('ghostPassInteractionSimulator.interactionMethod')}</h3>
         <div className="grid grid-cols-2 gap-3">
           <button
             onClick={() => setSelectedMethod('NFC')}
@@ -175,8 +177,8 @@ const GhostPassInteractionSimulator: React.FC<GhostPassInteractionSimulatorProps
           >
             <div className="flex flex-col items-center gap-2">
               <Wifi className="w-6 h-6" />
-              <span className="text-sm font-medium">NFC Tap</span>
-              <span className="text-xs">Preferred</span>
+              <span className="text-sm font-medium">{t('ghostPassInteractionSimulator.nfcTap')}</span>
+              <span className="text-xs">{t('ghostPassInteractionSimulator.preferred')}</span>
             </div>
           </button>
 
@@ -191,7 +193,7 @@ const GhostPassInteractionSimulator: React.FC<GhostPassInteractionSimulatorProps
           >
             <div className="flex flex-col items-center gap-2">
               <QrCode className="w-6 h-6" />
-              <span className="text-sm font-medium">QR Scan</span>
+              <span className="text-sm font-medium">{t('ghostPassInteractionSimulator.qrScan')}</span>
             </div>
           </button>
         </div>
@@ -199,7 +201,7 @@ const GhostPassInteractionSimulator: React.FC<GhostPassInteractionSimulatorProps
 
       {/* Context Selection */}
       <div className="space-y-3">
-        <h3 className="text-lg font-semibold text-white">Interaction Context</h3>
+        <h3 className="text-lg font-semibold text-white">{t('ghostPassInteractionSimulator.interactionContext')}</h3>
         <div className="grid grid-cols-2 gap-2">
           {(['entry', 'bar', 'merch', 'general'] as const).map((context) => (
             <button
@@ -215,7 +217,7 @@ const GhostPassInteractionSimulator: React.FC<GhostPassInteractionSimulatorProps
               <div className="flex flex-col items-center gap-1">
                 <span className="font-medium">{getContextLabel(context)}</span>
                 <span className="text-xs">
-                  ${(getContextFee(context) / 100).toFixed(2)} fee
+                  ${(getContextFee(context) / 100).toFixed(2)} {t('ghostPassInteractionSimulator.fee')}
                 </span>
               </div>
             </button>
@@ -225,7 +227,7 @@ const GhostPassInteractionSimulator: React.FC<GhostPassInteractionSimulatorProps
 
       {/* Gateway Selection */}
       <div className="space-y-3">
-        <h3 className="text-lg font-semibold text-white">Gateway</h3>
+        <h3 className="text-lg font-semibold text-white">{t('ghostPassInteractionSimulator.gateway')}</h3>
         <select
           value={selectedGateway}
           onChange={(e) => setSelectedGateway(e.target.value)}
@@ -240,22 +242,22 @@ const GhostPassInteractionSimulator: React.FC<GhostPassInteractionSimulatorProps
       {/* Transaction Preview */}
       {platformFeeConfig && (
         <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-600">
-          <h4 className="text-sm font-medium text-white mb-3">Transaction Preview</h4>
+          <h4 className="text-sm font-medium text-white mb-3">{t('ghostPassInteractionSimulator.transactionPreview')}</h4>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-slate-400">Method:</span>
+              <span className="text-slate-400">{t('ghostPassInteractionSimulator.method')}:</span>
               <span className="text-white">{selectedMethod}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-400">Context:</span>
+              <span className="text-slate-400">{t('ghostPassInteractionSimulator.context')}:</span>
               <span className="text-white">{getContextLabel(selectedContext)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-400">Platform Fee:</span>
+              <span className="text-slate-400">{t('ghostPassInteractionSimulator.platformFee')}:</span>
               <span className="text-cyan-400">${(getContextFee(selectedContext) / 100).toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-400">Available Balance:</span>
+              <span className="text-slate-400">{t('ghostPassInteractionSimulator.availableBalance')}:</span>
               <span className={cn(
                 walletBalance >= getContextFee(selectedContext) ? "text-green-400" : "text-red-400"
               )}>
@@ -280,17 +282,17 @@ const GhostPassInteractionSimulator: React.FC<GhostPassInteractionSimulatorProps
         {isProcessing ? (
           <div className="flex items-center justify-center gap-2">
             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            Processing {selectedMethod} Interaction...
+            {t('ghostPassInteractionSimulator.processingInteraction', { method: selectedMethod })}
           </div>
         ) : !deviceBound ? (
           <div className="flex items-center justify-center gap-2">
             <Shield className="w-4 h-4" />
-            Device Binding Required
+            {t('ghostPassInteractionSimulator.deviceBindingRequired')}
           </div>
         ) : (
           <div className="flex items-center justify-center gap-2">
             <Zap className="w-4 h-4" />
-            Simulate {selectedMethod} Interaction
+            {t('ghostPassInteractionSimulator.simulateInteraction', { method: selectedMethod })}
           </div>
         )}
       </button>
@@ -316,8 +318,8 @@ const GhostPassInteractionSimulator: React.FC<GhostPassInteractionSimulatorProps
                 </div>
               </div>
               <div className="space-y-1">
-                <p className="text-blue-400 font-medium">Processing {selectedMethod} Interaction</p>
-                <p className="text-blue-300 text-sm">Validating credentials and processing payment...</p>
+                <p className="text-blue-400 font-medium">{t('ghostPassInteractionSimulator.processingInteraction', { method: selectedMethod })}</p>
+                <p className="text-blue-300 text-sm">{t('ghostPassInteractionSimulator.validatingCredentials')}</p>
               </div>
             </div>
           </motion.div>
@@ -349,7 +351,7 @@ const GhostPassInteractionSimulator: React.FC<GhostPassInteractionSimulatorProps
                   "font-semibold",
                   simulationResult.status === 'APPROVED' ? "text-green-400" : "text-red-400"
                 )}>
-                  {simulationResult.status === 'APPROVED' ? 'Interaction Approved' : 'Interaction Denied'}
+                  {simulationResult.status === 'APPROVED' ? t('ghostPassInteractionSimulator.interactionApproved') : t('ghostPassInteractionSimulator.interactionDenied')}
                 </h4>
                 <p className="text-sm text-gray-400">
                   {simulationResult.method} • {getContextLabel(simulationResult.context)}
@@ -359,15 +361,15 @@ const GhostPassInteractionSimulator: React.FC<GhostPassInteractionSimulatorProps
 
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-400">Gateway:</span>
+                <span className="text-gray-400">{t('ghostPassInteractionSimulator.gateway')}:</span>
                 <span className="text-white">{simulationResult.gateway}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">Platform Fee:</span>
+                <span className="text-gray-400">{t('ghostPass.platformFee')}:</span>
                 <span className="text-cyan-400">${(simulationResult.platformFee / 100).toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">Timestamp:</span>
+                <span className="text-gray-400">{t('auditTrail.table.timestamp')}:</span>
                 <span className="text-white">
                   {new Date(simulationResult.timestamp).toLocaleString()}
                 </span>
@@ -381,14 +383,14 @@ const GhostPassInteractionSimulator: React.FC<GhostPassInteractionSimulatorProps
 
               {simulationResult.receipt && (
                 <div className="mt-3 p-3 bg-black/20 rounded">
-                  <h5 className="text-xs font-medium text-gray-400 mb-2">Receipt Details</h5>
+                  <h5 className="text-xs font-medium text-gray-400 mb-2">{t('history.digitalReceipt')}</h5>
                   <div className="space-y-1 text-xs">
                     <div className="flex justify-between">
-                      <span>Transaction ID:</span>
+                      <span>{t('history.transactionId')}:</span>
                       <span className="font-mono">{simulationResult.receipt.transaction_id?.slice(0, 8)}...</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Balance After:</span>
+                      <span>{t('ghostPassInteractionSimulator.balanceAfter')}:</span>
                       <span>{simulationResult.receipt.wallet_balance_after}</span>
                     </div>
                   </div>
@@ -411,10 +413,10 @@ const GhostPassInteractionSimulator: React.FC<GhostPassInteractionSimulatorProps
         <div className="p-4 bg-yellow-900/20 border border-yellow-500/30 rounded-lg">
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle className="w-4 h-4 text-yellow-400" />
-            <span className="text-yellow-400 font-medium text-sm">Device Binding Required</span>
+            <span className="text-yellow-400 font-medium text-sm">{t('ghostPassInteractionSimulator.deviceBindingRequired')}</span>
           </div>
           <p className="text-yellow-200 text-xs">
-            You must bind your device to the Ghost Pass wallet before you can simulate interactions.
+            {t('ghostPassInteractionSimulator.bindDeviceToEnable')}
           </p>
         </div>
       )}

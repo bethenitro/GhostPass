@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Wallet, ArrowRight, QrCode } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 interface DashboardSelectorProps {
@@ -10,6 +11,7 @@ interface DashboardSelectorProps {
 const DashboardSelector: React.FC<DashboardSelectorProps> = ({
   onSelectGhostPass
 }) => {
+  const { t } = useTranslation();
   const handleSelectScanner = () => {
     window.location.hash = '#/ghost-pass-scanner';
   };
@@ -22,8 +24,8 @@ const DashboardSelector: React.FC<DashboardSelectorProps> = ({
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
-          <h1 className="heading-primary text-3xl sm:text-4xl mb-4">Welcome to GhostPass</h1>
-          <p className="label-tactical text-lg">Select your dashboard</p>
+          <h1 className="heading-primary text-3xl sm:text-4xl mb-4">{t('dashboardSelector.welcome')}</h1>
+          <p className="label-tactical text-lg">{t('dashboardSelector.selectDashboard')}</p>
         </motion.div>
 
         {/* Dashboard Options */}
@@ -42,28 +44,28 @@ const DashboardSelector: React.FC<DashboardSelectorProps> = ({
                 <div className="inline-flex items-center justify-center w-16 h-16 glass-panel mb-4 mx-auto neon-glow-cyan">
                   <Wallet className="text-cyan-400" size={32} />
                 </div>
-                <CardTitle className="heading-primary text-xl">GhostPass Wallet</CardTitle>
+                <CardTitle className="heading-primary text-xl">{t('dashboardSelector.ghostPassWallet')}</CardTitle>
                 <CardDescription className="label-tactical">
-                  Manage your venue access and transactions
+                  {t('dashboardSelector.manageVenueAccess')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <ul className="space-y-3 text-sm text-slate-300">
                   <li className="flex items-start space-x-2">
                     <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full mt-2 flex-shrink-0"></div>
-                    <span>Purchase and manage GhostPass sessions</span>
+                    <span>{t('dashboardSelector.purchaseAndManage')}</span>
                   </li>
                   <li className="flex items-start space-x-2">
                     <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full mt-2 flex-shrink-0"></div>
-                    <span>View wallet balance and transaction history</span>
+                    <span>{t('dashboardSelector.viewBalance')}</span>
                   </li>
                   <li className="flex items-start space-x-2">
                     <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full mt-2 flex-shrink-0"></div>
-                    <span>Generate QR codes for venue entry</span>
+                    <span>{t('dashboardSelector.generateQRCodes')}</span>
                   </li>
                   <li className="flex items-start space-x-2">
                     <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full mt-2 flex-shrink-0"></div>
-                    <span>Access trust center and security features</span>
+                    <span>{t('dashboardSelector.accessTrustCenter')}</span>
                   </li>
                 </ul>
 
@@ -71,7 +73,7 @@ const DashboardSelector: React.FC<DashboardSelectorProps> = ({
                   className="flex items-center justify-center space-x-2 text-cyan-400 font-semibold pt-4"
                   whileHover={{ x: 5 }}
                 >
-                  <span>Enter Wallet</span>
+                  <span>{t('dashboardSelector.enterWallet')}</span>
                   <ArrowRight size={20} />
                 </motion.div>
               </CardContent>
@@ -92,28 +94,28 @@ const DashboardSelector: React.FC<DashboardSelectorProps> = ({
                 <div className="inline-flex items-center justify-center w-16 h-16 glass-panel mb-4 mx-auto" style={{ filter: 'drop-shadow(0 0 10px rgba(34, 197, 94, 0.5))' }}>
                   <QrCode className="text-green-400" size={32} />
                 </div>
-                <CardTitle className="heading-primary text-xl">Ghost Pass Scanner</CardTitle>
+                <CardTitle className="heading-primary text-xl">{t('nav.scan')}</CardTitle>
                 <CardDescription className="label-tactical">
-                  Scan QR codes for venue entry
+                  {t('dashboardSelector.scanQRCodes')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <ul className="space-y-3 text-sm text-slate-300">
                   <li className="flex items-start space-x-2">
                     <div className="w-1.5 h-1.5 bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
-                    <span>Scan Ghost Pass QR codes for entry</span>
+                    <span>{t('dashboardSelector.scanQRCodes')}</span>
                   </li>
                   <li className="flex items-start space-x-2">
                     <div className="w-1.5 h-1.5 bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
-                    <span>Automatic wallet surfacing after first scan</span>
+                    <span>{t('dashboardSelector.automaticWalletSurfacing')}</span>
                   </li>
                   <li className="flex items-start space-x-2">
                     <div className="w-1.5 h-1.5 bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
-                    <span>Entry tracking and re-entry management</span>
+                    <span>{t('scanner.instructions.steady')}</span>
                   </li>
                   <li className="flex items-start space-x-2">
                     <div className="w-1.5 h-1.5 bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
-                    <span>Brightness control for low-light scanning</span>
+                    <span>{t('scanner.brightnessOptimized')}</span>
                   </li>
                 </ul>
 
@@ -121,7 +123,7 @@ const DashboardSelector: React.FC<DashboardSelectorProps> = ({
                   className="flex items-center justify-center space-x-2 text-green-400 font-semibold pt-4"
                   whileHover={{ x: 5 }}
                 >
-                  <span>Open Scanner</span>
+                  <span>{t('dashboardSelector.openScanner')}</span>
                   <ArrowRight size={20} />
                 </motion.div>
               </CardContent>

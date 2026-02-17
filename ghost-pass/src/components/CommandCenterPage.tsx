@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, AlertTriangle, Shield, DollarSign, Users, Database, FileText, ChevronDown, ChevronRight, MapPin } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { adminApi, authApi } from '@/lib/api';
 import AdminSetupCheck from './AdminSetupCheck';
@@ -60,6 +61,7 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
 };
 
 const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigateToGatewayManager, onNavigateToAuditTrail }) => {
+  const { t } = useTranslation();
   const [dashboard, setDashboard] = useState<AdminDashboard | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -172,7 +174,7 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
 
   const handleUpdateFeeConfig = async () => {
     if (!validateFeeConfig()) {
-      setError('Fee percentages must sum to 100%');
+      setError(t('commandCenter.errors.feePercentagesMustSum'));
       return;
     }
 
@@ -182,7 +184,7 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
       await adminApi.updateFeeConfig(feeConfig);
       await loadDashboard();
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to update fee configuration');
+      setError(err.response?.data?.detail || t('commandCenter.errors.failedToUpdateFeeConfig'));
     } finally {
       setUpdating(null);
     }
@@ -191,7 +193,7 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
   // Scan Fee Handlers
   const handleUpdateScanFee = async () => {
     if (!scanFee.venue_id.trim()) {
-      setError('Please enter a venue ID');
+      setError(t('commandCenter.errors.pleaseEnterVenueId'));
       return;
     }
 
@@ -202,7 +204,7 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
       await loadDashboard();
       setScanFee({ venue_id: '', fee_cents: 10 });
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to update scan fee');
+      setError(err.response?.data?.detail || t('commandCenter.errors.failedToUpdateScanFee'));
     } finally {
       setUpdating(null);
     }
@@ -216,7 +218,7 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
       await adminApi.updateGhostPassPricing(pricing);
       await loadDashboard();
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to update pricing');
+      setError(err.response?.data?.detail || t('commandCenter.errors.failedToUpdatePricing'));
     } finally {
       setUpdating(null);
     }
@@ -230,14 +232,14 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
       await adminApi.processPayoutAction(payoutId, action);
       await loadDashboard();
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to process payout');
+      setError(err.response?.data?.detail || t('commandCenter.errors.failedToProcessPayout'));
     } finally {
       setUpdating(null);
     }
   };
 
   const handleProcessAllPayouts = async () => {
-    if (!confirm('Are you sure you want to approve all pending payouts?')) {
+    if (!confirm(t('commandCenter.confirmProcessAllPayouts'))) {
       return;
     }
 
@@ -247,7 +249,7 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
       await adminApi.processAllPayouts();
       await loadDashboard();
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to process payouts');
+      setError(err.response?.data?.detail || t('commandCenter.errors.failedToProcessPayouts'));
     } finally {
       setUpdating(null);
     }
@@ -256,11 +258,11 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
   // Retention Override Handler
   const handleRetentionOverride = async () => {
     if (!retention.justification.trim() || retention.justification.length < 10) {
-      setError('Please provide a detailed justification (minimum 10 characters)');
+      setError(t('commandCenter.errors.provideDetailedJustification'));
       return;
     }
 
-    if (!confirm('Are you sure you want to override the data retention period? This action will be audited.')) {
+    if (!confirm(t('commandCenter.confirmRetentionOverride'))) {
       return;
     }
 
@@ -271,7 +273,7 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
       await loadDashboard();
       setRetention({ retention_days: 60, justification: '' });
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to update retention period');
+      setError(err.response?.data?.detail || t('commandCenter.errors.failedToUpdateRetention'));
     } finally {
       setUpdating(null);
     }
@@ -299,10 +301,10 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
               <div className="flex items-center space-x-2 md:space-x-3 min-w-0">
                 <AlertTriangle className="text-red-400 flex-shrink-0" size={20} />
                 <div className="min-w-0">
-                  <h1 className="text-lg md:text-xl font-bold text-red-400 truncate">COMMAND CENTER</h1>
+                  <h1 className="text-lg md:text-xl font-bold text-red-400 truncate">{t('commandCenter.title')}</h1>
                   <div className="flex items-center space-x-2">
                     <div className="px-2 py-0.5 bg-red-500/20 border border-red-500/50 rounded text-xs font-medium text-red-300 whitespace-nowrap">
-                      AUDIT LOGGED
+                      {t('commandCenter.auditLogged')}
                     </div>
                   </div>
                 </div>
@@ -319,7 +321,7 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                     window.open(ssoData.bevalid_url, '_blank');
                   } catch (error) {
                     console.error('Error generating SSO token:', error);
-                    alert('Failed to open beVALID. Please try again.');
+                    alert(t('commandCenter.errors.failedToOpenBevalid'));
                   }
                 }}
                 className="px-3 py-2 md:px-4 bg-cyan-500/20 border border-cyan-500 text-cyan-400 rounded-lg text-sm font-medium hover:bg-cyan-500/30 transition-colors whitespace-nowrap"
@@ -333,7 +335,7 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                 }}
                 className="px-3 py-2 md:px-4 bg-red-500/20 border border-red-500 text-red-400 rounded-lg text-sm font-medium hover:bg-red-500/30 transition-colors whitespace-nowrap"
               >
-                Logout
+                {t('commandCenter.logout')}
               </button>
             </div>
           </div>
@@ -359,27 +361,27 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
             {/* System Overview - Updated with clearer language */}
             <div className="bg-slate-900/50 border border-slate-700 rounded-xl p-6">
               <div className="mb-6">
-                <h2 className="text-xl font-bold text-white mb-2">System Totals Overview</h2>
+                <h2 className="text-xl font-bold text-white mb-2">{t('commandCenter.systemTotalsOverview')}</h2>
                 <p className="text-slate-300 text-sm mb-4">
-                  These are your totals. Detailed breakdowns are available in the Gateway Manager.
+                  {t('commandCenter.systemTotalsDescription')}
                 </p>
                 <div className="flex flex-wrap gap-3">
                   <button
                     onClick={onNavigateToGatewayManager}
                     className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-500/20 border border-blue-500/50 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors touch-manipulation min-h-[44px] active:scale-95"
-                    title="View entry-point level details"
+                    title={t('commandCenter.viewEntryPointDetails')}
                   >
                     <MapPin size={16} />
-                    <span>Open Gateway Manager</span>
+                    <span>{t('commandCenter.openGatewayManager')}</span>
                   </button>
                   {onNavigateToAuditTrail && (
                     <button
                       onClick={onNavigateToAuditTrail}
                       className="inline-flex items-center space-x-2 px-4 py-2 bg-purple-500/20 border border-purple-500/50 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors touch-manipulation min-h-[44px] active:scale-95"
-                      title="View audit trail and activity logs"
+                      title={t('commandCenter.viewAuditTrailLogs')}
                     >
                       <FileText size={16} />
-                      <span>Open Audit Trail</span>
+                      <span>{t('commandCenter.openAuditTrail')}</span>
                     </button>
                   )}
                 </div>
@@ -390,11 +392,11 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                   <div className="flex items-center space-x-3">
                     <Shield className="text-cyan-400" size={20} />
                     <div>
-                      <p className="text-sm text-slate-400">Total Scans</p>
+                      <p className="text-sm text-slate-400">{t('commandCenter.stats.totalScans')}</p>
                       <p className="text-xl font-bold text-cyan-400">
                         {dashboard.stats.total_scans ?? 0}
                       </p>
-                      <p className="text-xs text-slate-500 mt-1">QR code scans</p>
+                      <p className="text-xs text-slate-500 mt-1">{t('commandCenter.stats.qrCodeScans')}</p>
                     </div>
                   </div>
                 </div>
@@ -402,11 +404,11 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                   <div className="flex items-center space-x-3">
                     <DollarSign className="text-emerald-400" size={20} />
                     <div>
-                      <p className="text-sm text-slate-400">Revenue (30 days)</p>
+                      <p className="text-sm text-slate-400">{t('commandCenter.stats.revenue30Days')}</p>
                       <p className="text-xl font-bold text-emerald-400">
                         ${((dashboard.stats.revenue_month_cents ?? 0) / 100).toFixed(2)}
                       </p>
-                      <p className="text-xs text-slate-500 mt-1">Last 30 days</p>
+                      <p className="text-xs text-slate-500 mt-1">{t('commandCenter.stats.last30Days')}</p>
                     </div>
                   </div>
                 </div>
@@ -414,9 +416,9 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                   <div className="flex items-center space-x-3">
                     <Users className="text-blue-400" size={20} />
                     <div>
-                      <p className="text-sm text-slate-400">Active Passes</p>
+                      <p className="text-sm text-slate-400">{t('commandCenter.stats.activePasses')}</p>
                       <p className="text-xl font-bold text-blue-400">{dashboard.stats.active_passes ?? 0}</p>
-                      <p className="text-xs text-slate-500 mt-1">Not yet expired</p>
+                      <p className="text-xs text-slate-500 mt-1">{t('commandCenter.stats.notYetExpired')}</p>
                     </div>
                   </div>
                 </div>
@@ -424,11 +426,11 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                   <div className="flex items-center space-x-3">
                     <Database className="text-orange-400" size={20} />
                     <div>
-                      <p className="text-sm text-slate-400">Expired Passes</p>
+                      <p className="text-sm text-slate-400">{t('commandCenter.stats.expiredPasses')}</p>
                       <p className="text-xl font-bold text-orange-400">
                         {dashboard.stats.expired_passes ?? 0}
                       </p>
-                      <p className="text-xs text-slate-500 mt-1">Past expiry date</p>
+                      <p className="text-xs text-slate-500 mt-1">{t('commandCenter.stats.pastExpiryDate')}</p>
                     </div>
                   </div>
                 </div>
@@ -438,7 +440,7 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
             {/* Rest of the sections remain the same but with updated styling */}
             {/* Revenue Split Configuration */}
             <CollapsibleSection
-              title="Revenue Split Configuration"
+              title={t('commandCenter.revenueSplitConfig')}
               icon={<DollarSign size={18} />}
               defaultOpen={true}
             >
@@ -451,7 +453,7 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                     }}
                     className="px-3 py-1 text-xs bg-slate-700 border border-slate-600 text-slate-300 rounded hover:bg-slate-600 transition-colors"
                   >
-                    Default (30/30/30/10)
+                    {t('commandCenter.presets.default')}
                   </button>
                   <button
                     onClick={() => {
@@ -459,7 +461,7 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                     }}
                     className="px-3 py-1 text-xs bg-slate-700 border border-slate-600 text-slate-300 rounded hover:bg-slate-600 transition-colors"
                   >
-                    Equal Split (25/25/25/25)
+                    {t('commandCenter.presets.equalSplit')}
                   </button>
                   <button
                     onClick={() => {
@@ -467,14 +469,14 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                     }}
                     className="px-3 py-1 text-xs bg-slate-700 border border-slate-600 text-slate-300 rounded hover:bg-slate-600 transition-colors"
                   >
-                    Vendor Focus (40/40/15/5)
+                    {t('commandCenter.presets.vendorFocus')}
                   </button>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Valid %
+                      {t('commandCenter.validPercent')}
                     </label>
                     <input
                       type="number"
@@ -489,7 +491,7 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Vendor %
+                      {t('commandCenter.vendorPercent')}
                     </label>
                     <input
                       type="number"
@@ -504,7 +506,7 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Pool %
+                      {t('commandCenter.poolPercent')}
                     </label>
                     <input
                       type="number"
@@ -519,7 +521,7 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Promoter %
+                      {t('commandCenter.promoterPercent')}
                     </label>
                     <input
                       type="number"
