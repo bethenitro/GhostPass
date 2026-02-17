@@ -75,7 +75,7 @@ export default function () {
   fundingDuration.add(duration);
 
   // Check response
-  const success = check(response, {
+  const responseChecks = check(response, {
     'status is 200': (r) => r.status === 200,
     'response has status field': (r) => {
       try {
@@ -107,8 +107,17 @@ export default function () {
     'response time < 5s': () => duration < 5000,
   });
 
-  // Log errors immediately
-  if (!success || response.status !== 200) {
+  // Determine if this is a real failure (not just slow)
+  let isRealFailure = false;
+  try {
+    const body = JSON.parse(response.body);
+    isRealFailure = response.status !== 200 || body.status !== 'success';
+  } catch (e) {
+    isRealFailure = true;
+  }
+
+  // Log only real errors (not performance issues)
+  if (isRealFailure) {
     console.error(`❌ Wallet funding failed [VU ${vuId}] Status: ${response.status}`);
     console.error(`   URL: ${API_BASE_URL}/api/wallet/fund`);
     console.error(`   Device: ${deviceFingerprint}`);
@@ -121,7 +130,7 @@ export default function () {
     }
   }
 
-  fundingSuccessRate.add(success);
+  fundingSuccessRate.add(responseChecks);
 
   // Simulate realistic funding timing (users don't fund constantly)
   sleep(Math.random() * 10 + 5);

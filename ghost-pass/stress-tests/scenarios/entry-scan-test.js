@@ -79,7 +79,7 @@ export default function () {
   entryDuration.add(duration);
 
   // Check response
-  const success = check(response, {
+  const responseChecks = check(response, {
     'status is 200': (r) => r.status === 200,
     'response has success field': (r) => {
       try {
@@ -103,8 +103,17 @@ export default function () {
     'response time < 500ms': () => duration < 500,
   });
 
-  // Log errors immediately
-  if (!success || response.status !== 200) {
+  // Determine if this is a real failure (not just slow)
+  let isRealFailure = false;
+  try {
+    const body = JSON.parse(response.body);
+    isRealFailure = response.status !== 200 || body.success !== true;
+  } catch (e) {
+    isRealFailure = true;
+  }
+
+  // Log only real errors (not performance issues)
+  if (isRealFailure) {
     console.error(`❌ Entry scan failed [VU ${vuId}] Status: ${response.status}`);
     console.error(`   URL: ${API_BASE_URL}/api/modes/process-scan`);
     console.error(`   Wallet: ${walletBindingId}`);
@@ -118,7 +127,7 @@ export default function () {
     }
   }
 
-  entrySuccessRate.add(success);
+  entrySuccessRate.add(responseChecks);
 
   // Simulate realistic entry timing (3-6 seconds between scans per user)
   sleep(Math.random() * 3 + 3);

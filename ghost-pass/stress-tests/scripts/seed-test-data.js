@@ -6,7 +6,7 @@
  * Creates test data for stress testing matching actual GhostPass flow:
  * - 5,000 test wallets with device fingerprints and initial balances
  * - Test venue and gateways
- * - Test vendor items
+ * - Test vendor items with specific IDs
  * 
  * Uses existing 'club' context (Mode A: pay-per-scan, 50 cents per scan)
  */
@@ -29,6 +29,7 @@ async function main() {
   console.log('═══════════════════════════════════════════════\n');
 
   await createTestVenue();
+  await createVenueEntryConfig();
   await createTestGateways();
   await createTestWallets();
   await createTestVendorItems();
@@ -63,6 +64,37 @@ async function createTestVenue() {
     console.error('  ❌ Error creating venue:', error.message);
   } else {
     console.log(`  ✅ Venue created: ${venueData.name} (ID: ${venueId})`);
+  }
+}
+
+async function createVenueEntryConfig() {
+  console.log('⚙️  Creating venue entry configuration...');
+
+  const venueId = process.env.TEST_VENUE_ID || 'test-venue-stress-001';
+  
+  const configData = {
+    venue_id: venueId,
+    re_entry_allowed: true,
+    initial_entry_fee_cents: 2500, // $25.00
+    venue_reentry_fee_cents: 1000, // $10.00 (venue re-entry fee)
+    valid_reentry_scan_fee_cents: 25, // $0.25 (VALID platform fee)
+    max_reentries: null, // Unlimited
+    reentry_time_limit_hours: null, // No time limit
+  };
+
+  const { data, error } = await supabase
+    .from('venue_entry_configs')
+    .upsert(configData, { onConflict: 'venue_id' })
+    .select();
+
+  if (error) {
+    console.error('  ❌ Error creating venue entry config:', error.message);
+  } else {
+    console.log(`  ✅ Venue entry config created:`);
+    console.log(`     - Initial entry: $${(configData.initial_entry_fee_cents / 100).toFixed(2)}`);
+    console.log(`     - Re-entry venue fee: $${(configData.venue_reentry_fee_cents / 100).toFixed(2)}`);
+    console.log(`     - Re-entry VALID fee: $${(configData.valid_reentry_scan_fee_cents / 100).toFixed(2)}`);
+    console.log(`     - Re-entry allowed: ${configData.re_entry_allowed}`);
   }
 }
 
@@ -177,6 +209,7 @@ async function createTestVendorItems() {
 
   const items = [
     {
+      id: 'test-item-beer',
       venue_id: process.env.TEST_VENUE_ID || 'test-venue-stress-001',
       name: 'Beer',
       price_cents: 800,
@@ -184,6 +217,7 @@ async function createTestVendorItems() {
       available: true,
     },
     {
+      id: 'test-item-cocktail',
       venue_id: process.env.TEST_VENUE_ID || 'test-venue-stress-001',
       name: 'Cocktail',
       price_cents: 1200,
@@ -191,6 +225,7 @@ async function createTestVendorItems() {
       available: true,
     },
     {
+      id: 'test-item-soda',
       venue_id: process.env.TEST_VENUE_ID || 'test-venue-stress-001',
       name: 'Soda',
       price_cents: 400,
@@ -198,6 +233,7 @@ async function createTestVendorItems() {
       available: true,
     },
     {
+      id: 'test-item-hotdog',
       venue_id: process.env.TEST_VENUE_ID || 'test-venue-stress-001',
       name: 'Hot Dog',
       price_cents: 600,
@@ -205,6 +241,7 @@ async function createTestVendorItems() {
       available: true,
     },
     {
+      id: 'test-item-nachos',
       venue_id: process.env.TEST_VENUE_ID || 'test-venue-stress-001',
       name: 'Nachos',
       price_cents: 900,
@@ -212,6 +249,7 @@ async function createTestVendorItems() {
       available: true,
     },
     {
+      id: 'test-item-burger',
       venue_id: process.env.TEST_VENUE_ID || 'test-venue-stress-001',
       name: 'Burger',
       price_cents: 1100,
@@ -221,37 +259,15 @@ async function createTestVendorItems() {
   ];
 
   for (const item of items) {
-    // Check if item exists first
-    const { data: existing } = await supabase
+    // Upsert with specific ID
+    const { error } = await supabase
       .from('vendor_items')
-      .select('id')
-      .eq('venue_id', item.venue_id)
-      .eq('name', item.name)
-      .maybeSingle();
+      .upsert(item, { onConflict: 'id' });
 
-    if (existing) {
-      // Update existing
-      const { error } = await supabase
-        .from('vendor_items')
-        .update(item)
-        .eq('id', existing.id);
-
-      if (error) {
-        console.error(`  ❌ Error updating item ${item.name}:`, error.message);
-      } else {
-        console.log(`  ✅ Item updated: ${item.name} - $${(item.price_cents / 100).toFixed(2)}`);
-      }
+    if (error) {
+      console.error(`  ❌ Error creating/updating item ${item.name}:`, error.message);
     } else {
-      // Insert new
-      const { error } = await supabase
-        .from('vendor_items')
-        .insert(item);
-
-      if (error) {
-        console.error(`  ❌ Error creating item ${item.name}:`, error.message);
-      } else {
-        console.log(`  ✅ Item created: ${item.name} - $${(item.price_cents / 100).toFixed(2)}`);
-      }
+      console.log(`  ✅ Item ready: ${item.name} - $${(item.price_cents / 100).toFixed(2)} (ID: ${item.id})`);
     }
   }
 }

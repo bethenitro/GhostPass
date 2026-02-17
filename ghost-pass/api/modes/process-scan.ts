@@ -89,15 +89,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Mode A: Pay-per-scan - charge the fee
       amountCharged = accessCheck.payment_amount_cents || 0;
 
-      // Get wallet
+      // Get device fingerprint from header
+      const deviceFingerprint = req.headers['x-device-fingerprint'] as string;
+
+      // Get wallet with device fingerprint verification
       const { data: wallet, error: walletError } = await supabase
         .from('wallets')
         .select('*')
         .eq('wallet_binding_id', wallet_binding_id)
+        .eq('device_fingerprint', deviceFingerprint)
         .single();
 
       if (walletError || !wallet) {
-        return res.status(404).json({ error: 'Wallet not found' });
+        return res.status(404).json({ error: 'Wallet not found or device mismatch' });
       }
 
       // Check balance
@@ -152,10 +156,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     } else {
       // Mode B: Event pass - no charge, just validate
+      const deviceFingerprint = req.headers['x-device-fingerprint'] as string;
+      
       const { data: wallet } = await supabase
         .from('wallets')
         .select('balance_cents')
         .eq('wallet_binding_id', wallet_binding_id)
+        .eq('device_fingerprint', deviceFingerprint)
         .single();
 
       newBalance = wallet?.balance_cents || 0;
