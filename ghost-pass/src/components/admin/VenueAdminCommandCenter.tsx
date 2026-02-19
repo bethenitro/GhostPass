@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { 
   Calendar, Store, LayoutGrid, FileText, 
-  BarChart3, Users, DollarSign, Settings, LogOut, MapPin, ArrowLeft 
+  BarChart3, Users, DollarSign, Settings, LogOut, MapPin, ArrowLeft, ExternalLink 
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { authApi } from '@/lib/api';
@@ -16,6 +16,7 @@ import { VenueStaffManager } from './VenueStaffManager';
 import { VenuePayouts } from './VenuePayouts';
 import { VenueEntryConfig } from './VenueEntryConfig';
 import { GatewayManager } from './GatewayManager';
+import { QRCodeGenerator } from './QRCodeGenerator';
 import { LanguageSwitcher } from '../LanguageSwitcher';
 
 interface VenueAdminCommandCenterProps {
@@ -30,7 +31,7 @@ export const VenueAdminCommandCenter: React.FC<VenueAdminCommandCenterProps> = (
   onBack 
 }) => {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'analytics' | 'events' | 'stations' | 'menu' | 'ledger' | 'staff' | 'payouts' | 'config' | 'gateway'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'events' | 'stations' | 'menu' | 'ledger' | 'staff' | 'payouts' | 'config' | 'gateway' | 'qr'>('analytics');
 
   const handleLogout = async () => {
     if (confirm('Are you sure you want to logout?')) {
@@ -43,6 +44,7 @@ export const VenueAdminCommandCenter: React.FC<VenueAdminCommandCenterProps> = (
     { id: 'analytics' as const, label: t('analytics.title'), icon: BarChart3, color: 'cyan' },
     { id: 'events' as const, label: t('events.myEvents'), icon: Calendar, color: 'purple' },
     { id: 'gateway' as const, label: 'Gateway', icon: MapPin, color: 'blue' },
+    { id: 'qr' as const, label: 'QR Codes', icon: Settings, color: 'indigo' },
     { id: 'config' as const, label: 'Entry Config', icon: Settings, color: 'amber' },
     { id: 'stations' as const, label: t('stations.title'), icon: Store, color: 'blue' },
     { id: 'menu' as const, label: t('menu.title'), icon: LayoutGrid, color: 'pink' },
@@ -100,7 +102,7 @@ export const VenueAdminCommandCenter: React.FC<VenueAdminCommandCenterProps> = (
               }}
               className="flex items-center space-x-2 px-4 py-2 bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-all duration-300 min-h-[44px] text-sm"
             >
-              <Settings className="w-4 h-4" />
+              <ExternalLink className="w-4 h-4" />
               <span className="hidden sm:inline">beVALID</span>
             </button>
             <button
@@ -153,6 +155,7 @@ export const VenueAdminCommandCenter: React.FC<VenueAdminCommandCenterProps> = (
           {activeTab === 'analytics' && <VenueAnalytics venueId={venueId} eventId={eventId} />}
           {activeTab === 'events' && <VenueEventManager venueId={venueId} />}
           {activeTab === 'gateway' && <GatewayManager venueId={venueId} />}
+          {activeTab === 'qr' && <QRCodeGenerator venueId={venueId} eventId={eventId} />}
           {activeTab === 'config' && <VenueEntryConfig venueId={venueId} eventId={eventId} />}
           {activeTab === 'stations' && <StationManager venueId={venueId} eventId={eventId || ''} />}
           {activeTab === 'menu' && <MenuManager venueId={venueId} eventId={eventId || ''} />}

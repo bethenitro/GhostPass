@@ -20,7 +20,9 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       transaction_type,
       item_amount_cents,
       revenue_profile_id,
-      tax_profile_id
+      tax_profile_id,
+      is_alcohol,
+      is_food
     } = req.body;
 
     if (!wallet_binding_id || !venue_id || !transaction_type || item_amount_cents === undefined) {
@@ -60,9 +62,21 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       const state_tax = Math.floor(item_amount_cents * (taxProfile.state_tax_percentage / 100));
       const local_tax = Math.floor(item_amount_cents * (taxProfile.local_tax_percentage / 100));
       
+      // Apply alcohol tax if item is alcohol
+      const alcohol_tax = is_alcohol 
+        ? Math.floor(item_amount_cents * (taxProfile.alcohol_tax_percentage / 100))
+        : 0;
+      
+      // Apply food tax if item is food
+      const food_tax = is_food 
+        ? Math.floor(item_amount_cents * (taxProfile.food_tax_percentage / 100))
+        : 0;
+      
       tax_breakdown.state_tax_cents = state_tax;
       tax_breakdown.local_tax_cents = local_tax;
-      tax_cents = state_tax + local_tax;
+      tax_breakdown.alcohol_tax_cents = alcohol_tax;
+      tax_breakdown.food_tax_cents = food_tax;
+      tax_cents = state_tax + local_tax + alcohol_tax + food_tax;
     }
 
     const total_with_tax = item_amount_cents + tax_cents;

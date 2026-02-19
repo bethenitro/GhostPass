@@ -1153,6 +1153,32 @@
       "drinks": "Bebidas"
     }
   },
+  "qr": {
+    "title": "Generador de Códigos QR",
+    "assetConfig": "Configuración de Activo",
+    "assetType": "Tipo de Activo",
+    "qrCode": "Código QR",
+    "nfcTag": "Etiqueta NFC",
+    "stationType": "Tipo de Estación",
+    "door": "Puerta / Entrada",
+    "bar": "Bar",
+    "concession": "Concesión",
+    "merch": "Mercancía",
+    "stationId": "ID de Estación",
+    "stationIdPlaceholder": "ej., PUERTA-001",
+    "idVerification": "Nivel de Verificación de ID",
+    "tier1": "Nivel 1 - Registro Manual",
+    "tier2": "Nivel 2 - Verificación de Edad",
+    "revenueProfile": "ID de Perfil de Ingresos (Opcional)",
+    "revenueProfilePlaceholder": "Dejar vacío para predeterminado del evento",
+    "taxProfile": "ID de Perfil de Impuestos (Opcional)",
+    "taxProfilePlaceholder": "Dejar vacío para predeterminado del evento",
+    "generate": "Generar Código QR",
+    "generatedTitle": "Código QR Generado",
+    "assetCode": "Código de Activo",
+    "download": "Descargar Código QR",
+    "generateAnother": "Generar Otro"
+  },
   "qrAssets": {
     "title": "Provisión de QR/NFC",
     "provision": "Provisionar Activo",

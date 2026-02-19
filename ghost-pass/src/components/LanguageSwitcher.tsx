@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Globe } from 'lucide-react';
+import { Globe, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface LanguageSwitcherProps {
@@ -13,27 +13,58 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
   showLabel = true 
 }) => {
   const { i18n } = useTranslation();
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const toggleLanguage = () => {
-    const newLang = i18n.language === 'en' ? 'es' : 'en';
-    i18n.changeLanguage(newLang);
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const changeLanguage = (lang: string) => {
+    i18n.changeLanguage(lang);
+    setIsOpen(false);
   };
 
   return (
-    <button
-      onClick={toggleLanguage}
-      className={cn(
-        "flex items-center space-x-2 px-3 sm:px-4 py-2 bg-slate-700/50 hover:bg-slate-700 border border-slate-600 rounded-lg transition-all min-h-[44px]",
-        className
+    <div className={cn("relative", className)} ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center space-x-2 px-3 sm:px-4 py-2 bg-slate-700/50 hover:bg-slate-700 border border-slate-600 rounded-lg transition-all min-h-[44px]"
+        title={i18n.language === 'en' ? 'Switch Language' : 'Cambiar Idioma'}
+      >
+        <Globe className="w-4 h-4 text-slate-300" />
+        {showLabel && (
+          <span className="text-slate-300 text-sm font-medium uppercase">
+            {i18n.language === 'en' ? 'EN' : 'ES'}
+          </span>
+        )}
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 bottom-full mb-2 w-32 bg-slate-800 border border-slate-600 rounded-lg shadow-xl overflow-hidden z-50">
+          <button
+            onClick={() => changeLanguage('en')}
+            className="w-full px-4 py-2 text-left text-sm text-slate-300 hover:bg-slate-700 transition-colors flex items-center justify-between"
+          >
+            <span>English</span>
+            {i18n.language === 'en' && <Check className="w-4 h-4 text-cyan-400" />}
+          </button>
+          <button
+            onClick={() => changeLanguage('es')}
+            className="w-full px-4 py-2 text-left text-sm text-slate-300 hover:bg-slate-700 transition-colors flex items-center justify-between"
+          >
+            <span>Español</span>
+            {i18n.language === 'es' && <Check className="w-4 h-4 text-cyan-400" />}
+          </button>
+        </div>
       )}
-      title={i18n.language === 'en' ? 'Switch to Spanish' : 'Cambiar a Inglés'}
-    >
-      <Globe className="w-4 h-4 text-slate-300" />
-      {showLabel && (
-        <span className="text-slate-300 text-sm font-medium uppercase">
-          {i18n.language === 'en' ? 'EN' : 'ES'}
-        </span>
-      )}
-    </button>
+    </div>
   );
 };

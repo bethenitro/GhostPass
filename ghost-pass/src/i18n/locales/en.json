@@ -1179,6 +1179,32 @@
       "drinks": "Drinks"
     }
   },
+  "qr": {
+    "title": "QR Code Generator",
+    "assetConfig": "Asset Configuration",
+    "assetType": "Asset Type",
+    "qrCode": "QR Code",
+    "nfcTag": "NFC Tag",
+    "stationType": "Station Type",
+    "door": "Door / Entry",
+    "bar": "Bar",
+    "concession": "Concession",
+    "merch": "Merchandise",
+    "stationId": "Station ID",
+    "stationIdPlaceholder": "e.g., DOOR-001",
+    "idVerification": "ID Verification Level",
+    "tier1": "Tier 1 - Manual Log",
+    "tier2": "Tier 2 - Age Verification",
+    "revenueProfile": "Revenue Profile ID (Optional)",
+    "revenueProfilePlaceholder": "Leave empty for event default",
+    "taxProfile": "Tax Profile ID (Optional)",
+    "taxProfilePlaceholder": "Leave empty for event default",
+    "generate": "Generate QR Code",
+    "generatedTitle": "Generated QR Code",
+    "assetCode": "Asset Code",
+    "download": "Download QR Code",
+    "generateAnother": "Generate Another"
+  },
   "qrAssets": {
     "title": "QR/NFC Provisioning",
     "provision": "Provision Asset",

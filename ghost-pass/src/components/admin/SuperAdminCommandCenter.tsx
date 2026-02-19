@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { 
   Building2, DollarSign, Store, LayoutGrid, FileText, 
-  Users, Settings, BarChart3, Shield, Database, Wallet, LogOut, MapPin, ArrowLeft 
+  Users, Settings, BarChart3, Shield, Database, Wallet, LogOut, MapPin, ArrowLeft, ExternalLink 
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { authApi } from '@/lib/api';
@@ -19,6 +19,7 @@ import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { PayoutsManager } from './PayoutsManager';
 import { GatewayManager } from './GatewayManager';
 import { AuditTrailViewer } from './AuditTrailViewer';
+import { QRCodeGenerator } from './QRCodeGenerator';
 import { LanguageSwitcher } from '../LanguageSwitcher';
 
 interface SuperAdminCommandCenterProps {
@@ -27,7 +28,7 @@ interface SuperAdminCommandCenterProps {
 
 export const SuperAdminCommandCenter: React.FC<SuperAdminCommandCenterProps> = ({ onBack }) => {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'events' | 'profiles' | 'menu' | 'stations' | 'ledger' | 'tax' | 'users' | 'settings' | 'analytics' | 'payouts' | 'gateway' | 'audit'>('analytics');
+  const [activeTab, setActiveTab] = useState<'events' | 'profiles' | 'menu' | 'stations' | 'ledger' | 'tax' | 'users' | 'settings' | 'analytics' | 'payouts' | 'gateway' | 'audit' | 'qr'>('analytics');
 
   const handleLogout = async () => {
     if (confirm('Are you sure you want to logout?')) {
@@ -40,6 +41,7 @@ export const SuperAdminCommandCenter: React.FC<SuperAdminCommandCenterProps> = (
     { id: 'analytics' as const, label: t('analytics.title'), icon: BarChart3, color: 'cyan' },
     { id: 'events' as const, label: t('events.title'), icon: Building2, color: 'purple' },
     { id: 'gateway' as const, label: 'Gateway', icon: MapPin, color: 'blue' },
+    { id: 'qr' as const, label: 'QR Codes', icon: Shield, color: 'indigo' },
     { id: 'profiles' as const, label: t('revenueProfiles.title'), icon: DollarSign, color: 'green' },
     { id: 'tax' as const, label: t('taxProfiles.title'), icon: Shield, color: 'amber' },
     { id: 'stations' as const, label: t('stations.title'), icon: Store, color: 'blue' },
@@ -100,7 +102,7 @@ export const SuperAdminCommandCenter: React.FC<SuperAdminCommandCenterProps> = (
               }}
               className="flex items-center space-x-2 px-4 py-2 bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-all duration-300 min-h-[44px] text-sm"
             >
-              <Shield className="w-4 h-4" />
+              <ExternalLink className="w-4 h-4" />
               <span className="hidden sm:inline">beVALID</span>
             </button>
             <button
@@ -153,6 +155,7 @@ export const SuperAdminCommandCenter: React.FC<SuperAdminCommandCenterProps> = (
           {activeTab === 'analytics' && <AnalyticsDashboard />}
           {activeTab === 'events' && <EventCreator />}
           {activeTab === 'gateway' && <GatewayManager />}
+          {activeTab === 'qr' && <QRCodeGenerator />}
           {activeTab === 'profiles' && <RevenueProfileManager />}
           {activeTab === 'tax' && <TaxProfileManager />}
           {activeTab === 'stations' && <StationManager venueId="" eventId="" />}
