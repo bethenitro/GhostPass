@@ -77,56 +77,56 @@ export const RevenueProfileManager: React.FC = () => {
         <h2 className="text-2xl font-bold">{t('revenueProfiles.title')}</h2>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          className="bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 px-4 py-2 rounded hover:bg-cyan-500/30"
         >
           {showForm ? t('common.cancel') : t('revenueProfiles.createProfile')}
         </button>
       </div>
 
       {showForm && (
-        <div className="bg-white p-6 rounded-lg shadow mb-6">
+        <div className="bg-slate-800/50 backdrop-blur-xl p-6 rounded-xl border border-slate-700 mb-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">{t('revenueProfiles.profileName')}</label>
+              <label className="block text-sm font-medium text-slate-300 mb-1">{t('revenueProfiles.profileName')}</label>
               <input
                 type="text"
                 value={formData.profile_name}
                 onChange={(e) => setFormData({ ...formData, profile_name: e.target.value })}
-                className="w-full px-3 py-2 border rounded"
+                className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-xl text-white focus:border-cyan-500/50 focus:outline-none"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">{t('revenueProfiles.description')}</label>
+              <label className="block text-sm font-medium text-slate-300 mb-1">{t('revenueProfiles.description')}</label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-3 py-2 border rounded"
+                className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-xl text-white focus:border-cyan-500/50 focus:outline-none"
                 rows={2}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">{t('revenueProfiles.validPercentage')} (%)</label>
+                <label className="block text-sm font-medium text-slate-300 mb-1">{t('revenueProfiles.validPercentage')} (%)</label>
                 <input
                   type="number"
                   value={formData.valid_percentage}
                   onChange={(e) => setFormData({ ...formData, valid_percentage: parseFloat(e.target.value) })}
-                  className="w-full px-3 py-2 border rounded"
+                  className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-xl text-white focus:border-cyan-500/50 focus:outline-none"
                   step="0.01"
                   min="0"
                   max="100"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">{t('revenueProfiles.vendorPercentage')} (%)</label>
+                <label className="block text-sm font-medium text-slate-300 mb-1">{t('revenueProfiles.vendorPercentage')} (%)</label>
                 <input
                   type="number"
                   value={formData.vendor_percentage}
                   onChange={(e) => setFormData({ ...formData, vendor_percentage: parseFloat(e.target.value) })}
-                  className="w-full px-3 py-2 border rounded"
+                  className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-xl text-white focus:border-cyan-500/50 focus:outline-none"
                   step="0.01"
                   min="0"
                   max="100"
@@ -136,36 +136,36 @@ export const RevenueProfileManager: React.FC = () => {
 
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">{t('revenueProfiles.poolPercentage')} (%)</label>
+                <label className="block text-sm font-medium text-slate-300 mb-1">{t('revenueProfiles.poolPercentage')} (%)</label>
                 <input
                   type="number"
                   value={formData.pool_percentage}
                   onChange={(e) => setFormData({ ...formData, pool_percentage: parseFloat(e.target.value) })}
-                  className="w-full px-3 py-2 border rounded"
+                  className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-xl text-white focus:border-cyan-500/50 focus:outline-none"
                   step="0.01"
                   min="0"
                   max="100"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">{t('revenueProfiles.promoterPercentage')} (%)</label>
+                <label className="block text-sm font-medium text-slate-300 mb-1">{t('revenueProfiles.promoterPercentage')} (%)</label>
                 <input
                   type="number"
                   value={formData.promoter_percentage}
                   onChange={(e) => setFormData({ ...formData, promoter_percentage: parseFloat(e.target.value) })}
-                  className="w-full px-3 py-2 border rounded"
+                  className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-xl text-white focus:border-cyan-500/50 focus:outline-none"
                   step="0.01"
                   min="0"
                   max="100"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">{t('revenueProfiles.executivePercentage')} (%)</label>
+                <label className="block text-sm font-medium text-slate-300 mb-1">{t('revenueProfiles.executivePercentage')} (%)</label>
                 <input
                   type="number"
                   value={formData.executive_percentage}
                   onChange={(e) => setFormData({ ...formData, executive_percentage: parseFloat(e.target.value) })}
-                  className="w-full px-3 py-2 border rounded"
+                  className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-xl text-white focus:border-cyan-500/50 focus:outline-none"
                   step="0.01"
                   min="0"
                   max="100"
@@ -173,14 +173,14 @@ export const RevenueProfileManager: React.FC = () => {
               </div>
             </div>
 
-            <div className={`p-3 rounded ${isValid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+            <div className={`p-3 rounded ${isValid ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-red-100 text-red-800'}`}>
               {t('common.total')}: {total.toFixed(2)}% {isValid ? '✓' : `⚠ ${t('revenueProfiles.totalMustBe100')}`}
             </div>
 
             <button
               type="submit"
               disabled={loading || !isValid}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 disabled:opacity-50"
+              className="w-full bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 py-2 px-4 rounded hover:bg-cyan-500/30 disabled:opacity-50"
             >
               {loading ? t('common.processing') : t('revenueProfiles.createProfile')}
             </button>
@@ -190,28 +190,28 @@ export const RevenueProfileManager: React.FC = () => {
 
       <div className="grid gap-4">
         {profiles.map((profile) => (
-          <div key={profile.id} className="bg-white p-4 rounded-lg shadow">
+          <div key={profile.id} className="bg-slate-800/50 backdrop-blur-xl p-4 rounded-xl border border-slate-700">
             <h3 className="font-bold text-lg mb-2">{profile.profile_name}</h3>
-            {profile.description && <p className="text-gray-600 text-sm mb-3">{profile.description}</p>}
+            {profile.description && <p className="text-slate-400 text-sm mb-3">{profile.description}</p>}
             <div className="grid grid-cols-5 gap-2 text-sm">
               <div>
-                <span className="text-gray-600">VALID:</span>
+                <span className="text-slate-400">VALID:</span>
                 <span className="ml-1 font-medium">{profile.valid_percentage}%</span>
               </div>
               <div>
-                <span className="text-gray-600">Vendor:</span>
+                <span className="text-slate-400">Vendor:</span>
                 <span className="ml-1 font-medium">{profile.vendor_percentage}%</span>
               </div>
               <div>
-                <span className="text-gray-600">Pool:</span>
+                <span className="text-slate-400">Pool:</span>
                 <span className="ml-1 font-medium">{profile.pool_percentage}%</span>
               </div>
               <div>
-                <span className="text-gray-600">Promoter:</span>
+                <span className="text-slate-400">Promoter:</span>
                 <span className="ml-1 font-medium">{profile.promoter_percentage}%</span>
               </div>
               <div>
-                <span className="text-gray-600">Executive:</span>
+                <span className="text-slate-400">Executive:</span>
                 <span className="ml-1 font-medium">{profile.executive_percentage}%</span>
               </div>
             </div>

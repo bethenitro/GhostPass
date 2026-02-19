@@ -20,7 +20,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       .from('entry_tracking')
       .select(`
         *,
-        transaction_ledger:transaction_id(*)
+        venue_transaction_ledger:transaction_id(*)
       `);
 
     if (wallet_binding_id) query = query.eq('wallet_binding_id', wallet_binding_id);

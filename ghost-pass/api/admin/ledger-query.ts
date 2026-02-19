@@ -32,7 +32,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     } = req.query;
 
     let query = supabase
-      .from('transaction_ledger')
+      .from('venue_transaction_ledger')
       .select(`
         *,
         revenue_profiles:revenue_profile_id(profile_name)

@@ -41,7 +41,7 @@ export const TransactionLedger: React.FC = () => {
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-6">{t('transactionLedger.title')}</h2>
 
-      <div className="bg-white p-4 rounded-lg shadow mb-6">
+      <div className="bg-slate-800/50 backdrop-blur-xl p-4 rounded-xl border border-slate-700 mb-6">
         <h3 className="font-bold mb-4">{t('transactionLedger.filterOptions')}</h3>
         <div className="grid grid-cols-3 gap-4">
           <input
@@ -85,7 +85,7 @@ export const TransactionLedger: React.FC = () => {
           </select>
           <button
             onClick={loadTransactions}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            className="bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 px-4 py-2 rounded hover:bg-cyan-500/30"
           >
             {t('common.refresh')}
           </button>
@@ -97,14 +97,14 @@ export const TransactionLedger: React.FC = () => {
       ) : (
         <div className="space-y-4">
           {transactions.map((tx) => (
-            <div key={tx.id} className="bg-white p-4 rounded-lg shadow">
+            <div key={tx.id} className="bg-slate-800/50 backdrop-blur-xl p-4 rounded-xl border border-slate-700">
               <div className="flex justify-between items-start mb-3">
                 <div>
-                  <span className="font-mono text-sm text-gray-600">{tx.transaction_hash.substring(0, 16)}...</span>
+                  <span className="font-mono text-sm text-slate-400">{tx.transaction_hash.substring(0, 16)}...</span>
                   <p className="text-xs text-gray-500 mt-1">{new Date(tx.timestamp).toLocaleString()}</p>
                 </div>
                 <span className={`px-3 py-1 rounded text-sm ${
-                  tx.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                  tx.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-yellow-100 text-yellow-800'
                 }`}>
                   {tx.status}
                 </span>
@@ -112,16 +112,16 @@ export const TransactionLedger: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-gray-600">Type: <span className="font-medium">{tx.transaction_type}</span></p>
-                  <p className="text-gray-600">Amount: <span className="font-medium">${(tx.item_amount_cents / 100).toFixed(2)}</span></p>
-                  <p className="text-gray-600">Tax: <span className="font-medium">${(tx.tax_cents / 100).toFixed(2)}</span></p>
-                  <p className="text-gray-600">Platform Fee: <span className="font-medium">${(tx.platform_fee_cents / 100).toFixed(2)}</span></p>
+                  <p className="text-slate-400">Type: <span className="font-medium">{tx.transaction_type}</span></p>
+                  <p className="text-slate-400">Amount: <span className="font-medium">${(tx.item_amount_cents / 100).toFixed(2)}</span></p>
+                  <p className="text-slate-400">Tax: <span className="font-medium">${(tx.tax_cents / 100).toFixed(2)}</span></p>
+                  <p className="text-slate-400">Platform Fee: <span className="font-medium">${(tx.platform_fee_cents / 100).toFixed(2)}</span></p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Pre-Balance: <span className="font-medium">${(tx.pre_balance_cents / 100).toFixed(2)}</span></p>
-                  <p className="text-gray-600">Post-Balance: <span className="font-medium">${(tx.post_balance_cents / 100).toFixed(2)}</span></p>
-                  {tx.venue_id && <p className="text-gray-600">Venue: <span className="font-medium">{tx.venue_id}</span></p>}
-                  {tx.event_id && <p className="text-gray-600">Event: <span className="font-medium">{tx.event_id}</span></p>}
+                  <p className="text-slate-400">Pre-Balance: <span className="font-medium">${(tx.pre_balance_cents / 100).toFixed(2)}</span></p>
+                  <p className="text-slate-400">Post-Balance: <span className="font-medium">${(tx.post_balance_cents / 100).toFixed(2)}</span></p>
+                  {tx.venue_id && <p className="text-slate-400">Venue: <span className="font-medium">{tx.venue_id}</span></p>}
+                  {tx.event_id && <p className="text-slate-400">Event: <span className="font-medium">{tx.event_id}</span></p>}
                 </div>
               </div>
 
@@ -131,7 +131,7 @@ export const TransactionLedger: React.FC = () => {
                   <div className="grid grid-cols-5 gap-2 text-xs">
                     {Object.entries(tx.split_breakdown).map(([key, value]: [string, any]) => (
                       <div key={key}>
-                        <span className="text-gray-600">{key}:</span>
+                        <span className="text-slate-400">{key}:</span>
                         <span className="ml-1 font-medium">${(value / 100).toFixed(2)}</span>
                       </div>
                     ))}

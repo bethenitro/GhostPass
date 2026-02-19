@@ -111,7 +111,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
     // Insert into ledger
     const { data: ledgerEntry, error: ledgerError } = await supabase
-      .from('transaction_ledger')
+      .from('venue_transaction_ledger')
       .insert({
         transaction_hash,
         venue_id,
