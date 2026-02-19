@@ -16,6 +16,7 @@ import GatewayManagerPage from './components/GatewayManagerPage';
 import AuditTrail from './components/AuditTrail';
 import OperatorLogin from './components/OperatorLogin';
 import EntryTester from './components/EntryTester';
+import { AdminDashboard } from './components/admin';
 import { ghostPassApi, authApi } from './lib/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ToastProvider } from './components/ui/toast';
@@ -31,7 +32,7 @@ const queryClient = new QueryClient({
 
 const AppContent: React.FC = () => {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'wallet' | 'scan' | 'session' | 'trust' | 'history' | 'tickets' | 'modes' | 'entry-test'>('scan'); // Start on scan for new users
+  const [activeTab, setActiveTab] = useState<'wallet' | 'scan' | 'session' | 'trust' | 'history' | 'tickets' | 'modes' | 'entry-test' | 'admin'>('scan'); // Start on scan for new users
   const [purchasingDuration, setPurchasingDuration] = useState<number | null>(null);
   const [fastEntryMode, setFastEntryMode] = useState(false);
   const [fastEntryContext, setFastEntryContext] = useState<{
@@ -142,6 +143,9 @@ const AppContent: React.FC = () => {
       } else if (newRoute === '#/entry-test' && import.meta.env.DEV) {
         // Only allow entry tester in development
         setActiveTab('entry-test');
+      } else if (newRoute === '#/admin') {
+        // Admin dashboard
+        setActiveTab('admin');
       } else if (newRoute === '#/modes' && !import.meta.env.DEV) {
         // Redirect to wallet if trying to access modes in production
         window.location.hash = '#/wallet';
@@ -321,6 +325,8 @@ const AppContent: React.FC = () => {
       case 'entry-test':
         // Only show entry tester in development
         return import.meta.env.DEV ? <EntryTester /> : <WalletDashboard onPurchase={handlePurchase} isPurchasing={purchaseMutation.isPending} purchasingDuration={purchasingDuration ?? undefined} />;
+      case 'admin':
+        return <AdminDashboard />;
       default:
         if (fastEntryMode) {
           return (

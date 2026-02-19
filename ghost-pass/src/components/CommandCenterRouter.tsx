@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import CommandCenterPage from './CommandCenterPage';
 import VenueCommandCenter from './VenueCommandCenter';
+import { AdminDashboard } from './admin';
 import { authApi } from '@/lib/api';
 import type { User } from '@/types';
 
@@ -48,8 +49,19 @@ const CommandCenterRouter: React.FC<CommandCenterRouterProps> = (props) => {
     );
   }
 
-  // Default to admin command center for ADMIN role
-  return <CommandCenterPage {...props} />;
+  // ADMIN users get full AdminDashboard
+  if (user?.role === 'ADMIN') {
+    return <AdminDashboard />;
+  }
+
+  // Default to CommandCenterPage
+  return (
+    <CommandCenterPage
+      onBack={props.onBack}
+      onNavigateToGatewayManager={props.onNavigateToGatewayManager}
+      onNavigateToAuditTrail={props.onNavigateToAuditTrail}
+    />
+  );
 };
 
 export default CommandCenterRouter;

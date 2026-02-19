@@ -388,6 +388,185 @@ export interface AuditSummaryStats {
   most_active_employee: string;
 }
 
+// Comprehensive Venue & Event System Types
+export interface Venue {
+  id: string;
+  venue_id: string;
+  venue_name: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country: string;
+  timezone: string;
+  status: 'active' | 'inactive' | 'suspended';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Event {
+  id: string;
+  event_id: string;
+  venue_id: string;
+  event_name: string;
+  description?: string;
+  start_date: string;
+  end_date: string;
+  ticket_price_cents: number;
+  entry_fee_cents: number;
+  re_entry_fee_cents: number;
+  platform_fee_cents: number;
+  revenue_profile_id?: string;
+  tax_profile_id?: string;
+  payout_routing_id?: string;
+  status: 'active' | 'cancelled' | 'completed';
+  metadata: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RevenueProfile {
+  id: string;
+  profile_name: string;
+  description?: string;
+  valid_percentage: number;
+  vendor_percentage: number;
+  pool_percentage: number;
+  promoter_percentage: number;
+  executive_percentage: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TaxProfile {
+  id: string;
+  profile_name: string;
+  venue_id?: string;
+  state_tax_percentage: number;
+  local_tax_percentage: number;
+  alcohol_tax_percentage: number;
+  food_tax_percentage: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PayoutRouting {
+  id: string;
+  routing_name: string;
+  venue_id?: string;
+  account_type: 'bank' | 'stripe' | 'paypal' | 'zelle';
+  account_details: Record<string, any>;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Station {
+  id: string;
+  station_id: string;
+  venue_id: string;
+  event_id?: string;
+  station_name: string;
+  station_type: 'DOOR' | 'BAR' | 'CONCESSION' | 'MERCH';
+  revenue_profile_id?: string;
+  tax_profile_id?: string;
+  fee_logic: Record<string, any>;
+  re_entry_rules: Record<string, any>;
+  id_verification_level: 1 | 2;
+  employee_id?: string;
+  employee_name?: string;
+  status: 'active' | 'inactive';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface QRNFCAsset {
+  id: string;
+  asset_code: string;
+  asset_type: 'QR' | 'NFC';
+  venue_id: string;
+  event_id?: string;
+  station_id?: string;
+  revenue_profile_id?: string;
+  tax_profile_id?: string;
+  fee_logic: Record<string, any>;
+  re_entry_rules: Record<string, any>;
+  id_verification_level: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MenuItem {
+  id: string;
+  venue_id: string;
+  event_id?: string;
+  station_type: 'BAR' | 'CONCESSION' | 'MERCH';
+  item_name: string;
+  item_category?: string;
+  price_cents: number;
+  is_taxable: boolean;
+  is_alcohol: boolean;
+  is_food: boolean;
+  revenue_profile_id?: string;
+  available: boolean;
+  sort_order: number;
+  metadata: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TransactionLedger {
+  id: string;
+  transaction_hash: string;
+  venue_id: string;
+  event_id?: string;
+  station_id?: string;
+  employee_id?: string;
+  wallet_binding_id: string;
+  transaction_type: 'ENTRY' | 'RE_ENTRY' | 'PURCHASE' | 'REFUND';
+  item_amount_cents: number;
+  tax_cents: number;
+  tax_breakdown: Record<string, any>;
+  platform_fee_cents: number;
+  revenue_profile_id?: string;
+  split_breakdown: Record<string, any>;
+  pre_balance_cents: number;
+  post_balance_cents: number;
+  status: 'pending' | 'completed' | 'failed' | 'refunded';
+  timestamp: string;
+  metadata: Record<string, any>;
+}
+
+export interface EntryTracking {
+  id: string;
+  wallet_binding_id: string;
+  venue_id: string;
+  event_id: string;
+  station_id: string;
+  employee_id?: string;
+  entry_number: number;
+  entry_type: 'INITIAL' | 'RE_ENTRY';
+  entry_fee_cents: number;
+  re_entry_fee_cents: number;
+  platform_fee_cents: number;
+  verification_tier: 1 | 2;
+  age_verified: boolean;
+  transaction_id?: string;
+  timestamp: string;
+}
+
+export interface IDVerificationLog {
+  id: string;
+  entry_id: string;
+  station_id: string;
+  employee_id: string;
+  verification_tier: 1 | 2;
+  age_flag_verified: boolean;
+  timestamp: string;
+}
+
 export interface RecentScansResponse {
   period_hours: number;
   total_scans: number;

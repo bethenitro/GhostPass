@@ -6,8 +6,8 @@ import LanguageSelector from './LanguageSelector';
 
 interface LayoutProps {
   children: React.ReactNode;
-  activeTab: 'wallet' | 'scan' | 'session' | 'trust' | 'history' | 'tickets' | 'modes' | 'entry-test';
-  onTabChange: (tab: 'wallet' | 'scan' | 'session' | 'trust' | 'history' | 'tickets' | 'modes' | 'entry-test') => void;
+  activeTab: 'wallet' | 'scan' | 'session' | 'trust' | 'history' | 'tickets' | 'modes' | 'entry-test' | 'admin';
+  onTabChange: (tab: 'wallet' | 'scan' | 'session' | 'trust' | 'history' | 'tickets' | 'modes' | 'entry-test' | 'admin') => void;
   fastEntryMode?: boolean; // Hide TopUp tab in fast entry mode
   onRecoverWallet?: () => void;
 }
@@ -31,7 +31,7 @@ const Layout: React.FC<LayoutProps> = ({
     { id: 'history' as const, icon: History, label: t('nav.history') },
   ];
 
-  const handleTabChange = (tabId: 'wallet' | 'scan' | 'session' | 'trust' | 'history' | 'tickets' | 'modes' | 'entry-test') => {
+  const handleTabChange = (tabId: 'wallet' | 'scan' | 'session' | 'trust' | 'history' | 'tickets' | 'modes' | 'entry-test' | 'admin') => {
     // Navigate to the proper URL
     const routes = {
       wallet: '#/wallet',
@@ -42,6 +42,7 @@ const Layout: React.FC<LayoutProps> = ({
       tickets: '#/tickets',
       modes: '#/modes',
       'entry-test': '#/entry-test',
+      admin: '#/admin',
     };
     window.location.hash = routes[tabId];
     onTabChange(tabId);
