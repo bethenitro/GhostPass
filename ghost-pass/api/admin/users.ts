@@ -25,13 +25,20 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     const limitNum = Math.min(parseInt(limit as string), 200);
     const offsetNum = Math.max(parseInt(offset as string), 0);
 
+    // Get user's venue_id from database for VENUE_ADMIN
+    const { data: currentUserData } = await supabase
+      .from('users')
+      .select('venue_id')
+      .eq('id', user.id)
+      .single();
+
     let query = supabase
       .from('users')
       .select('id, email, role, venue_id, created_at');
 
     // If VENUE_ADMIN, only show users from their venue
-    if (user.role === 'VENUE_ADMIN' && user.venue_id) {
-      query = query.eq('venue_id', user.venue_id);
+    if (user.role === 'VENUE_ADMIN' && currentUserData?.venue_id) {
+      query = query.eq('venue_id', currentUserData.venue_id);
     } else if (venue_id) {
       // ADMIN can filter by venue_id
       query = query.eq('venue_id', venue_id);
