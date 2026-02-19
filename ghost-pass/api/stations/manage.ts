@@ -64,13 +64,13 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         .insert({
           station_id,
           venue_id,
-          event_id,
+          event_id: event_id || null,
           station_name,
           station_type,
-          revenue_profile_id,
-          tax_profile_id,
-          employee_id,
-          employee_name,
+          revenue_profile_id: revenue_profile_id || null,
+          tax_profile_id: tax_profile_id || null,
+          employee_id: employee_id || null,
+          employee_name: employee_name || null,
           fee_logic: fee_logic || {},
           re_entry_rules: re_entry_rules || {},
           id_verification_level: id_verification_level || 1
@@ -80,19 +80,24 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
       if (error) throw error;
 
-      // Log station creation
-      await supabase.from('entry_point_audit_logs').insert({
-        action_type: 'CREATE',
-        entry_point_id: data.id,
-        entry_point_type: station_type,
-        entry_point_name: station_name,
-        employee_name,
-        employee_id,
-        admin_user_id: user.id,
-        admin_email: user.email,
-        source_location: 'API',
-        new_values: data
-      });
+      // Log station creation (only if audit log table exists and user has permission)
+      try {
+        await supabase.from('entry_point_audit_logs').insert({
+          action_type: 'CREATE',
+          entry_point_id: data.id,
+          entry_point_type: station_type,
+          entry_point_name: station_name,
+          employee_name: employee_name || 'N/A',
+          employee_id: employee_id || 'N/A',
+          admin_user_id: user.id,
+          admin_email: user.email,
+          source_location: 'API',
+          new_values: data
+        });
+      } catch (auditError) {
+        // Log audit error but don't fail the station creation
+        console.warn('Failed to create audit log:', auditError);
+      }
 
       res.status(201).json(data);
     } catch (error: any) {

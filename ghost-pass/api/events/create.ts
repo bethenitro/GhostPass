@@ -44,16 +44,16 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         event_id,
         venue_id,
         event_name,
-        description,
+        description: description || null,
         start_date,
         end_date,
         ticket_price_cents: ticket_price_cents || 0,
         entry_fee_cents: entry_fee_cents || 0,
         re_entry_fee_cents: re_entry_fee_cents || 0,
         platform_fee_cents: platform_fee_cents || 25,
-        revenue_profile_id,
-        tax_profile_id,
-        payout_routing_id
+        revenue_profile_id: revenue_profile_id || null,
+        tax_profile_id: tax_profile_id || null,
+        payout_routing_id: payout_routing_id || null
       })
       .select()
       .single();
