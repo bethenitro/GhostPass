@@ -230,6 +230,12 @@ const AppContent: React.FC = () => {
     setShowAuditTrail(false);
   };
 
+  const handleRequireAuth = () => {
+    // User needs to authenticate - show login form
+    setShowOperatorPortal(false);
+    setShowOperatorLogin(true);
+  };
+
   const handleNavigateToGatewayManager = () => {
     setShowGatewayManager(true);
     setShowAuditTrail(false);
@@ -287,6 +293,7 @@ const AppContent: React.FC = () => {
         onBack={handleBackFromOperatorPortal}
         onNavigateToGatewayManager={handleNavigateToGatewayManager}
         onNavigateToAuditTrail={handleNavigateToAuditTrail}
+        onRequireAuth={handleRequireAuth}
       />
     );
   }

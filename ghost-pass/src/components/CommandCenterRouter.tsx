@@ -9,6 +9,7 @@ interface CommandCenterRouterProps {
   onBack: () => void;
   onNavigateToGatewayManager: () => void;
   onNavigateToAuditTrail?: () => void;
+  onRequireAuth?: () => void;
 }
 
 const CommandCenterRouter: React.FC<CommandCenterRouterProps> = (props) => {
@@ -67,17 +68,30 @@ const CommandCenterRouter: React.FC<CommandCenterRouterProps> = (props) => {
           <p className="text-slate-400 mb-6">
             You need to be logged in to access the Command Center. Please sign in with your admin or venue admin account.
           </p>
-          <button
-            onClick={() => {
-              // Clear any stale tokens
-              authApi.signOut();
-              // Redirect to login or home
-              window.location.href = '/';
-            }}
-            className="w-full px-6 py-3 bg-purple-500/20 border border-purple-500 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors font-medium"
-          >
-            Go to Login
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={() => {
+                // Clear any stale tokens
+                authApi.signOut();
+                // Trigger login flow if callback provided
+                if (props.onRequireAuth) {
+                  props.onRequireAuth();
+                } else {
+                  // Fallback to going back
+                  props.onBack();
+                }
+              }}
+              className="flex-1 px-6 py-3 bg-purple-500/20 border border-purple-500 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors font-medium min-h-[44px]"
+            >
+              Go to Login
+            </button>
+            <button
+              onClick={props.onBack}
+              className="flex-1 px-6 py-3 bg-slate-700 border border-slate-600 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors font-medium min-h-[44px]"
+            >
+              Go Back
+            </button>
+          </div>
         </div>
       </div>
     );

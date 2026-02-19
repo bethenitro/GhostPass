@@ -3,7 +3,8 @@
     "superAdmin": "Centro de Comando Super Admin",
     "venueAdmin": "Centro de Comando Admin de Venue",
     "fullSystemAccess": "Acceso Completo al Sistema",
-    "venueManagement": "Gestión de Venue"
+    "venueManagement": "Gestión de Venue",
+    "manageYourVenue": "Gestiona Tu Venue"
   },
   "analytics": {
     "title": "Analíticas",
@@ -59,6 +60,7 @@
     "success": "Éxito",
     "error": "Error",
     "confirm": "Confirmar",
-    "back": "Volver"
+    "back": "Volver",
+    "logout": "Cerrar Sesión"
   }
 }

@@ -3,9 +3,10 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { 
   Building2, DollarSign, Store, LayoutGrid, FileText, 
-  Users, Settings, BarChart3, Shield, Database, Wallet 
+  Users, Settings, BarChart3, Shield, Database, Wallet, LogOut 
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { authApi } from '@/lib/api';
 import { EventCreator } from './EventCreator';
 import { RevenueProfileManager } from './RevenueProfileManager';
 import { MenuManager } from './MenuManager';
@@ -20,6 +21,13 @@ import { PayoutsManager } from './PayoutsManager';
 export const SuperAdminCommandCenter: React.FC = () => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'events' | 'profiles' | 'menu' | 'stations' | 'ledger' | 'tax' | 'users' | 'settings' | 'analytics' | 'payouts'>('analytics');
+
+  const handleLogout = async () => {
+    if (confirm('Are you sure you want to logout?')) {
+      await authApi.signOut();
+      window.location.reload();
+    }
+  };
 
   const tabs = [
     { id: 'analytics' as const, label: t('analytics.title'), icon: BarChart3, color: 'cyan' },
@@ -36,19 +44,36 @@ export const SuperAdminCommandCenter: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-950 pb-20 md:pb-6">
-      <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center"
         >
-          <div className="flex items-center justify-center space-x-3 mb-2">
-            <Database className="w-8 h-8 text-cyan-400" />
-            <h1 className="text-2xl md:text-3xl font-bold text-white">{t('commandCenter.superAdmin')}</h1>
+          <div className="flex items-center justify-center space-x-2 sm:space-x-3 mb-2">
+            <Database className="w-6 h-6 sm:w-8 sm:h-8 text-cyan-400" />
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white">{t('commandCenter.superAdmin')}</h1>
           </div>
-          <p className="text-cyan-400 text-sm">{t('commandCenter.fullSystemAccess')}</p>
-          <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent mx-auto mt-4"></div>
+          <p className="text-cyan-400 text-xs sm:text-sm">{t('commandCenter.fullSystemAccess')}</p>
+          <div className="w-12 sm:w-16 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent mx-auto mt-3 sm:mt-4"></div>
+        </motion.div>
+
+        {/* Logout Button - Mobile Friendly */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="flex justify-end"
+        >
+          <button
+            onClick={handleLogout}
+            className="flex items-center space-x-2 px-4 py-2 bg-red-500/20 border border-red-500/50 text-red-400 rounded-lg hover:bg-red-500/30 transition-all duration-300 min-h-[44px] text-sm"
+          >
+            <LogOut className="w-4 h-4" />
+            <span className="hidden sm:inline">{t('common.logout')}</span>
+            <span className="sm:hidden">Logout</span>
+          </button>
         </motion.div>
 
         {/* Tab Navigation - Mobile Optimized */}
@@ -56,9 +81,9 @@ export const SuperAdminCommandCenter: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-xl p-2"
+          className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-xl p-1.5 sm:p-2 overflow-x-auto"
         >
-          <div className="grid grid-cols-2 md:flex md:flex-wrap gap-2">
+          <div className="flex md:grid md:grid-cols-5 gap-1.5 sm:gap-2 min-w-max md:min-w-0">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
@@ -66,15 +91,14 @@ export const SuperAdminCommandCenter: React.FC = () => {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    "flex items-center justify-center md:justify-start space-x-2 px-3 py-3 md:py-2 rounded-lg font-medium transition-all duration-300 min-h-[44px]",
+                    "flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg font-medium transition-all duration-300 min-h-[44px] whitespace-nowrap text-xs sm:text-sm",
                     activeTab === tab.id
                       ? `bg-${tab.color}-500/20 text-${tab.color}-400 border border-${tab.color}-500/50`
                       : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                   )}
                 >
-                  <Icon className="w-5 h-5 md:w-4 md:h-4" />
-                  <span className="text-xs md:text-sm hidden md:inline">{tab.label}</span>
-                  <span className="text-xs md:hidden">{tab.label}</span>
+                  <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                  <span>{tab.label}</span>
                 </button>
               );
             })}
@@ -86,7 +110,7 @@ export const SuperAdminCommandCenter: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-xl p-4 md:p-6"
+          className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-xl p-3 sm:p-4 md:p-6"
         >
           {activeTab === 'analytics' && <AnalyticsDashboard />}
           {activeTab === 'events' && <EventCreator />}
