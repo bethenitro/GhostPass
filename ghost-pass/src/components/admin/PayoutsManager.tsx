@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { DollarSign, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
+import BankVisualPlaceholders from '@/components/BankVisualPlaceholders';
 import type { PayoutRequest } from '@/types';
 
 export const PayoutsManager: React.FC = () => {
@@ -111,6 +112,12 @@ export const PayoutsManager: React.FC = () => {
             <span>{t('payouts.processAll')}</span>
           </button>
         )}
+      </div>
+
+      {/* Bank Account Configuration */}
+      <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700 rounded-lg p-4 sm:p-6">
+        <h3 className="text-base sm:text-lg font-semibold text-white mb-4">{t('payouts.bankAccountSetup')}</h3>
+        <BankVisualPlaceholders />
       </div>
 
       {payouts.length === 0 ? (

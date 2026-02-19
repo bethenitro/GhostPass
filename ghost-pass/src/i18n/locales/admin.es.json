@@ -44,7 +44,8 @@
     "allProcessed": "Todos los pagos procesados exitosamente",
     "loadError": "Error al cargar solicitudes de pago",
     "actionError": "Error al procesar acción de pago",
-    "processAllError": "Error al procesar todos los pagos"
+    "processAllError": "Error al procesar todos los pagos",
+    "bankAccountSetup": "Configuración de Cuenta Bancaria"
   },
   "common": {
     "save": "Guardar Cambios",

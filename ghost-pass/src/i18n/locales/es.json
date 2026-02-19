@@ -1224,7 +1224,16 @@
     "title": "Pagos",
     "pending": "Pagos Pendientes",
     "history": "Historial de Pagos",
-    "process": "Procesar Pago"
+    "process": "Procesar Pago",
+    "bankAccountSetup": "Configuración de Cuenta Bancaria",
+    "noPending": "No hay solicitudes de pago pendientes",
+    "approved": "Pago aprobado exitosamente",
+    "rejected": "Pago rechazado",
+    "allProcessed": "Todos los pagos procesados exitosamente",
+    "loadError": "Error al cargar pagos",
+    "actionError": "Error al procesar acción de pago",
+    "processAllError": "Error al procesar todos los pagos",
+    "processAll": "Procesar Todos los Pagos"
   },
   "users": {
     "title": "Gestión de Usuarios",

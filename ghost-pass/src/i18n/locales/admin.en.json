@@ -44,7 +44,8 @@
     "allProcessed": "All payouts processed successfully",
     "loadError": "Failed to load payout requests",
     "actionError": "Failed to process payout action",
-    "processAllError": "Failed to process all payouts"
+    "processAllError": "Failed to process all payouts",
+    "bankAccountSetup": "Bank Account Setup"
   },
   "common": {
     "save": "Save Changes",

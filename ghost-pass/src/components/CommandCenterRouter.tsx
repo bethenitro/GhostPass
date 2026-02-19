@@ -103,13 +103,14 @@ const CommandCenterRouter: React.FC<CommandCenterRouterProps> = (props) => {
       <VenueAdminCommandCenter
         venueId={user.venue_id || ''}
         eventId={user.event_id}
+        onBack={props.onBack}
       />
     );
   }
 
   // ADMIN users get full SuperAdminCommandCenter
   if (user?.role === 'ADMIN') {
-    return <SuperAdminCommandCenter />;
+    return <SuperAdminCommandCenter onBack={props.onBack} />;
   }
 
   // Default to CommandCenterPage

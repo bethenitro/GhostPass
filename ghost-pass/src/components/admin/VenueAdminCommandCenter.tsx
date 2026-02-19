@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { 
   Calendar, Store, LayoutGrid, FileText, 
-  BarChart3, Users, DollarSign, Settings, LogOut, MapPin 
+  BarChart3, Users, DollarSign, Settings, LogOut, MapPin, ArrowLeft 
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { authApi } from '@/lib/api';
@@ -21,11 +21,13 @@ import { LanguageSwitcher } from '../LanguageSwitcher';
 interface VenueAdminCommandCenterProps {
   venueId: string;
   eventId?: string;
+  onBack?: () => void;
 }
 
 export const VenueAdminCommandCenter: React.FC<VenueAdminCommandCenterProps> = ({ 
   venueId, 
-  eventId 
+  eventId,
+  onBack 
 }) => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'analytics' | 'events' | 'stations' | 'menu' | 'ledger' | 'staff' | 'payouts' | 'config' | 'gateway'>('analytics');
@@ -66,23 +68,50 @@ export const VenueAdminCommandCenter: React.FC<VenueAdminCommandCenterProps> = (
           <div className="w-12 sm:w-16 h-0.5 bg-gradient-to-r from-transparent via-purple-400 to-transparent mx-auto mt-3 sm:mt-4"></div>
         </motion.div>
 
-        {/* Logout Button - Mobile Friendly */}
+        {/* Action Buttons - Mobile Friendly */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className="flex justify-end gap-2"
+          className="flex justify-between items-center gap-2"
         >
-          <LanguageSwitcher showLabel={false} className="sm:hidden" />
-          <LanguageSwitcher showLabel={true} className="hidden sm:flex" />
-          <button
-            onClick={handleLogout}
-            className="flex items-center space-x-2 px-4 py-2 bg-red-500/20 border border-red-500/50 text-red-400 rounded-lg hover:bg-red-500/30 transition-all duration-300 min-h-[44px] text-sm"
-          >
-            <LogOut className="w-4 h-4" />
-            <span className="hidden sm:inline">{t('common.logout')}</span>
-            <span className="sm:hidden">Logout</span>
-          </button>
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="flex items-center space-x-2 px-4 py-2 bg-slate-700/50 border border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700 transition-all duration-300 min-h-[44px] text-sm"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">Back to Scan</span>
+            </button>
+          )}
+          <div className="flex gap-2 ml-auto">
+            <LanguageSwitcher showLabel={false} className="sm:hidden" />
+            <LanguageSwitcher showLabel={true} className="hidden sm:flex" />
+            <button
+              onClick={async () => {
+                try {
+                  const deviceFingerprint = localStorage.getItem('device_fingerprint') || '';
+                  const ssoData = await authApi.generateSSOToken(deviceFingerprint);
+                  window.open(ssoData.bevalid_url, '_blank');
+                } catch (error) {
+                  console.error('Error generating SSO token:', error);
+                  alert('Failed to open beVALID. Please try again.');
+                }
+              }}
+              className="flex items-center space-x-2 px-4 py-2 bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-all duration-300 min-h-[44px] text-sm"
+            >
+              <Settings className="w-4 h-4" />
+              <span className="hidden sm:inline">beVALID</span>
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex items-center space-x-2 px-4 py-2 bg-red-500/20 border border-red-500/50 text-red-400 rounded-lg hover:bg-red-500/30 transition-all duration-300 min-h-[44px] text-sm"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">{t('common.logout')}</span>
+              <span className="sm:hidden">Logout</span>
+            </button>
+          </div>
         </motion.div>
 
         {/* Tab Navigation - Mobile Optimized */}

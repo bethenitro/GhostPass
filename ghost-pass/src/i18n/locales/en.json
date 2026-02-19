@@ -1251,7 +1251,16 @@
     "title": "Payouts",
     "pending": "Pending Payouts",
     "history": "Payout History",
-    "process": "Process Payout"
+    "process": "Process Payout",
+    "bankAccountSetup": "Bank Account Setup",
+    "noPending": "No pending payout requests",
+    "approved": "Payout approved successfully",
+    "rejected": "Payout rejected",
+    "allProcessed": "All payouts processed successfully",
+    "loadError": "Failed to load payouts",
+    "actionError": "Failed to process payout action",
+    "processAllError": "Failed to process all payouts",
+    "processAll": "Process All Payouts"
   },
   "users": {
     "title": "User Management",

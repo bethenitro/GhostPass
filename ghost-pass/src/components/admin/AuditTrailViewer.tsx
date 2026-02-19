@@ -174,16 +174,16 @@ export const AuditTrailViewer: React.FC = () => {
           <div className="md:hidden space-y-2 p-2 sm:p-3">
             {filteredLogs.map((log) => (
               <div key={log.id} className="bg-slate-800/50 rounded-lg p-3 space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-purple-400 font-mono text-xs truncate">{log.action}</span>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
+                  <span className="text-purple-400 font-mono text-xs break-words">{log.action}</span>
                   <span className="text-slate-500 text-xs flex-shrink-0">
                     {new Date(log.timestamp).toLocaleDateString()}
                   </span>
                 </div>
-                <div className="text-white text-sm truncate">{log.admin_email}</div>
+                <div className="text-white text-sm break-words">{log.admin_email}</div>
                 <div className="text-slate-400 text-xs">{log.resource_type}</div>
                 {log.resource_id && (
-                  <div className="text-slate-500 text-xs font-mono truncate">ID: {log.resource_id}</div>
+                  <div className="text-slate-500 text-xs font-mono break-all">ID: {log.resource_id}</div>
                 )}
               </div>
             ))}
