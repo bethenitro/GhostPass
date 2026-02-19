@@ -9,8 +9,9 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   const user = await requireAuth(req, res);
   if (!user) return;
 
-  if (user.role !== 'ADMIN') {
-    return res.status(403).json({ error: 'Admin access required' });
+  // Allow both ADMIN and VENUE_ADMIN to access revenue profiles
+  if (user.role !== 'ADMIN' && user.role !== 'VENUE_ADMIN') {
+    return res.status(403).json({ error: 'Admin or venue admin access required' });
   }
 
   if (req.method === 'GET') {

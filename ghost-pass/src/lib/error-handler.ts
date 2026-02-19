@@ -8,6 +8,13 @@ export const isAuthError = (error: any): boolean => {
 };
 
 /**
+ * Utility to check if an error is a 403 forbidden error
+ */
+export const isForbiddenError = (error: any): boolean => {
+  return error?.response?.status === 403;
+};
+
+/**
  * Handle API errors consistently across the application
  * @param error - The error object from axios
  * @param defaultMessage - Default message to show if no specific error message
@@ -18,6 +25,13 @@ export const handleApiError = (error: any, defaultMessage: string = 'An error oc
   if (isAuthError(error)) {
     console.log('Authentication error - user will be redirected to login');
     return null;
+  }
+
+  // Provide user-friendly message for 403 errors
+  if (isForbiddenError(error)) {
+    const forbiddenMessage = error?.response?.data?.error || 'You do not have permission to access this resource';
+    console.error('Permission denied:', forbiddenMessage);
+    return forbiddenMessage;
   }
 
   // Extract error message from response

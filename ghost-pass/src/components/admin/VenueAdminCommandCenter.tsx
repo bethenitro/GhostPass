@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { 
   Calendar, Store, LayoutGrid, FileText, 
-  BarChart3, Users, DollarSign, Settings, LogOut 
+  BarChart3, Users, DollarSign, Settings, LogOut, MapPin 
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { authApi } from '@/lib/api';
@@ -15,6 +15,7 @@ import { VenueAnalytics } from './VenueAnalytics';
 import { VenueStaffManager } from './VenueStaffManager';
 import { VenuePayouts } from './VenuePayouts';
 import { VenueEntryConfig } from './VenueEntryConfig';
+import { GatewayManager } from './GatewayManager';
 
 interface VenueAdminCommandCenterProps {
   venueId: string;
@@ -26,7 +27,7 @@ export const VenueAdminCommandCenter: React.FC<VenueAdminCommandCenterProps> = (
   eventId 
 }) => {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'analytics' | 'events' | 'stations' | 'menu' | 'ledger' | 'staff' | 'payouts' | 'config'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'events' | 'stations' | 'menu' | 'ledger' | 'staff' | 'payouts' | 'config' | 'gateway'>('analytics');
 
   const handleLogout = async () => {
     if (confirm('Are you sure you want to logout?')) {
@@ -38,6 +39,7 @@ export const VenueAdminCommandCenter: React.FC<VenueAdminCommandCenterProps> = (
   const tabs = [
     { id: 'analytics' as const, label: t('analytics.title'), icon: BarChart3, color: 'cyan' },
     { id: 'events' as const, label: t('events.myEvents'), icon: Calendar, color: 'purple' },
+    { id: 'gateway' as const, label: 'Gateway', icon: MapPin, color: 'blue' },
     { id: 'config' as const, label: 'Entry Config', icon: Settings, color: 'amber' },
     { id: 'stations' as const, label: t('stations.title'), icon: Store, color: 'blue' },
     { id: 'menu' as const, label: t('menu.title'), icon: LayoutGrid, color: 'pink' },
@@ -118,6 +120,7 @@ export const VenueAdminCommandCenter: React.FC<VenueAdminCommandCenterProps> = (
         >
           {activeTab === 'analytics' && <VenueAnalytics venueId={venueId} eventId={eventId} />}
           {activeTab === 'events' && <VenueEventManager venueId={venueId} />}
+          {activeTab === 'gateway' && <GatewayManager venueId={venueId} />}
           {activeTab === 'config' && <VenueEntryConfig venueId={venueId} eventId={eventId} />}
           {activeTab === 'stations' && <StationManager venueId={venueId} eventId={eventId || ''} />}
           {activeTab === 'menu' && <MenuManager venueId={venueId} eventId={eventId || ''} />}

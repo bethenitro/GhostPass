@@ -20,9 +20,9 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       .from('events')
       .select(`
         *,
-        revenue_profiles:revenue_profile_id(*),
-        tax_profiles:tax_profile_id(*),
-        payout_routing:payout_routing_id(*)
+        revenue_profiles:revenue_profile_id(id, profile_name, valid_percentage, vendor_percentage, pool_percentage, promoter_percentage, executive_percentage),
+        tax_profiles:tax_profile_id(id, profile_name, state_tax_percentage, local_tax_percentage, alcohol_tax_percentage, food_tax_percentage),
+        payout_routing:payout_routing_id(id, routing_name, account_type)
       `);
 
     if (venue_id) {

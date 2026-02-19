@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { 
   Building2, DollarSign, Store, LayoutGrid, FileText, 
-  Users, Settings, BarChart3, Shield, Database, Wallet, LogOut 
+  Users, Settings, BarChart3, Shield, Database, Wallet, LogOut, MapPin 
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { authApi } from '@/lib/api';
@@ -17,10 +17,12 @@ import { UserManagement } from './UserManagement';
 import { SystemSettings } from './SystemSettings';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { PayoutsManager } from './PayoutsManager';
+import { GatewayManager } from './GatewayManager';
+import { AuditTrailViewer } from './AuditTrailViewer';
 
 export const SuperAdminCommandCenter: React.FC = () => {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'events' | 'profiles' | 'menu' | 'stations' | 'ledger' | 'tax' | 'users' | 'settings' | 'analytics' | 'payouts'>('analytics');
+  const [activeTab, setActiveTab] = useState<'events' | 'profiles' | 'menu' | 'stations' | 'ledger' | 'tax' | 'users' | 'settings' | 'analytics' | 'payouts' | 'gateway' | 'audit'>('analytics');
 
   const handleLogout = async () => {
     if (confirm('Are you sure you want to logout?')) {
@@ -32,12 +34,14 @@ export const SuperAdminCommandCenter: React.FC = () => {
   const tabs = [
     { id: 'analytics' as const, label: t('analytics.title'), icon: BarChart3, color: 'cyan' },
     { id: 'events' as const, label: t('events.title'), icon: Building2, color: 'purple' },
+    { id: 'gateway' as const, label: 'Gateway', icon: MapPin, color: 'blue' },
     { id: 'profiles' as const, label: t('revenueProfiles.title'), icon: DollarSign, color: 'green' },
     { id: 'tax' as const, label: t('taxProfiles.title'), icon: Shield, color: 'amber' },
     { id: 'stations' as const, label: t('stations.title'), icon: Store, color: 'blue' },
     { id: 'menu' as const, label: t('menu.title'), icon: LayoutGrid, color: 'pink' },
     { id: 'ledger' as const, label: t('transactionLedger.title'), icon: FileText, color: 'orange' },
     { id: 'payouts' as const, label: t('payouts.title'), icon: Wallet, color: 'emerald' },
+    { id: 'audit' as const, label: 'Audit Trail', icon: Database, color: 'red' },
     { id: 'users' as const, label: t('users.title'), icon: Users, color: 'indigo' },
     { id: 'settings' as const, label: t('settings.title'), icon: Settings, color: 'slate' },
   ];
@@ -114,12 +118,14 @@ export const SuperAdminCommandCenter: React.FC = () => {
         >
           {activeTab === 'analytics' && <AnalyticsDashboard />}
           {activeTab === 'events' && <EventCreator />}
+          {activeTab === 'gateway' && <GatewayManager />}
           {activeTab === 'profiles' && <RevenueProfileManager />}
           {activeTab === 'tax' && <TaxProfileManager />}
           {activeTab === 'stations' && <StationManager venueId="" eventId="" />}
           {activeTab === 'menu' && <MenuManager venueId="" eventId="" />}
           {activeTab === 'ledger' && <TransactionLedger />}
           {activeTab === 'payouts' && <PayoutsManager />}
+          {activeTab === 'audit' && <AuditTrailViewer />}
           {activeTab === 'users' && <UserManagement />}
           {activeTab === 'settings' && <SystemSettings />}
         </motion.div>
