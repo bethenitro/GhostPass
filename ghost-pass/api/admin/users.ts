@@ -10,19 +10,32 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Require admin authentication
-  const adminUser = await requireAdmin(req, res);
-  if (!adminUser) return;
+  // Require admin or venue admin authentication
+  const user = await requireAdmin(req, res);
+  if (!user) return;
+
+  // Allow VENUE_ADMIN to access
+  if (user.role !== 'ADMIN' && user.role !== 'VENUE_ADMIN') {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
 
   try {
-    const { limit = '50', offset = '0', role } = req.query;
+    const { limit = '50', offset = '0', role, venue_id } = req.query;
 
     const limitNum = Math.min(parseInt(limit as string), 200);
     const offsetNum = Math.max(parseInt(offset as string), 0);
 
     let query = supabase
       .from('users')
-      .select('id, email, role, created_at');
+      .select('id, email, role, venue_id, created_at');
+
+    // If VENUE_ADMIN, only show users from their venue
+    if (user.role === 'VENUE_ADMIN' && user.venue_id) {
+      query = query.eq('venue_id', user.venue_id);
+    } else if (venue_id) {
+      // ADMIN can filter by venue_id
+      query = query.eq('venue_id', venue_id);
+    }
 
     if (role) {
       query = query.eq('role', (role as string).toUpperCase());

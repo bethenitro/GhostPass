@@ -41,9 +41,9 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     const { data, error } = await supabase
       .from('events')
       .insert({
-        event_id,
+        id: event_id, // Use 'id' column, not 'event_id'
+        name: event_name, // Use 'name' column, not 'event_name'
         venue_id,
-        event_name,
         description: description || null,
         start_date,
         end_date,
@@ -51,9 +51,12 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         entry_fee_cents: entry_fee_cents || 0,
         re_entry_fee_cents: re_entry_fee_cents || 0,
         platform_fee_cents: platform_fee_cents || 25,
-        revenue_profile_id: revenue_profile_id || null,
-        tax_profile_id: tax_profile_id || null,
-        payout_routing_id: payout_routing_id || null
+        // Note: revenue_profile_id, tax_profile_id, payout_routing_id don't exist in current schema
+        metadata: {
+          revenue_profile_id: revenue_profile_id || null,
+          tax_profile_id: tax_profile_id || null,
+          payout_routing_id: payout_routing_id || null
+        }
       })
       .select()
       .single();

@@ -48,7 +48,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 bottom-full mb-2 w-32 bg-slate-800 border border-slate-600 rounded-lg shadow-xl overflow-hidden z-50">
+        <div className="absolute right-0 top-full mt-2 w-32 bg-slate-800 border border-slate-600 rounded-lg shadow-xl overflow-hidden z-50">
           <button
             onClick={() => changeLanguage('en')}
             className="w-full px-4 py-2 text-left text-sm text-slate-300 hover:bg-slate-700 transition-colors flex items-center justify-between"

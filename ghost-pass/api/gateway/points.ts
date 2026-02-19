@@ -131,15 +131,19 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
       if (error) throw error;
 
-      // Log admin action
-      await supabase.from('audit_logs').insert({
-        admin_user_id: user.id,
-        action: 'CREATE_GATEWAY_POINT',
-        resource_type: 'gateway_point',
-        resource_id: data.id,
-        old_value: null,
-        new_value: data
-      });
+      // Log admin action (non-blocking)
+      try {
+        await supabase.from('audit_logs').insert({
+          admin_user_id: user.id,
+          action: 'CREATE_GATEWAY_POINT',
+          resource_type: 'gateway_point',
+          resource_id: data.id,
+          old_value: null,
+          new_value: data
+        });
+      } catch (auditError) {
+        console.warn('Failed to create audit log:', auditError);
+      }
 
       res.status(201).json(data);
     } catch (error) {

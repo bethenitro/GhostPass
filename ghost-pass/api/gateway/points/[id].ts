@@ -140,20 +140,25 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         changes.status = { old: oldPoint.status, new: updates.status };
       }
 
-      await supabase.from('entry_point_audit_logs').insert({
-        action_type: actionType,
-        entry_point_id: id,
-        entry_point_type: data.type,
-        entry_point_name: data.name,
-        employee_name: data.employee_name,
-        employee_id: data.employee_id,
-        admin_user_id: user.id,
-        admin_email: user.email || 'unknown',
-        source_location: 'Command Center',
-        old_values: oldPoint,
-        new_values: data,
-        metadata: { changes, admin_action: true }
-      });
+      // Log detailed entry point audit (non-blocking)
+      try {
+        await supabase.from('entry_point_audit_logs').insert({
+          action_type: actionType,
+          entry_point_id: id,
+          entry_point_type: data.type,
+          entry_point_name: data.name,
+          employee_name: data.employee_name,
+          employee_id: data.employee_id,
+          admin_user_id: user.id,
+          admin_email: user.email || 'unknown',
+          source_location: 'Command Center',
+          old_values: oldPoint,
+          new_values: data,
+          metadata: { changes, admin_action: true }
+        });
+      } catch (auditError) {
+        console.warn('Failed to create entry point audit log:', auditError);
+      }
 
       res.status(200).json(data);
     } catch (error) {
@@ -185,15 +190,19 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
       if (error) throw error;
 
-      // Log admin action
-      await supabase.from('audit_logs').insert({
-        admin_user_id: user.id,
-        action: 'DELETE_GATEWAY_POINT',
-        resource_type: 'gateway_point',
-        resource_id: id as string,
-        old_value: oldPoint,
-        new_value: null
-      });
+      // Log admin action (non-blocking)
+      try {
+        await supabase.from('audit_logs').insert({
+          admin_user_id: user.id,
+          action: 'DELETE_GATEWAY_POINT',
+          resource_type: 'gateway_point',
+          resource_id: id as string,
+          old_value: oldPoint,
+          new_value: null
+        });
+      } catch (auditError) {
+        console.warn('Failed to create audit log:', auditError);
+      }
 
       res.status(200).json({ status: 'success', message: 'Gateway point deleted successfully' });
     } catch (error) {
