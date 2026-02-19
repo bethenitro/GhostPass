@@ -21,6 +21,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     const {
       event_id,
       venue_id,
+      venue_name,
       event_name,
       description,
       start_date,
@@ -34,7 +35,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       payout_routing_id
     } = req.body;
 
-    if (!event_id || !venue_id || !event_name || !start_date || !end_date) {
+    if (!event_id || !venue_id || !venue_name || !event_name || !start_date || !end_date) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -44,6 +45,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         id: event_id, // Use 'id' column, not 'event_id'
         name: event_name, // Use 'name' column, not 'event_name'
         venue_id,
+        venue_name,
         description: description || null,
         start_date,
         end_date,

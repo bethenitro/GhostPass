@@ -60,8 +60,8 @@ export const requireAdmin = async (req: VercelRequest, res: VercelResponse) => {
     return null;
   }
 
-  if (user.role !== 'ADMIN') {
-    res.status(403).json({ error: 'Forbidden', detail: 'Admin access required' });
+  if (user.role !== 'ADMIN' && user.role !== 'VENUE_ADMIN') {
+    res.status(403).json({ error: 'Forbidden', detail: 'Admin or Venue Admin access required' });
     return null;
   }
 
