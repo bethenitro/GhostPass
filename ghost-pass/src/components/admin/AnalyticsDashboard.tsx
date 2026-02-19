@@ -18,8 +18,13 @@ export const AnalyticsDashboard: React.FC = () => {
       setLoading(true);
       const data = await adminApi.getDashboard();
       setDashboard(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading dashboard:', error);
+      // Don't show error toast for 401 - the router will handle it
+      if (error.response?.status !== 401) {
+        // Handle other errors silently or show a message
+        console.warn('Dashboard load failed:', error.message);
+      }
     } finally {
       setLoading(false);
     }

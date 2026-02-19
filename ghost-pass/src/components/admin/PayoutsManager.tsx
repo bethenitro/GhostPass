@@ -21,13 +21,16 @@ export const PayoutsManager: React.FC = () => {
       setLoading(true);
       const data = await adminApi.getPayoutRequests('pending');
       setPayouts(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading payouts:', error);
-      toast({
-        title: t('common.error'),
-        description: t('payouts.loadError'),
-        variant: 'destructive'
-      });
+      // Don't show error toast for 401 - the router will handle it
+      if (error.response?.status !== 401) {
+        toast({
+          title: t('common.error'),
+          description: t('payouts.loadError'),
+          variant: 'destructive'
+        });
+      }
     } finally {
       setLoading(false);
     }

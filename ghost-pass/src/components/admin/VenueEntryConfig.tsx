@@ -40,9 +40,12 @@ export const VenueEntryConfig: React.FC<VenueEntryConfigProps> = ({ venueId, eve
           reentry_time_limit_hours: data.reentry_time_limit_hours ?? 0
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading config:', error);
-      showToast('Failed to load entry configuration', 'error');
+      // Don't show error toast for 401 - the router will handle it
+      if (error.response?.status !== 401) {
+        showToast('Failed to load entry configuration', 'error');
+      }
     } finally {
       setLoading(false);
     }

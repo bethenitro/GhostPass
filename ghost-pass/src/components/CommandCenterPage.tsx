@@ -142,6 +142,13 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
 
     } catch (err: any) {
       const errorMessage = err.response?.data?.detail || 'Failed to load dashboard';
+      
+      // Don't show error for 401 - the router will handle it
+      if (err.response?.status === 401) {
+        console.log('Authentication required - redirecting to login');
+        return;
+      }
+      
       setError(errorMessage);
 
       // If it's a setup issue, show the setup check

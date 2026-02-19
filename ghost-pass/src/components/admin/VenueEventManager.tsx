@@ -69,7 +69,10 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
       setTaxProfiles(taxRes.data || []);
     } catch (error: any) {
       console.error('Failed to load data:', error);
-      showToast(error.response?.data?.error || t('common.error'), 'error');
+      // Don't show error toast for 401 - the router will handle it
+      if (error.response?.status !== 401) {
+        showToast(error.response?.data?.error || t('common.error'), 'error');
+      }
     } finally {
       setLoading(false);
     }

@@ -46,7 +46,10 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
       }
     } catch (err: any) {
       console.error('Error loading venue dashboard:', err);
-      setError(err.response?.data?.detail || 'Failed to load dashboard');
+      // Don't show error for 401 - the router will handle it
+      if (err.response?.status !== 401) {
+        setError(err.response?.data?.detail || 'Failed to load dashboard');
+      }
     } finally {
       setLoading(false);
     }

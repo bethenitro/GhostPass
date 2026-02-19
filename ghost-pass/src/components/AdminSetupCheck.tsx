@@ -30,6 +30,11 @@ const AdminSetupCheck: React.FC<AdminSetupCheckProps> = ({ onSetupComplete }) =>
         setTimeout(() => onSetupComplete(), 2000);
       }
     } catch (err: any) {
+      // Don't show error for 401 - the router will handle it
+      if (err.response?.status === 401) {
+        console.log('Authentication required for health check');
+        return;
+      }
       setError(err.response?.data?.detail || err.message || 'Health check failed');
     } finally {
       setLoading(false);

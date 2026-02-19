@@ -61,13 +61,16 @@ export const SystemSettings: React.FC = () => {
           promoter_pct: dashboard.current_fee_config.promoter_pct || 0
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading settings:', error);
-      toast({
-        title: t('common.error'),
-        description: t('settings.loadError'),
-        variant: 'destructive'
-      });
+      // Don't show error toast for 401 - the router will handle it
+      if (error.response?.status !== 401) {
+        toast({
+          title: t('common.error'),
+          description: t('settings.loadError'),
+          variant: 'destructive'
+        });
+      }
     } finally {
       setLoading(false);
     }
