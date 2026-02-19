@@ -18,12 +18,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
     let query = supabase
       .from('events')
-      .select(`
-        *,
-        revenue_profiles:revenue_profile_id(id, profile_name, valid_percentage, vendor_percentage, pool_percentage, promoter_percentage, executive_percentage),
-        tax_profiles:tax_profile_id(id, profile_name, state_tax_percentage, local_tax_percentage, alcohol_tax_percentage, food_tax_percentage),
-        payout_routing:payout_routing_id(id, routing_name, account_type)
-      `);
+      .select('*');
 
     if (venue_id) {
       query = query.eq('venue_id', venue_id);

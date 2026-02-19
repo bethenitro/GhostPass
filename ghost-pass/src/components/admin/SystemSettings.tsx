@@ -215,91 +215,91 @@ export const SystemSettings: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div className="flex items-center space-x-3">
-        <Settings className="w-6 h-6 text-slate-400" />
-        <h2 className="text-xl font-bold text-white">{t('settings.title')}</h2>
+        <Settings className="w-5 h-5 sm:w-6 sm:h-6 text-slate-400" />
+        <h2 className="text-lg sm:text-xl font-bold text-white">{t('settings.title')}</h2>
       </div>
 
       {/* Revenue Split Configuration */}
-      <div className="bg-slate-700/30 border border-slate-600 rounded-lg p-6">
-        <div className="flex items-center space-x-2 mb-4">
-          <Percent className="w-5 h-5 text-green-400" />
-          <h3 className="text-lg font-semibold text-white">{t('settings.revenueSplit')}</h3>
+      <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700 rounded-lg p-4 sm:p-6">
+        <div className="flex items-center space-x-2 mb-3 sm:mb-4">
+          <Percent className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" />
+          <h3 className="text-base sm:text-lg font-semibold text-white">{t('settings.revenueSplit')}</h3>
         </div>
 
-        <div className="space-y-4">
-          <div className="flex flex-wrap gap-2">
+        <div className="space-y-3 sm:space-y-4">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-2">
             <button
               onClick={() => applyPreset('balanced')}
-              className="px-3 py-1 bg-blue-500/20 border border-blue-500 text-blue-400 rounded text-sm hover:bg-blue-500/30 transition-colors min-h-[44px]"
+              className="px-4 py-2 bg-blue-500/20 border border-blue-500 text-blue-400 rounded-lg text-xs sm:text-sm hover:bg-blue-500/30 transition-colors min-h-[44px]"
             >
               Balanced (25/50/15/10)
             </button>
             <button
               onClick={() => applyPreset('vendor_focused')}
-              className="px-3 py-1 bg-purple-500/20 border border-purple-500 text-purple-400 rounded text-sm hover:bg-purple-500/30 transition-colors min-h-[44px]"
+              className="px-4 py-2 bg-purple-500/20 border border-purple-500 text-purple-400 rounded-lg text-xs sm:text-sm hover:bg-purple-500/30 transition-colors min-h-[44px]"
             >
               Vendor Focused (15/65/10/10)
             </button>
             <button
               onClick={() => applyPreset('valid_focused')}
-              className="px-3 py-1 bg-cyan-500/20 border border-cyan-500 text-cyan-400 rounded text-sm hover:bg-cyan-500/30 transition-colors min-h-[44px]"
+              className="px-4 py-2 bg-cyan-500/20 border border-cyan-500 text-cyan-400 rounded-lg text-xs sm:text-sm hover:bg-cyan-500/30 transition-colors min-h-[44px]"
             >
               VALID Focused (40/40/10/10)
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">VALID %</label>
+              <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">VALID %</label>
               <input
                 type="number"
                 min="0"
                 max="100"
                 value={revenueSplit.valid_pct}
                 onChange={(e) => setRevenueSplit(prev => ({ ...prev, valid_pct: parseInt(e.target.value) || 0 }))}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
+                className="w-full px-3 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-cyan-500 focus:outline-none min-h-[44px]"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Vendor %</label>
+              <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">Vendor %</label>
               <input
                 type="number"
                 min="0"
                 max="100"
                 value={revenueSplit.vendor_pct}
                 onChange={(e) => setRevenueSplit(prev => ({ ...prev, vendor_pct: parseInt(e.target.value) || 0 }))}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
+                className="w-full px-3 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-cyan-500 focus:outline-none min-h-[44px]"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Pool %</label>
+              <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">Pool %</label>
               <input
                 type="number"
                 min="0"
                 max="100"
                 value={revenueSplit.pool_pct}
                 onChange={(e) => setRevenueSplit(prev => ({ ...prev, pool_pct: parseInt(e.target.value) || 0 }))}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
+                className="w-full px-3 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-cyan-500 focus:outline-none min-h-[44px]"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Promoter %</label>
+              <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">Promoter %</label>
               <input
                 type="number"
                 min="0"
                 max="100"
                 value={revenueSplit.promoter_pct}
                 onChange={(e) => setRevenueSplit(prev => ({ ...prev, promoter_pct: parseInt(e.target.value) || 0 }))}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
+                className="w-full px-3 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-cyan-500 focus:outline-none min-h-[44px]"
               />
             </div>
           </div>
 
-          <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
-            <span className="text-slate-300">Total:</span>
-            <span className={`font-bold ${
+          <div className="flex items-center justify-between p-3 bg-slate-950/50 rounded-lg border border-slate-700">
+            <span className="text-slate-300 text-sm sm:text-base">Total:</span>
+            <span className={`font-bold text-base sm:text-lg ${
               revenueSplit.valid_pct + revenueSplit.vendor_pct + 
               revenueSplit.pool_pct + revenueSplit.promoter_pct === 100
                 ? 'text-green-400'
@@ -313,7 +313,7 @@ export const SystemSettings: React.FC = () => {
           <button
             onClick={handleUpdateRevenueSplit}
             disabled={updating === 'revenue-split'}
-            className="w-full md:w-auto px-6 py-2 bg-green-500/20 border border-green-500 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 min-h-[44px]"
+            className="w-full sm:w-auto px-6 py-3 bg-green-500/20 border border-green-500 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 min-h-[44px]"
           >
             {updating === 'revenue-split' ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-400"></div>
@@ -326,49 +326,49 @@ export const SystemSettings: React.FC = () => {
       </div>
 
       {/* Gateway Scan Fees */}
-      <div className="bg-slate-700/30 border border-slate-600 rounded-lg p-6">
-        <div className="flex items-center space-x-2 mb-4">
-          <DollarSign className="w-5 h-5 text-cyan-400" />
-          <h3 className="text-lg font-semibold text-white">{t('settings.scanFees')}</h3>
+      <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700 rounded-lg p-4 sm:p-6">
+        <div className="flex items-center space-x-2 mb-3 sm:mb-4">
+          <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400" />
+          <h3 className="text-base sm:text-lg font-semibold text-white">{t('settings.scanFees')}</h3>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Entry Scan Fee</label>
+            <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">Entry Scan Fee</label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
               <input
                 type="number"
                 step="0.01"
                 value={(scanFees.entry_scan_fee_cents / 100).toFixed(2)}
                 onChange={(e) => setScanFees(prev => ({ ...prev, entry_scan_fee_cents: Math.round(parseFloat(e.target.value || '0') * 100) }))}
-                className="w-full pl-8 pr-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
+                className="w-full pl-8 pr-4 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-cyan-500 focus:outline-none min-h-[44px]"
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Re-entry Scan Fee</label>
+            <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">Re-entry Scan Fee</label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
               <input
                 type="number"
                 step="0.01"
                 value={(scanFees.reentry_scan_fee_cents / 100).toFixed(2)}
                 onChange={(e) => setScanFees(prev => ({ ...prev, reentry_scan_fee_cents: Math.round(parseFloat(e.target.value || '0') * 100) }))}
-                className="w-full pl-8 pr-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
+                className="w-full pl-8 pr-4 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-cyan-500 focus:outline-none min-h-[44px]"
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Internal Scan Fee</label>
+            <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">Internal Scan Fee</label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
               <input
                 type="number"
                 step="0.01"
                 value={(scanFees.internal_scan_fee_cents / 100).toFixed(2)}
                 onChange={(e) => setScanFees(prev => ({ ...prev, internal_scan_fee_cents: Math.round(parseFloat(e.target.value || '0') * 100) }))}
-                className="w-full pl-8 pr-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-cyan-500 focus:outline-none"
+                className="w-full pl-8 pr-4 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-cyan-500 focus:outline-none min-h-[44px]"
               />
             </div>
           </div>
@@ -377,7 +377,7 @@ export const SystemSettings: React.FC = () => {
         <button
           onClick={handleUpdateScanFees}
           disabled={updating === 'scan-fees'}
-          className="mt-4 w-full md:w-auto px-6 py-2 bg-cyan-500/20 border border-cyan-500 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 min-h-[44px]"
+          className="mt-4 w-full sm:w-auto px-6 py-3 bg-cyan-500/20 border border-cyan-500 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 min-h-[44px]"
         >
           {updating === 'scan-fees' ? (
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-cyan-400"></div>
@@ -389,13 +389,13 @@ export const SystemSettings: React.FC = () => {
       </div>
 
       {/* GhostPass Pricing */}
-      <div className="bg-slate-700/30 border border-slate-600 rounded-lg p-6">
-        <div className="flex items-center space-x-2 mb-4">
-          <DollarSign className="w-5 h-5 text-purple-400" />
-          <h3 className="text-lg font-semibold text-white">{t('settings.ghostPassPricing')}</h3>
+      <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700 rounded-lg p-4 sm:p-6">
+        <div className="flex items-center space-x-2 mb-3 sm:mb-4">
+          <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
+          <h3 className="text-base sm:text-lg font-semibold text-white">{t('settings.ghostPassPricing')}</h3>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           {[
             { key: 'one_day_cents', label: '1 Day' },
             { key: 'three_day_cents', label: '3 Day' },
@@ -406,9 +406,9 @@ export const SystemSettings: React.FC = () => {
             { key: 'thirty_day_cents', label: '30 Day' }
           ].map(({ key, label }) => (
             <div key={key}>
-              <label className="block text-sm font-medium text-slate-300 mb-2">{label}</label>
+              <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">{label}</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
                 <input
                   type="number"
                   step="0.01"
@@ -417,7 +417,7 @@ export const SystemSettings: React.FC = () => {
                     ...prev, 
                     [key]: Math.round(parseFloat(e.target.value || '0') * 100) 
                   }))}
-                  className="w-full pl-8 pr-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-purple-500 focus:outline-none"
+                  className="w-full pl-8 pr-4 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-purple-500 focus:outline-none min-h-[44px]"
                 />
               </div>
             </div>
@@ -427,7 +427,7 @@ export const SystemSettings: React.FC = () => {
         <button
           onClick={handleUpdateGhostPassPricing}
           disabled={updating === 'ghostpass-pricing'}
-          className="mt-4 w-full md:w-auto px-6 py-2 bg-purple-500/20 border border-purple-500 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 min-h-[44px]"
+          className="mt-4 w-full sm:w-auto px-6 py-3 bg-purple-500/20 border border-purple-500 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 min-h-[44px]"
         >
           {updating === 'ghostpass-pricing' ? (
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-400"></div>
@@ -439,46 +439,46 @@ export const SystemSettings: React.FC = () => {
       </div>
 
       {/* Transaction Retention Override */}
-      <div className="bg-slate-700/30 border border-amber-600 rounded-lg p-6">
-        <div className="flex items-center space-x-2 mb-4">
-          <Clock className="w-5 h-5 text-amber-400" />
-          <h3 className="text-lg font-semibold text-white">{t('settings.retentionOverride')}</h3>
+      <div className="bg-slate-900/60 backdrop-blur-xl border border-amber-600 rounded-lg p-4 sm:p-6">
+        <div className="flex items-center space-x-2 mb-3 sm:mb-4">
+          <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
+          <h3 className="text-base sm:text-lg font-semibold text-white">{t('settings.retentionOverride')}</h3>
         </div>
 
-        <div className="bg-amber-500/10 border border-amber-500/50 rounded-lg p-3 mb-4">
+        <div className="bg-amber-500/10 border border-amber-500/50 rounded-lg p-3 mb-3 sm:mb-4">
           <div className="flex items-start space-x-2">
-            <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-            <p className="text-amber-400 text-sm">{t('settings.retentionWarning')}</p>
+            <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+            <p className="text-amber-400 text-xs sm:text-sm">{t('settings.retentionWarning')}</p>
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Retention Period (Days)</label>
+            <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">Retention Period (Days)</label>
             <input
               type="number"
               min="1"
               max="365"
               value={retention.retention_days}
               onChange={(e) => setRetention(prev => ({ ...prev, retention_days: parseInt(e.target.value) || 60 }))}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-amber-500 focus:outline-none"
+              className="w-full px-3 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-amber-500 focus:outline-none min-h-[44px]"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Justification (Required)</label>
+            <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">Justification (Required)</label>
             <textarea
               value={retention.justification}
               onChange={(e) => setRetention(prev => ({ ...prev, justification: e.target.value }))}
               placeholder="Explain why this override is necessary..."
               rows={3}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-amber-500 focus:outline-none resize-none"
+              className="w-full px-3 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-amber-500 focus:outline-none resize-none"
             />
           </div>
 
           <button
             onClick={handleRetentionOverride}
             disabled={updating === 'retention' || !retention.justification.trim()}
-            className="w-full md:w-auto px-6 py-2 bg-amber-500/20 border border-amber-500 text-amber-400 rounded-lg hover:bg-amber-500/30 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 min-h-[44px]"
+            className="w-full sm:w-auto px-6 py-3 bg-amber-500/20 border border-amber-500 text-amber-400 rounded-lg hover:bg-amber-500/30 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 min-h-[44px]"
           >
             {updating === 'retention' ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-amber-400"></div>

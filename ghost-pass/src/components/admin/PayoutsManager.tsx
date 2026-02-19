@@ -93,17 +93,17 @@ export const PayoutsManager: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-center space-x-3">
-          <DollarSign className="w-6 h-6 text-green-400" />
-          <h2 className="text-xl font-bold text-white">{t('payouts.title')}</h2>
+          <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-green-400" />
+          <h2 className="text-lg sm:text-xl font-bold text-white">{t('payouts.title')}</h2>
         </div>
         {payouts.length > 0 && (
           <button
             onClick={handleProcessAll}
             disabled={processing === 'all'}
-            className="px-4 py-2 bg-green-500/20 border border-green-500 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors disabled:opacity-50 flex items-center space-x-2 min-h-[44px]"
+            className="flex items-center justify-center space-x-2 px-4 py-3 bg-green-500/20 border border-green-500 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors disabled:opacity-50 min-h-[44px] text-sm"
           >
             {processing === 'all' && (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-400"></div>
@@ -114,20 +114,20 @@ export const PayoutsManager: React.FC = () => {
       </div>
 
       {payouts.length === 0 ? (
-        <div className="bg-slate-700/30 border border-slate-600 rounded-lg p-12 text-center">
-          <Clock className="w-12 h-12 text-slate-500 mx-auto mb-3" />
-          <p className="text-slate-400">{t('payouts.noPending')}</p>
+        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700 rounded-lg p-8 sm:p-12 text-center">
+          <Clock className="w-10 h-10 sm:w-12 sm:h-12 text-slate-500 mx-auto mb-3" />
+          <p className="text-slate-400 text-sm sm:text-base">{t('payouts.noPending')}</p>
         </div>
       ) : (
         <>
           {/* Mobile View */}
-          <div className="space-y-3 md:hidden">
+          <div className="space-y-3 lg:hidden">
             {payouts.map((payout) => (
-              <div key={payout.id} className="bg-slate-700/30 border border-slate-600 rounded-lg p-4 space-y-3">
+              <div key={payout.id} className="bg-slate-900/60 backdrop-blur-xl border border-slate-700 rounded-lg p-4 space-y-3">
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="text-white font-medium">{payout.vendor_email}</p>
-                    <p className="text-green-400 font-mono text-xl">{formatCurrency(payout.amount_cents)}</p>
+                    <p className="text-white font-medium text-sm sm:text-base">{payout.vendor_email}</p>
+                    <p className="text-green-400 font-mono text-lg sm:text-xl">{formatCurrency(payout.amount_cents)}</p>
                     <p className="text-slate-400 text-xs mt-1">
                       {new Date(payout.requested_at).toLocaleDateString()}
                     </p>
@@ -137,7 +137,7 @@ export const PayoutsManager: React.FC = () => {
                   <button
                     onClick={() => handlePayoutAction(payout.id, 'approve')}
                     disabled={processing === payout.id}
-                    className="flex-1 px-3 py-2 bg-green-500/20 border border-green-500 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 min-h-[44px]"
+                    className="flex-1 px-3 py-3 bg-green-500/20 border border-green-500 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 min-h-[44px] text-sm"
                   >
                     <CheckCircle className="w-4 h-4" />
                     <span>{t('common.approve')}</span>
@@ -145,7 +145,7 @@ export const PayoutsManager: React.FC = () => {
                   <button
                     onClick={() => handlePayoutAction(payout.id, 'reject')}
                     disabled={processing === payout.id}
-                    className="flex-1 px-3 py-2 bg-red-500/20 border border-red-500 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 min-h-[44px]"
+                    className="flex-1 px-3 py-3 bg-red-500/20 border border-red-500 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 min-h-[44px] text-sm"
                   >
                     <XCircle className="w-4 h-4" />
                     <span>{t('common.reject')}</span>
@@ -156,9 +156,9 @@ export const PayoutsManager: React.FC = () => {
           </div>
 
           {/* Desktop View */}
-          <div className="hidden md:block bg-slate-700/30 border border-slate-600 rounded-lg overflow-hidden">
+          <div className="hidden lg:block bg-slate-900/60 backdrop-blur-xl border border-slate-700 rounded-lg overflow-hidden">
             <table className="w-full">
-              <thead className="bg-slate-800/50">
+              <thead className="bg-slate-950/50 border-b border-slate-700">
                 <tr>
                   <th className="text-left px-6 py-3 text-slate-300 font-medium">Vendor</th>
                   <th className="text-left px-6 py-3 text-slate-300 font-medium">Amount</th>

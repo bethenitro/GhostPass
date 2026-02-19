@@ -53,27 +53,34 @@ const Layout: React.FC<LayoutProps> = ({
 
       {/* Mobile Top Navigation */}
       <nav className="md:hidden fixed top-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-b border-slate-700 z-50">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-cyan-500/20 rounded-lg flex items-center justify-center border border-cyan-500/50">
-              <div className="w-4 h-4 bg-cyan-400 rounded-sm"></div>
+        <div className="flex items-center justify-between p-3 sm:p-4">
+          <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-cyan-500/20 rounded-lg flex items-center justify-center border border-cyan-500/50 flex-shrink-0">
+              <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 bg-cyan-400 rounded-sm"></div>
             </div>
-            <div>
-              <h1 className="text-lg font-bold text-white">{t('app.title')}</h1>
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-lg font-bold text-white truncate">{t('app.title')}</h1>
             </div>
           </div>
           
-          {/* Recover Wallet / Operator Access Button - Mobile */}
-          {onRecoverWallet && (
-            <button
-              onClick={onRecoverWallet}
-              className="flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400"
-              title={t('nav.walletAccess')}
-            >
-              <Shield size={20} />
-              <span className="text-[10px] font-medium mt-0.5">{t('nav.walletAccess')}</span>
-            </button>
-          )}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Language Selector - Mobile */}
+            <div className="scale-90 sm:scale-100">
+              <LanguageSelector />
+            </div>
+            
+            {/* Recover Wallet / Operator Access Button - Mobile */}
+            {onRecoverWallet && (
+              <button
+                onClick={onRecoverWallet}
+                className="flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-lg transition-all duration-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 min-h-[44px] min-w-[44px]"
+                title={t('nav.walletAccess')}
+              >
+                <Shield size={18} className="sm:w-5 sm:h-5" />
+                <span className="text-[9px] sm:text-[10px] font-medium mt-0.5 hidden xs:block">{t('nav.walletAccess')}</span>
+              </button>
+            )}
+          </div>
         </div>
       </nav>
 

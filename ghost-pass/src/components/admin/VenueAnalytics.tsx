@@ -87,41 +87,41 @@ export const VenueAnalytics: React.FC<VenueAnalyticsProps> = ({ venueId, eventId
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-center space-x-3">
-          <BarChart3 className="w-6 h-6 text-cyan-400" />
-          <h2 className="text-xl font-bold text-white">{t('analytics.dashboard')}</h2>
+          <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-cyan-400" />
+          <h2 className="text-lg sm:text-xl font-bold text-white">{t('analytics.dashboard')}</h2>
         </div>
         <button
           onClick={() => loadStats(true)}
           disabled={refreshing}
-          className="flex items-center space-x-2 px-3 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/50 rounded-lg text-cyan-400 transition-all disabled:opacity-50"
+          className="flex items-center justify-center space-x-2 px-4 py-3 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/50 rounded-lg text-cyan-400 transition-all disabled:opacity-50 min-h-[44px] text-sm"
         >
           <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           <span className="text-sm">{t('common.refresh')}</span>
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {statCards.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <div key={index} className="bg-slate-700/30 border border-slate-600 rounded-lg p-4 hover:border-slate-500 transition-colors">
+            <div key={index} className="bg-slate-900/60 backdrop-blur-xl border border-slate-700 rounded-lg p-4 hover:border-slate-600 transition-colors">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-slate-400 text-sm">{stat.label}</span>
-                <Icon className={`w-5 h-5 text-${stat.color}-400`} />
+                <span className="text-slate-400 text-xs sm:text-sm">{stat.label}</span>
+                <Icon className={`w-4 h-4 sm:w-5 sm:h-5 text-${stat.color}-400`} />
               </div>
-              <p className="text-2xl font-bold text-white mb-1">{stat.value}</p>
+              <p className="text-xl sm:text-2xl font-bold text-white mb-1">{stat.value}</p>
               <p className="text-xs text-green-400">{stat.change} vs last period</p>
             </div>
           );
         })}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-slate-700/30 border border-slate-600 rounded-lg p-4">
-          <h3 className="text-white font-medium mb-3">Entry Statistics</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700 rounded-lg p-4">
+          <h3 className="text-white font-medium mb-3 text-sm sm:text-base">Entry Statistics</h3>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-slate-400">Initial Entries</span>
@@ -140,8 +140,8 @@ export const VenueAnalytics: React.FC<VenueAnalyticsProps> = ({ venueId, eventId
           </div>
         </div>
 
-        <div className="bg-slate-700/30 border border-slate-600 rounded-lg p-4">
-          <h3 className="text-white font-medium mb-3">Performance</h3>
+        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700 rounded-lg p-4">
+          <h3 className="text-white font-medium mb-3 text-sm sm:text-base">Performance</h3>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-slate-400">Avg Transaction</span>
@@ -159,8 +159,8 @@ export const VenueAnalytics: React.FC<VenueAnalyticsProps> = ({ venueId, eventId
         </div>
       </div>
 
-      <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4">
-        <p className="text-cyan-400 text-sm">
+      <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-3 sm:p-4">
+        <p className="text-cyan-400 text-xs sm:text-sm">
           📊 Real-time analytics • Auto-refreshes every 30 seconds • Last updated: {new Date().toLocaleTimeString()}
         </p>
       </div>

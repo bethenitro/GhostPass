@@ -16,6 +16,7 @@ import { VenueStaffManager } from './VenueStaffManager';
 import { VenuePayouts } from './VenuePayouts';
 import { VenueEntryConfig } from './VenueEntryConfig';
 import { GatewayManager } from './GatewayManager';
+import { LanguageSwitcher } from '../LanguageSwitcher';
 
 interface VenueAdminCommandCenterProps {
   venueId: string;
@@ -70,8 +71,10 @@ export const VenueAdminCommandCenter: React.FC<VenueAdminCommandCenterProps> = (
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className="flex justify-end"
+          className="flex justify-end gap-2"
         >
+          <LanguageSwitcher showLabel={false} className="sm:hidden" />
+          <LanguageSwitcher showLabel={true} className="hidden sm:flex" />
           <button
             onClick={handleLogout}
             className="flex items-center space-x-2 px-4 py-2 bg-red-500/20 border border-red-500/50 text-red-400 rounded-lg hover:bg-red-500/30 transition-all duration-300 min-h-[44px] text-sm"
