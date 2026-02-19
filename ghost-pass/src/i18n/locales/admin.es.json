@@ -1,0 +1,64 @@
+{
+  "commandCenter": {
+    "superAdmin": "Centro de Comando Super Admin",
+    "venueAdmin": "Centro de Comando Admin de Venue",
+    "fullSystemAccess": "Acceso Completo al Sistema",
+    "venueManagement": "Gestión de Venue"
+  },
+  "analytics": {
+    "title": "Analíticas",
+    "dashboard": "Panel de Analíticas",
+    "overview": "Resumen del Sistema",
+    "revenue": "Ingresos Totales",
+    "transactions": "Transacciones Totales",
+    "users": "Usuarios Totales",
+    "recentActivity": "Actividad Reciente del Sistema"
+  },
+  "settings": {
+    "title": "Configuración del Sistema",
+    "general": "General",
+    "security": "Seguridad",
+    "integrations": "Integraciones",
+    "revenueSplit": "Configuración de División de Ingresos",
+    "scanFees": "Tarifas de Escaneo de Gateway",
+    "ghostPassPricing": "Precios de GhostPass",
+    "retentionOverride": "Anulación de Retención de Transacciones",
+    "retentionWarning": "⚠ Riesgo de Cumplimiento. Debe justificarse en el registro de auditoría.",
+    "splitMustEqual100": "Los porcentajes de división de ingresos deben sumar 100%",
+    "justificationRequired": "Se requiere justificación para anular la retención",
+    "revenueSplitUpdated": "Configuración de división de ingresos actualizada exitosamente",
+    "scanFeesUpdated": "Tarifas de escaneo actualizadas exitosamente",
+    "ghostPassPricingUpdated": "Precios de GhostPass actualizados exitosamente",
+    "retentionUpdated": "Anulación de retención aplicada exitosamente",
+    "loadError": "Error al cargar la configuración",
+    "updateError": "Error al actualizar la configuración",
+    "applyOverride": "Aplicar Anulación"
+  },
+  "payouts": {
+    "title": "Pagos a Vendedores",
+    "noPending": "No hay solicitudes de pago pendientes",
+    "processAll": "Procesar Todos los Pagos",
+    "approved": "Pago aprobado exitosamente",
+    "rejected": "Pago rechazado exitosamente",
+    "allProcessed": "Todos los pagos procesados exitosamente",
+    "loadError": "Error al cargar solicitudes de pago",
+    "actionError": "Error al procesar acción de pago",
+    "processAllError": "Error al procesar todos los pagos"
+  },
+  "common": {
+    "save": "Guardar Cambios",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "update": "Actualizar",
+    "approve": "Aprobar",
+    "reject": "Rechazar",
+    "refresh": "Actualizar",
+    "loading": "Cargando...",
+    "success": "Éxito",
+    "error": "Error",
+    "confirm": "Confirmar",
+    "back": "Volver"
+  }
+}

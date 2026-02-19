@@ -1,0 +1,64 @@
+{
+  "commandCenter": {
+    "superAdmin": "Super Admin Command Center",
+    "venueAdmin": "Venue Admin Command Center",
+    "fullSystemAccess": "Full System Access",
+    "venueManagement": "Venue Management"
+  },
+  "analytics": {
+    "title": "Analytics",
+    "dashboard": "Analytics Dashboard",
+    "overview": "System Overview",
+    "revenue": "Total Revenue",
+    "transactions": "Total Transactions",
+    "users": "Total Users",
+    "recentActivity": "Recent System Activity"
+  },
+  "settings": {
+    "title": "System Settings",
+    "general": "General",
+    "security": "Security",
+    "integrations": "Integrations",
+    "revenueSplit": "Revenue Split Configuration",
+    "scanFees": "Gateway Scan Fees",
+    "ghostPassPricing": "GhostPass Pricing",
+    "retentionOverride": "Transaction Retention Override",
+    "retentionWarning": "⚠ Compliance Risk. Must justify in audit log.",
+    "splitMustEqual100": "Revenue split percentages must equal 100%",
+    "justificationRequired": "Justification is required for retention override",
+    "revenueSplitUpdated": "Revenue split configuration updated successfully",
+    "scanFeesUpdated": "Scan fees updated successfully",
+    "ghostPassPricingUpdated": "GhostPass pricing updated successfully",
+    "retentionUpdated": "Retention override applied successfully",
+    "loadError": "Failed to load settings",
+    "updateError": "Failed to update settings",
+    "applyOverride": "Apply Override"
+  },
+  "payouts": {
+    "title": "Vendor Payouts",
+    "noPending": "No pending payout requests",
+    "processAll": "Process All Payouts",
+    "approved": "Payout approved successfully",
+    "rejected": "Payout rejected successfully",
+    "allProcessed": "All payouts processed successfully",
+    "loadError": "Failed to load payout requests",
+    "actionError": "Failed to process payout action",
+    "processAllError": "Failed to process all payouts"
+  },
+  "common": {
+    "save": "Save Changes",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "update": "Update",
+    "approve": "Approve",
+    "reject": "Reject",
+    "refresh": "Refresh",
+    "loading": "Loading...",
+    "success": "Success",
+    "error": "Error",
+    "confirm": "Confirm",
+    "back": "Back"
+  }
+}

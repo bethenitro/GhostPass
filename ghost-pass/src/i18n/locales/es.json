@@ -641,6 +641,11 @@
   },
   "commandCenter": {
     "title": "CENTRO DE COMANDO",
+    "superAdmin": "Centro de Comando de Super Administrador",
+    "venueAdmin": "Centro de Comando de Administrador de Lugar",
+    "fullSystemAccess": "Acceso completo al sistema y configuración",
+    "manageYourVenue": "Gestiona las operaciones de tu lugar",
+    "subtitle": "Gestión y configuración del sistema",
     "auditLogged": "REGISTRADO EN AUDITORÍA",
     "logout": "Cerrar Sesión",
     "systemTotalsOverview": "Resumen de Totales del Sistema",
@@ -1060,6 +1065,7 @@
   },
   "events": {
     "title": "Gestión de Eventos",
+    "myEvents": "Mis Eventos",
     "createEvent": "Crear Evento",
     "editEvent": "Editar Evento",
     "eventName": "Nombre del Evento",
@@ -1199,5 +1205,37 @@
     "taxCalculation": "Cálculo de Impuestos",
     "fees": "Tarifas",
     "immutableLedger": "Libro Mayor Inmutable"
+  },
+  "analytics": {
+    "title": "Analítica",
+    "dashboard": "Panel de Analítica",
+    "overview": "Resumen",
+    "revenue": "Ingresos",
+    "transactions": "Transacciones",
+    "users": "Usuarios"
+  },
+  "staff": {
+    "title": "Gestión de Personal",
+    "addStaff": "Agregar Personal",
+    "staffList": "Lista de Personal",
+    "permissions": "Permisos"
+  },
+  "payouts": {
+    "title": "Pagos",
+    "pending": "Pagos Pendientes",
+    "history": "Historial de Pagos",
+    "process": "Procesar Pago"
+  },
+  "users": {
+    "title": "Gestión de Usuarios",
+    "addUser": "Agregar Usuario",
+    "userList": "Lista de Usuarios",
+    "roles": "Roles"
+  },
+  "settings": {
+    "title": "Configuración del Sistema",
+    "general": "General",
+    "security": "Seguridad",
+    "integrations": "Integraciones"
   }
 }

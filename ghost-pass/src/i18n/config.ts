@@ -4,14 +4,20 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 
 import en from './locales/en.json';
 import es from './locales/es.json';
+import adminEn from './locales/admin.en.json';
+import adminEs from './locales/admin.es.json';
+
+// Merge admin translations with main translations
+const enResources = { ...en, ...adminEn };
+const esResources = { ...es, ...adminEs };
 
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     resources: {
-      en: { translation: en },
-      es: { translation: es },
+      en: { translation: enResources },
+      es: { translation: esResources },
     },
     fallbackLng: 'en',
     interpolation: {

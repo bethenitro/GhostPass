@@ -606,6 +606,11 @@
   },
   "commandCenter": {
     "title": "COMMAND CENTER",
+    "superAdmin": "Super Admin Command Center",
+    "venueAdmin": "Venue Admin Command Center",
+    "fullSystemAccess": "Full system access and configuration",
+    "manageYourVenue": "Manage your venue operations",
+    "subtitle": "System management and configuration",
     "auditLogged": "AUDIT LOGGED",
     "logout": "Logout",
     "systemTotalsOverview": "System Totals Overview",
@@ -1074,6 +1079,7 @@
   },
   "events": {
     "title": "Event Management",
+    "myEvents": "My Events",
     "createEvent": "Create Event",
     "editEvent": "Edit Event",
     "eventId": "Event ID",
@@ -1226,5 +1232,37 @@
     "taxCalculation": "Tax Calculation",
     "fees": "Fees",
     "immutableLedger": "Immutable Ledger"
+  },
+  "analytics": {
+    "title": "Analytics",
+    "dashboard": "Analytics Dashboard",
+    "overview": "Overview",
+    "revenue": "Revenue",
+    "transactions": "Transactions",
+    "users": "Users"
+  },
+  "staff": {
+    "title": "Staff Management",
+    "addStaff": "Add Staff",
+    "staffList": "Staff List",
+    "permissions": "Permissions"
+  },
+  "payouts": {
+    "title": "Payouts",
+    "pending": "Pending Payouts",
+    "history": "Payout History",
+    "process": "Process Payout"
+  },
+  "users": {
+    "title": "User Management",
+    "addUser": "Add User",
+    "userList": "User List",
+    "roles": "Roles"
+  },
+  "settings": {
+    "title": "System Settings",
+    "general": "General",
+    "security": "Security",
+    "integrations": "Integrations"
   }
 }

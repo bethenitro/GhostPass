@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import CommandCenterPage from './CommandCenterPage';
-import VenueCommandCenter from './VenueCommandCenter';
-import { AdminDashboard } from './admin';
+import { SuperAdminCommandCenter } from './admin/SuperAdminCommandCenter';
+import { VenueAdminCommandCenter } from './admin/VenueAdminCommandCenter';
 import { authApi } from '@/lib/api';
 import type { User } from '@/types';
 
@@ -41,17 +41,16 @@ const CommandCenterRouter: React.FC<CommandCenterRouterProps> = (props) => {
   // Route based on user role
   if (user?.role === 'VENUE_ADMIN') {
     return (
-      <VenueCommandCenter
-        onBack={props.onBack}
-        venueId={user.venue_id}
+      <VenueAdminCommandCenter
+        venueId={user.venue_id || ''}
         eventId={user.event_id}
       />
     );
   }
 
-  // ADMIN users get full AdminDashboard
+  // ADMIN users get full SuperAdminCommandCenter
   if (user?.role === 'ADMIN') {
-    return <AdminDashboard />;
+    return <SuperAdminCommandCenter />;
   }
 
   // Default to CommandCenterPage
