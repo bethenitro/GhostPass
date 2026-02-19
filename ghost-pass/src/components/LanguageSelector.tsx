@@ -17,18 +17,36 @@ const LanguageSelector: React.FC = () => {
     i18n.changeLanguage(langCode);
   };
 
+  // On mobile, cycle through languages on click
+  const handleMobileClick = () => {
+    const currentIndex = languages.findIndex(lang => lang.code === i18n.language);
+    const nextIndex = (currentIndex + 1) % languages.length;
+    changeLanguage(languages[nextIndex].code);
+  };
+
   return (
     <div className="relative group">
+      {/* Mobile: Direct click to cycle languages */}
       <button
-        className="flex items-center space-x-1.5 sm:space-x-2 px-2.5 sm:px-3 py-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700 hover:border-slate-600 transition-all text-slate-300 hover:text-white min-h-[44px]"
+        onClick={handleMobileClick}
+        className="md:hidden flex items-center space-x-1.5 sm:space-x-2 px-2.5 sm:px-3 py-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700 hover:border-slate-600 transition-all text-slate-300 hover:text-white min-h-[44px]"
         title="Change Language"
       >
         <Globe size={16} className="sm:w-[18px] sm:h-[18px]" />
         <span className="text-sm font-medium">{currentLanguage.flag}</span>
       </button>
 
-      {/* Dropdown */}
-      <div className="absolute bottom-full mb-2 left-0 w-36 sm:w-40 bg-slate-800 border border-slate-700 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+      {/* Desktop: Hover dropdown */}
+      <button
+        className="hidden md:flex items-center space-x-1.5 sm:space-x-2 px-2.5 sm:px-3 py-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700 hover:border-slate-600 transition-all text-slate-300 hover:text-white min-h-[44px]"
+        title="Change Language"
+      >
+        <Globe size={16} className="sm:w-[18px] sm:h-[18px]" />
+        <span className="text-sm font-medium">{currentLanguage.flag}</span>
+      </button>
+
+      {/* Dropdown - Desktop only */}
+      <div className="hidden md:block absolute bottom-full mb-2 left-0 w-36 sm:w-40 bg-slate-800 border border-slate-700 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
         {languages.map((lang) => (
           <button
             key={lang.code}
