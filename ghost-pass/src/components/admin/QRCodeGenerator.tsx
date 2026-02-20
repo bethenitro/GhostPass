@@ -59,10 +59,13 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
       
       const sessionData = await sessionResponse.json();
       
-      // The session data contains wallet_binding_id which is what we need
-      const walletBindingId = sessionData.wallet_binding_id;
+      // The wallet_binding_id can be in multiple places in the response
+      const walletBindingId = sessionData.wallet?.wallet_binding_id 
+        || sessionData.session?.wallet_binding_id 
+        || sessionData.wallet_binding_id;
       
       if (!walletBindingId) {
+        console.error('Session data:', sessionData);
         throw new Error('No wallet binding ID returned from session creation');
       }
 

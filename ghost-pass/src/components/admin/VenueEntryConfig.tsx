@@ -69,7 +69,7 @@ export const VenueEntryConfig: React.FC<VenueEntryConfigProps> = ({ venueId, eve
     }
   };
 
-  const formatCurrency = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+  const formatCurrency = (cents: number) => `${(cents / 100).toFixed(2)}`;
 
   if (loading) {
     return (

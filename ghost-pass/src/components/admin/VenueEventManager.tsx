@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Calendar, Plus, Edit2, Trash2, Loader2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { eventApi, revenueProfileApi, taxProfileApi } from '@/lib/api-client';
+import { eventApi } from '@/lib/api-client';
 import { useToast } from '../ui/toast';
 
 interface VenueEventManagerProps {
@@ -28,8 +28,6 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
   const { t } = useTranslation();
   const { showToast } = useToast();
   const [events, setEvents] = useState<Event[]>([]);
-  const [revenueProfiles, setRevenueProfiles] = useState<any[]>([]);
-  const [taxProfiles, setTaxProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -38,6 +36,7 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
   const [formData, setFormData] = useState({
     event_id: '',
     venue_id: venueId,
+    venue_name: '',
     event_name: '',
     description: '' as string | undefined,
     start_date: '',
@@ -46,8 +45,17 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
     entry_fee_cents: 500,
     re_entry_fee_cents: 200,
     platform_fee_cents: 25,
-    revenue_profile_id: '' as string | undefined,
-    tax_profile_id: '' as string | undefined,
+    // Tax percentages
+    state_tax_percentage: 0,
+    local_tax_percentage: 0,
+    alcohol_tax_percentage: 0,
+    food_tax_percentage: 0,
+    // Revenue split percentages
+    valid_percentage: 0,
+    vendor_percentage: 0,
+    pool_percentage: 0,
+    promoter_percentage: 0,
+    executive_percentage: 0,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -59,14 +67,8 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
   const loadData = async () => {
     try {
       setLoading(true);
-      const [eventsRes, profilesRes, taxRes] = await Promise.all([
-        eventApi.list({ venue_id: venueId }),
-        revenueProfileApi.list(),
-        taxProfileApi.list(venueId),
-      ]);
+      const eventsRes = await eventApi.list({ venue_id: venueId });
       setEvents(eventsRes.data || []);
-      setRevenueProfiles(profilesRes.data || []);
-      setTaxProfiles(taxRes.data || []);
     } catch (error: any) {
       console.error('Failed to load data:', error);
       // Don't show error toast for 401 - the router will handle it
@@ -150,6 +152,7 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
     setFormData({
       event_id: '',
       venue_id: venueId,
+      venue_name: '',
       event_name: '',
       description: '' as string | undefined,
       start_date: '',
@@ -158,8 +161,15 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
       entry_fee_cents: 500,
       re_entry_fee_cents: 200,
       platform_fee_cents: 25,
-      revenue_profile_id: '' as string | undefined,
-      tax_profile_id: '' as string | undefined,
+      state_tax_percentage: 0,
+      local_tax_percentage: 0,
+      alcohol_tax_percentage: 0,
+      food_tax_percentage: 0,
+      valid_percentage: 0,
+      vendor_percentage: 0,
+      pool_percentage: 0,
+      promoter_percentage: 0,
+      executive_percentage: 0,
     });
     setErrors({});
     setEditingEvent(null);
@@ -354,43 +364,149 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">{t('events.revenueProfile')}</label>
-                <select
-                  value={formData.revenue_profile_id}
-                  onChange={(e) => setFormData({ ...formData, revenue_profile_id: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
-                >
-                  <option value="">{t('events.selectProfile')}</option>
-                  {revenueProfiles.map((profile) => (
-                    <option key={profile.id} value={profile.id}>
-                      {profile.profile_name}
-                    </option>
-                  ))}
-                </select>
+            {/* Revenue Split Configuration */}
+            <div className="bg-slate-800/50 border border-slate-600 rounded-lg p-4">
+              <h4 className="text-sm font-semibold text-slate-300 mb-3">Revenue Split (%)</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">VALID</label>
+                  <input
+                    type="number"
+                    value={formData.valid_percentage}
+                    onChange={(e) => setFormData({ ...formData, valid_percentage: parseFloat(e.target.value || '0') })}
+                    className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Vendor</label>
+                  <input
+                    type="number"
+                    value={formData.vendor_percentage}
+                    onChange={(e) => setFormData({ ...formData, vendor_percentage: parseFloat(e.target.value || '0') })}
+                    className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Pool</label>
+                  <input
+                    type="number"
+                    value={formData.pool_percentage}
+                    onChange={(e) => setFormData({ ...formData, pool_percentage: parseFloat(e.target.value || '0') })}
+                    className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Promoter</label>
+                  <input
+                    type="number"
+                    value={formData.promoter_percentage}
+                    onChange={(e) => setFormData({ ...formData, promoter_percentage: parseFloat(e.target.value || '0') })}
+                    className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Executive</label>
+                  <input
+                    type="number"
+                    value={formData.executive_percentage}
+                    onChange={(e) => setFormData({ ...formData, executive_percentage: parseFloat(e.target.value || '0') })}
+                    className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                  />
+                </div>
               </div>
+              <div className="mt-2 p-2 bg-slate-900/50 rounded text-xs">
+                <span className="text-slate-400">Total: </span>
+                <span className={`font-semibold ${
+                  (formData.valid_percentage + formData.vendor_percentage + formData.pool_percentage + formData.promoter_percentage + formData.executive_percentage) === 100 
+                    ? 'text-emerald-400' 
+                    : 'text-red-400'
+                }`}>
+                  {(formData.valid_percentage + formData.vendor_percentage + formData.pool_percentage + formData.promoter_percentage + formData.executive_percentage).toFixed(2)}%
+                </span>
+                {(formData.valid_percentage + formData.vendor_percentage + formData.pool_percentage + formData.promoter_percentage + formData.executive_percentage) !== 100 && (
+                  <span className="ml-2 text-red-400">(must equal 100%)</span>
+                )}
+              </div>
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">{t('events.taxProfile')}</label>
-                <select
-                  value={formData.tax_profile_id}
-                  onChange={(e) => setFormData({ ...formData, tax_profile_id: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
-                >
-                  <option value="">{t('events.selectProfile')}</option>
-                  {taxProfiles.map((profile) => (
-                    <option key={profile.id} value={profile.id}>
-                      {profile.profile_name}
-                    </option>
-                  ))}
-                </select>
+            {/* Tax Configuration */}
+            <div className="bg-slate-800/50 border border-slate-600 rounded-lg p-4">
+              <h4 className="text-sm font-semibold text-slate-300 mb-3">Tax Configuration (%)</h4>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">State Tax</label>
+                  <input
+                    type="number"
+                    value={formData.state_tax_percentage}
+                    onChange={(e) => setFormData({ ...formData, state_tax_percentage: parseFloat(e.target.value || '0') })}
+                    className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Local Tax</label>
+                  <input
+                    type="number"
+                    value={formData.local_tax_percentage}
+                    onChange={(e) => setFormData({ ...formData, local_tax_percentage: parseFloat(e.target.value || '0') })}
+                    className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Alcohol Tax</label>
+                  <input
+                    type="number"
+                    value={formData.alcohol_tax_percentage}
+                    onChange={(e) => setFormData({ ...formData, alcohol_tax_percentage: parseFloat(e.target.value || '0') })}
+                    className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Food Tax</label>
+                  <input
+                    type="number"
+                    value={formData.food_tax_percentage}
+                    onChange={(e) => setFormData({ ...formData, food_tax_percentage: parseFloat(e.target.value || '0') })}
+                    className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                  />
+                </div>
+              </div>
+              <div className="mt-2 p-2 bg-slate-900/50 rounded text-xs text-slate-400">
+                Total Base Tax: <span className="text-white font-semibold">
+                  {(formData.state_tax_percentage + formData.local_tax_percentage).toFixed(2)}%
+                </span>
               </div>
             </div>
 
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || (formData.valid_percentage + formData.vendor_percentage + formData.pool_percentage + formData.promoter_percentage + formData.executive_percentage) !== 100}
               className="w-full bg-purple-500/20 border border-purple-500/50 text-purple-400 py-3 px-4 rounded-lg hover:bg-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all flex items-center justify-center gap-2 min-h-[44px]"
             >
               {submitting ? (
@@ -443,6 +559,7 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                       setFormData({
                         event_id: event.event_id,
                         venue_id: venueId,
+                        venue_name: '',
                         event_name: event.event_name,
                         description: (event.description || '') as string | undefined,
                         start_date: event.start_date,
@@ -451,8 +568,15 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                         entry_fee_cents: event.entry_fee_cents,
                         re_entry_fee_cents: event.re_entry_fee_cents,
                         platform_fee_cents: event.platform_fee_cents,
-                        revenue_profile_id: (event.revenue_profile_id || '') as string | undefined,
-                        tax_profile_id: (event.tax_profile_id || '') as string | undefined,
+                        state_tax_percentage: 0,
+                        local_tax_percentage: 0,
+                        alcohol_tax_percentage: 0,
+                        food_tax_percentage: 0,
+                        valid_percentage: 0,
+                        vendor_percentage: 0,
+                        pool_percentage: 0,
+                        promoter_percentage: 0,
+                        executive_percentage: 0,
                       });
                       setShowForm(true);
                     }}
