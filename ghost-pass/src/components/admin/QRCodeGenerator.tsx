@@ -244,23 +244,11 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
             <img src={qrDataUrl} alt="Generated QR Code" className="w-64 h-64 sm:w-80 sm:h-80" />
           </div>
 
-          <div className="bg-slate-950/50 border border-slate-700 rounded-lg p-3 sm:p-4 mb-4 text-left">
-            <p className="text-xs sm:text-sm text-slate-400 mb-1">{t('qr.walletBindingId', 'Wallet Binding ID')}:</p>
-            <p className="text-sm sm:text-base text-white font-mono break-all">{selectedAsset.asset_code}</p>
-            <p className="text-xs sm:text-sm text-slate-400 mt-2 mb-1">{t('qr.qrFormat', 'QR Code Format')}:</p>
-            <p className="text-sm sm:text-base text-emerald-400 font-mono break-all">ghostsession:{selectedAsset.asset_code}</p>
-            <p className="text-xs sm:text-sm text-slate-400 mt-2 mb-1">{t('qr.stationType', 'Station Type')}:</p>
-            <p className="text-sm sm:text-base text-white">{formData.station_type}</p>
-            {formData.station_id && (
-              <>
-                <p className="text-xs sm:text-sm text-slate-400 mt-2 mb-1">{t('qr.stationId', 'Station ID')}:</p>
-                <p className="text-sm sm:text-base text-white">{formData.station_id}</p>
-              </>
-            )}
-            <div className="mt-3 p-2 bg-emerald-500/10 border border-emerald-500/30 rounded">
-              <p className="text-xs text-emerald-400 flex items-center gap-2">
+          <div className="bg-slate-950/50 border border-slate-700 rounded-lg p-3 sm:p-4 mb-4">
+            <div className="p-2 bg-emerald-500/10 border border-emerald-500/30 rounded">
+              <p className="text-xs sm:text-sm text-emerald-400 flex items-center justify-center gap-2">
                 <CheckCircle className="w-3 h-3" />
-                This QR code is scanner-ready and will be accepted by GhostPass
+                QR code is scanner-ready
               </p>
             </div>
           </div>

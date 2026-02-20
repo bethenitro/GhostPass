@@ -116,13 +116,19 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
 
     setSubmitting(true);
     try {
+      // Use venueId as venue_name if venue_name is not set
+      const submitData = {
+        ...formData,
+        venue_name: formData.venue_name || venueId
+      };
+      
       if (editingEvent) {
         // Update existing event
-        await eventApi.update(editingEvent.event_id, formData);
+        await eventApi.update(editingEvent.event_id, submitData);
         showToast('Event updated successfully', 'success');
       } else {
         // Create new event
-        await eventApi.create(formData);
+        await eventApi.create(submitData);
         showToast(t('events.eventCreated'), 'success');
       }
       setShowForm(false);
