@@ -80,7 +80,12 @@ export const EventCreator: React.FC = () => {
         executive_percentage: 0,
       });
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Failed to create event');
+      // Handle duplicate event ID error
+      if (error.response?.status === 409 || error.response?.data?.detail?.includes('duplicate')) {
+        alert('Event ID already exists. Please use a different event ID.');
+      } else {
+        alert(error.response?.data?.error || 'Failed to create event');
+      }
     } finally {
       setLoading(false);
     }

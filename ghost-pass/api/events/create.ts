@@ -81,7 +81,19 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Create event error:', error);
+      
+      // Handle duplicate key error
+      if (error.code === '23505' || error.message?.includes('duplicate key')) {
+        return res.status(409).json({ 
+          error: 'Event ID already exists', 
+          detail: 'An event with this ID already exists. Please use a different event ID.' 
+        });
+      }
+      
+      throw error;
+    }
 
     res.status(201).json(data);
   } catch (error: any) {

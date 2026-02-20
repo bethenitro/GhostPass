@@ -32,7 +32,14 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
     if (error) throw error;
 
-    res.status(200).json(data || []);
+    // Map database columns to frontend expected format
+    const mappedData = (data || []).map(event => ({
+      ...event,
+      event_id: event.id,
+      event_name: event.name,
+    }));
+
+    res.status(200).json(mappedData);
   } catch (error: any) {
     console.error('List events error:', error);
     res.status(500).json({ error: 'Failed to list events', detail: error.message });

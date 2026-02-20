@@ -136,7 +136,13 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
       loadData();
     } catch (error: any) {
       console.error('Failed to save event:', error);
-      showToast(error.response?.data?.error || `Failed to ${editingEvent ? 'update' : 'create'} event`, 'error');
+      
+      // Handle duplicate event ID error
+      if (error.response?.status === 409 || error.response?.data?.detail?.includes('duplicate')) {
+        showToast('Event ID already exists. Please use a different event ID.', 'error');
+      } else {
+        showToast(error.response?.data?.error || `Failed to ${editingEvent ? 'update' : 'create'} event`, 'error');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -562,6 +568,10 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                   <button 
                     onClick={() => {
                       setEditingEvent(event);
+                      
+                      // Extract metadata values if they exist
+                      const metadata = (event as any).metadata || {};
+                      
                       setFormData({
                         event_id: event.event_id,
                         venue_id: venueId,
@@ -574,15 +584,15 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                         entry_fee_cents: event.entry_fee_cents,
                         re_entry_fee_cents: event.re_entry_fee_cents,
                         platform_fee_cents: event.platform_fee_cents,
-                        state_tax_percentage: 0,
-                        local_tax_percentage: 0,
-                        alcohol_tax_percentage: 0,
-                        food_tax_percentage: 0,
-                        valid_percentage: 0,
-                        vendor_percentage: 0,
-                        pool_percentage: 0,
-                        promoter_percentage: 0,
-                        executive_percentage: 0,
+                        state_tax_percentage: metadata.state_tax_percentage || 0,
+                        local_tax_percentage: metadata.local_tax_percentage || 0,
+                        alcohol_tax_percentage: metadata.alcohol_tax_percentage || 0,
+                        food_tax_percentage: metadata.food_tax_percentage || 0,
+                        valid_percentage: metadata.valid_percentage || 0,
+                        vendor_percentage: metadata.vendor_percentage || 0,
+                        pool_percentage: metadata.pool_percentage || 0,
+                        promoter_percentage: metadata.promoter_percentage || 0,
+                        executive_percentage: metadata.executive_percentage || 0,
                       });
                       setShowForm(true);
                     }}
