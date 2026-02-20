@@ -48,16 +48,16 @@ export const taxProfileApi = {
 export const stationApi = {
   list: (params?: any) => apiClient.get('/stations/manage', { params }),
   create: (data: any) => apiClient.post('/stations/manage', data),
-  update: (data: any) => apiClient.put('/stations/manage', data),
-  delete: (id: string) => apiClient.delete('/stations/manage', { params: { id } }),
+  update: (id: string, data: any) => apiClient.put(`/stations/manage?id=${id}`, data),
+  delete: (id: string) => apiClient.delete(`/stations/manage?id=${id}`),
 };
 
 // Menu APIs
 export const menuApi = {
   list: (params?: any) => apiClient.get('/menu/manage', { params }),
   create: (data: any) => apiClient.post('/menu/manage', data),
-  update: (data: any) => apiClient.put('/menu/manage', data),
-  delete: (id: string) => apiClient.delete('/menu/manage', { params: { id } }),
+  update: (id: string, data: any) => apiClient.put(`/menu/manage?id=${id}`, data),
+  delete: (id: string) => apiClient.delete(`/menu/manage?id=${id}`),
 };
 
 // QR/NFC Asset APIs

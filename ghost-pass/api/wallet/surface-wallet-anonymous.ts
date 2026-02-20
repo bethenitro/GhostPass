@@ -9,6 +9,7 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { handleCors } from '../_lib/cors.js';
 import crypto from 'crypto';
+import { randomUUID } from 'crypto';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL!;
 const supabaseServiceKey = process.env.VITE_SUPABASE_ANON_KEY!;
@@ -64,7 +65,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Create new wallet if doesn't exist
     if (!existingWallet || walletError) {
-      walletBindingId = `wallet_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      // Use proper UUID for wallet binding ID so it's scanner-compatible
+      walletBindingId = randomUUID();
       
       // Generate recovery code
       const recoveryCode = generateRecoveryCode();
@@ -95,8 +97,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       wallet = newWallet;
       
-      // Create wallet session for new wallet
-      const sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      // Create wallet session for new wallet - use UUID for session ID
+      const sessionId = randomUUID();
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 24); // 24 hour session
 
@@ -148,8 +150,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // Create or update wallet session for existing wallet
-    const sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    // Create or update wallet session for existing wallet - use UUID for session ID
+    const sessionId = randomUUID();
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 24); // 24 hour session
 

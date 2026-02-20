@@ -65,16 +65,47 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Try to validate the pass in the database
-    // This is a basic implementation - expand based on your schema
+    // Check wallet_sessions table using wallet_binding_id
     const { data: session, error } = await supabase
-      .from('ghost_pass_sessions')
+      .from('wallet_sessions')
       .select('*')
-      .eq('id', pass_id)
+      .eq('wallet_binding_id', pass_id)
+      .eq('is_active', true)
       .single();
 
     if (error || !session) {
-      console.log('Pass not found in database, returning approval for demo');
-      // For demo purposes, approve anyway
+      console.log('Wallet session not found, checking by session ID');
+      
+      // Also try by session ID in case pass_id is the session ID
+      const { data: sessionById, error: sessionByIdError } = await supabase
+        .from('wallet_sessions')
+        .select('*')
+        .eq('id', pass_id)
+        .eq('is_active', true)
+        .single();
+      
+      if (sessionByIdError || !sessionById) {
+        console.log('Pass not found in database');
+        return res.status(200).json({
+          status: 'DENIED',
+          message: 'Invalid or expired pass',
+          receipt_id: venue_id || 'unknown'
+        });
+      }
+      
+      // Use session found by ID
+      const sessionData = sessionById;
+      
+      // Check if session has expired
+      if (sessionData.expires_at && new Date(sessionData.expires_at) < new Date()) {
+        return res.status(200).json({
+          status: 'DENIED',
+          message: 'Pass has expired',
+          receipt_id: venue_id || 'unknown'
+        });
+      }
+      
+      // All checks passed
       return res.status(200).json({
         status: 'APPROVED',
         message: 'Entry approved',
@@ -82,15 +113,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         pass_id,
         gateway_id,
         timestamp: new Date().toISOString()
-      });
-    }
-
-    // Check if session is active
-    if (session.is_active === false) {
-      return res.status(200).json({
-        status: 'DENIED',
-        message: 'Pass is not active',
-        receipt_id: venue_id || 'unknown'
       });
     }
 

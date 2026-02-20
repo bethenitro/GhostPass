@@ -220,7 +220,7 @@ export const VenueEntryConfig: React.FC<VenueEntryConfigProps> = ({ venueId, eve
               <span className="text-white font-mono">{formatCurrency(config.valid_reentry_scan_fee_cents)}</span>
             </div>
             <div className="flex justify-between pt-2 border-t border-slate-700">
-              <span className="text-slate-300 font-medium">Total Re-entry Cost:</span>
+              <span className="text-slate-300 font-medium">Total Charges:</span>
               <span className="text-green-400 font-mono font-bold">
                 {formatCurrency(config.venue_reentry_fee_cents + config.valid_reentry_scan_fee_cents)}
               </span>

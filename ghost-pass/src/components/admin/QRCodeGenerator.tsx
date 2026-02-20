@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { QrCode, Download, Loader2, Plus } from 'lucide-react';
+import { QrCode, Download, Loader2, Plus, CheckCircle } from 'lucide-react';
 import QRCodeLib from 'qrcode';
 import { useToast } from '../ui/toast';
 
@@ -31,41 +31,69 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
     try {
       setLoading(true);
       
-      // Create QR asset via API
-      const response = await fetch('/api/qr-assets/provision', {
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) {
+        showToast('Please login first', 'error');
+        setLoading(false);
+        return;
+      }
+
+      // Step 1: Create a wallet session that the scanner can validate
+      const sessionResponse = await fetch('/api/wallet/surface-wallet-anonymous', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         },
         body: JSON.stringify({
-          asset_type: formData.asset_type,
-          venue_id: formData.venue_id,
-          event_id: formData.event_id,
-          station_id: formData.station_id,
-          revenue_profile_id: formData.revenue_profile_id,
-          tax_profile_id: formData.tax_profile_id,
-          fee_logic: {},
-          re_entry_rules: {},
-          id_verification_level: formData.id_verification_level
+          venue_id: formData.venue_id || 'venue_001',
+          event_id: formData.event_id || null,
+          device_fingerprint: `qr_gen_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+          force_surface: true
         })
       });
 
-      if (!response.ok) throw new Error('Failed to provision QR asset');
+      if (!sessionResponse.ok) {
+        const errorData = await sessionResponse.json();
+        throw new Error(errorData.error || 'Failed to create wallet session');
+      }
       
-      const asset = await response.json();
-      setSelectedAsset(asset);
+      const sessionData = await sessionResponse.json();
+      
+      // The session data contains wallet_binding_id which is what we need
+      const walletBindingId = sessionData.wallet_binding_id;
+      
+      if (!walletBindingId) {
+        throw new Error('No wallet binding ID returned from session creation');
+      }
 
-      // Generate QR code image
-      const qrData = JSON.stringify({
-        type: 'ENTRY_POINT',
-        asset_code: asset.asset_code,
-        venue_id: asset.venue_id,
-        event_id: asset.event_id,
-        station_id: asset.station_id,
-        station_type: formData.station_type,
-        timestamp: new Date().toISOString()
-      });
+      // Step 2: Create QR asset record for tracking (optional but recommended)
+      try {
+        await fetch('/api/qr-assets/provision', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            asset_type: formData.asset_type,
+            venue_id: formData.venue_id || 'venue_001',
+            event_id: formData.event_id || null,
+            station_id: formData.station_id || `${formData.station_type}_${Date.now()}`,
+            revenue_profile_id: formData.revenue_profile_id || null,
+            tax_profile_id: formData.tax_profile_id || null,
+            fee_logic: {},
+            re_entry_rules: {},
+            id_verification_level: formData.id_verification_level
+          })
+        });
+      } catch (assetError) {
+        console.warn('Failed to create QR asset record:', assetError);
+        // Continue anyway - the wallet session is what matters
+      }
+
+      // Step 3: Generate QR code with the wallet binding ID in scanner-compatible format
+      // The scanner expects: "ghostpass:{uuid}" or "ghostsession:{uuid}"
+      const qrData = `ghostsession:${walletBindingId}`;
 
       const dataUrl = await QRCodeLib.toDataURL(qrData, {
         width: 512,
@@ -77,7 +105,16 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
       });
 
       setQrDataUrl(dataUrl);
-      showToast('QR Code generated successfully', 'success');
+      setSelectedAsset({
+        asset_code: walletBindingId,
+        venue_id: formData.venue_id || 'venue_001',
+        event_id: formData.event_id || null,
+        station_id: formData.station_id,
+        station_type: formData.station_type,
+        session_data: sessionData
+      });
+      
+      showToast('QR Code generated successfully - Ready to scan!', 'success');
     } catch (error: any) {
       console.error('Error generating QR code:', error);
       showToast(error.message || 'Failed to generate QR code', 'error');
@@ -205,8 +242,10 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
           </div>
 
           <div className="bg-slate-950/50 border border-slate-700 rounded-lg p-3 sm:p-4 mb-4 text-left">
-            <p className="text-xs sm:text-sm text-slate-400 mb-1">{t('qr.assetCode', 'Asset Code')}:</p>
+            <p className="text-xs sm:text-sm text-slate-400 mb-1">{t('qr.walletBindingId', 'Wallet Binding ID')}:</p>
             <p className="text-sm sm:text-base text-white font-mono break-all">{selectedAsset.asset_code}</p>
+            <p className="text-xs sm:text-sm text-slate-400 mt-2 mb-1">{t('qr.qrFormat', 'QR Code Format')}:</p>
+            <p className="text-sm sm:text-base text-emerald-400 font-mono break-all">ghostsession:{selectedAsset.asset_code}</p>
             <p className="text-xs sm:text-sm text-slate-400 mt-2 mb-1">{t('qr.stationType', 'Station Type')}:</p>
             <p className="text-sm sm:text-base text-white">{formData.station_type}</p>
             {formData.station_id && (
@@ -215,6 +254,12 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
                 <p className="text-sm sm:text-base text-white">{formData.station_id}</p>
               </>
             )}
+            <div className="mt-3 p-2 bg-emerald-500/10 border border-emerald-500/30 rounded">
+              <p className="text-xs text-emerald-400 flex items-center gap-2">
+                <CheckCircle className="w-3 h-3" />
+                This QR code is scanner-ready and will be accepted by GhostPass
+              </p>
+            </div>
           </div>
 
           <div className="flex flex-col sm:flex-row justify-center gap-3">

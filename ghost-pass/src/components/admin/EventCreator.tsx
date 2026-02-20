@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { eventApi, venueApi, revenueProfileApi, taxProfileApi } from '../../lib/api-client';
+import { eventApi, venueApi, revenueProfileApi } from '../../lib/api-client';
 
 export const EventCreator: React.FC = () => {
   const { t } = useTranslation();
   const [venues, setVenues] = useState<any[]>([]);
   const [revenueProfiles, setRevenueProfiles] = useState<any[]>([]);
-  const [taxProfiles, setTaxProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     event_id: '',
     venue_id: '',
+    venue_name: '',
     event_name: '',
     description: '',
     start_date: '',
@@ -21,7 +21,10 @@ export const EventCreator: React.FC = () => {
     re_entry_fee_cents: 0,
     platform_fee_cents: 25,
     revenue_profile_id: '',
-    tax_profile_id: '',
+    state_tax_percentage: 0,
+    local_tax_percentage: 0,
+    alcohol_tax_percentage: 0,
+    food_tax_percentage: 0,
   });
 
   useEffect(() => {
@@ -30,14 +33,12 @@ export const EventCreator: React.FC = () => {
 
   const loadData = async () => {
     try {
-      const [venuesRes, profilesRes, taxRes] = await Promise.all([
+      const [venuesRes, profilesRes] = await Promise.all([
         venueApi.list(),
         revenueProfileApi.list(),
-        taxProfileApi.list(),
       ]);
       setVenues(venuesRes.data);
       setRevenueProfiles(profilesRes.data);
-      setTaxProfiles(taxRes.data);
     } catch (error) {
       console.error('Failed to load data:', error);
     }
@@ -48,11 +49,18 @@ export const EventCreator: React.FC = () => {
     setLoading(true);
 
     try {
-      await eventApi.create(formData);
+      // Get venue name from selected venue
+      const selectedVenue = venues.find(v => v.venue_id === formData.venue_id);
+      
+      await eventApi.create({
+        ...formData,
+        venue_name: selectedVenue?.venue_name || formData.venue_id
+      });
       alert(t('events.eventCreated'));
       setFormData({
         event_id: '',
         venue_id: '',
+        venue_name: '',
         event_name: '',
         description: '',
         start_date: '',
@@ -62,7 +70,10 @@ export const EventCreator: React.FC = () => {
         re_entry_fee_cents: 0,
         platform_fee_cents: 25,
         revenue_profile_id: '',
-        tax_profile_id: '',
+        state_tax_percentage: 0,
+        local_tax_percentage: 0,
+        alcohol_tax_percentage: 0,
+        food_tax_percentage: 0,
       });
     } catch (error: any) {
       alert(error.response?.data?.error || 'Failed to create event');
@@ -210,20 +221,70 @@ export const EventCreator: React.FC = () => {
           </select>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">{t('events.taxProfile')}</label>
-          <select
-            value={formData.tax_profile_id}
-            onChange={(e) => setFormData({ ...formData, tax_profile_id: e.target.value })}
-            className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-xl text-white focus:border-cyan-500/50 focus:outline-none"
-          >
-            <option value="">{t('events.selectProfile')}</option>
-            {taxProfiles.map((profile) => (
-              <option key={profile.id} value={profile.id}>
-                {profile.profile_name}
-              </option>
-            ))}
-          </select>
+        {/* Tax Configuration */}
+        <div className="bg-slate-800/50 border border-slate-600 rounded-lg p-4">
+          <h3 className="text-sm font-semibold text-slate-300 mb-3">Tax Configuration (%)</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-1">State Tax</label>
+              <input
+                type="number"
+                value={formData.state_tax_percentage}
+                onChange={(e) => setFormData({ ...formData, state_tax_percentage: parseFloat(e.target.value || '0') })}
+                className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-cyan-500/50 focus:outline-none"
+                step="0.01"
+                min="0"
+                max="100"
+                placeholder="e.g., 5.5"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-1">Local Tax</label>
+              <input
+                type="number"
+                value={formData.local_tax_percentage}
+                onChange={(e) => setFormData({ ...formData, local_tax_percentage: parseFloat(e.target.value || '0') })}
+                className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-cyan-500/50 focus:outline-none"
+                step="0.01"
+                min="0"
+                max="100"
+                placeholder="e.g., 2.5"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-1">Alcohol Tax</label>
+              <input
+                type="number"
+                value={formData.alcohol_tax_percentage}
+                onChange={(e) => setFormData({ ...formData, alcohol_tax_percentage: parseFloat(e.target.value || '0') })}
+                className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-cyan-500/50 focus:outline-none"
+                step="0.01"
+                min="0"
+                max="100"
+                placeholder="e.g., 3.0"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-1">Food Tax</label>
+              <input
+                type="number"
+                value={formData.food_tax_percentage}
+                onChange={(e) => setFormData({ ...formData, food_tax_percentage: parseFloat(e.target.value || '0') })}
+                className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-cyan-500/50 focus:outline-none"
+                step="0.01"
+                min="0"
+                max="100"
+                placeholder="e.g., 1.5"
+              />
+            </div>
+          </div>
+          <div className="mt-3 p-2 bg-slate-900/50 rounded">
+            <p className="text-xs text-slate-400">
+              Total Base Tax: <span className="text-white font-semibold">
+                {(formData.state_tax_percentage + formData.local_tax_percentage).toFixed(2)}%
+              </span>
+            </p>
+          </div>
         </div>
 
         <button
