@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { menuApi, revenueProfileApi } from '../../lib/api-client';
 import { Plus, Loader2, Trash2, Beer, UtensilsCrossed, ShoppingBag, Edit2 } from 'lucide-react';
 import { useToast } from '../ui/toast';
@@ -9,7 +8,6 @@ const CONCESSION_ITEMS = ['Food items', 'Drinks'];
 const MERCH_ITEMS = ['Item name'];
 
 export const MenuManager: React.FC<{ venueId: string; eventId?: string }> = ({ venueId, eventId }) => {
-  const { t } = useTranslation();
   const { showToast } = useToast();
   const [items, setItems] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<any[]>([]);
