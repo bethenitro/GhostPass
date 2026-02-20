@@ -209,20 +209,20 @@ export const VenueEntryConfig: React.FC<VenueEntryConfigProps> = ({ venueId, eve
           <div className="space-y-1 text-sm">
             <div className="flex justify-between">
               <span className="text-slate-400">Initial Entry:</span>
-              <span className="text-white font-mono">{formatCurrency(config.initial_entry_fee_cents)}</span>
+              <span className="text-white font-mono">${formatCurrency(config.initial_entry_fee_cents)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-400">Re-entry (Venue):</span>
-              <span className="text-white font-mono">{formatCurrency(config.venue_reentry_fee_cents)}</span>
+              <span className="text-white font-mono">${formatCurrency(config.venue_reentry_fee_cents)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-400">Re-entry (VALID Fee):</span>
-              <span className="text-white font-mono">{formatCurrency(config.valid_reentry_scan_fee_cents)}</span>
+              <span className="text-white font-mono">${formatCurrency(config.valid_reentry_scan_fee_cents)}</span>
             </div>
             <div className="flex justify-between pt-2 border-t border-slate-700">
               <span className="text-slate-300 font-medium">Total Charges:</span>
               <span className="text-green-400 font-mono font-bold">
-                {formatCurrency(config.venue_reentry_fee_cents + config.valid_reentry_scan_fee_cents)}
+                ${formatCurrency(config.initial_entry_fee_cents + config.venue_reentry_fee_cents + config.valid_reentry_scan_fee_cents)}
               </span>
             </div>
           </div>

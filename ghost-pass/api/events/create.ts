@@ -30,11 +30,15 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       entry_fee_cents,
       re_entry_fee_cents,
       platform_fee_cents,
-      revenue_profile_id,
       state_tax_percentage,
       local_tax_percentage,
       alcohol_tax_percentage,
       food_tax_percentage,
+      valid_percentage,
+      vendor_percentage,
+      pool_percentage,
+      promoter_percentage,
+      executive_percentage,
       payout_routing_id
     } = req.body;
 
@@ -56,14 +60,19 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         entry_fee_cents: entry_fee_cents || 0,
         re_entry_fee_cents: re_entry_fee_cents || 0,
         platform_fee_cents: platform_fee_cents || 25,
-        // Store tax percentages in metadata
+        // Store tax percentages and revenue split in metadata
         metadata: {
-          revenue_profile_id: revenue_profile_id || null,
           payout_routing_id: payout_routing_id || null,
           state_tax_percentage: state_tax_percentage || 0,
           local_tax_percentage: local_tax_percentage || 0,
           alcohol_tax_percentage: alcohol_tax_percentage || 0,
           food_tax_percentage: food_tax_percentage || 0,
+          // Revenue split percentages (matching revenue_profiles table)
+          valid_percentage: valid_percentage || 0,
+          vendor_percentage: vendor_percentage || 0,
+          pool_percentage: pool_percentage || 0,
+          promoter_percentage: promoter_percentage || 0,
+          executive_percentage: executive_percentage || 0,
         }
       })
       .select()
