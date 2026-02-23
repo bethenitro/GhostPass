@@ -250,6 +250,7 @@ export const StationManager: React.FC<{ venueId: string; eventId?: string }> = (
               >
                 <option value={1}>{t('stations.tier1')}</option>
                 <option value={2}>{t('stations.tier2')}</option>
+                <option value={3}>{t('stations.tier3', 'Tier 3 - Footprint ID Verification')}</option>
               </select>
             </div>
 

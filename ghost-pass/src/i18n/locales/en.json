@@ -169,7 +169,11 @@
     "wallet": "Wallet",
     "walletNotCreated": "Not created yet",
     "openWallet": "Open Wallet",
-    "viewWallet": "View Wallet"
+    "viewWallet": "View Wallet",
+    "verificationRequired": "Identity Verification Required",
+    "tier3Required": "This entry point requires Tier-3 identity verification",
+    "verificationComplete": "Verification complete - Entry approved",
+    "verificationFailed": "Identity verification failed"
   },
   "session": {
     "title": "GHOSTPASS SESSION",
@@ -1142,6 +1146,7 @@
     "idVerificationLevel": "ID Verification Level",
     "tier1": "Tier 1 - Manual Verification",
     "tier2": "Tier 2 - Age Flag",
+    "tier3": "Tier 3 - Footprint ID Verification",
     "noStations": "No stations configured",
     "addStation": "Add Station",
     "employeeName": "Employee Name",
@@ -1195,6 +1200,7 @@
     "idVerification": "ID Verification Level",
     "tier1": "Tier 1 - Manual Log",
     "tier2": "Tier 2 - Age Verification",
+    "tier3": "Tier 3 - Footprint ID Verification",
     "revenueProfile": "Revenue Profile ID (Optional)",
     "revenueProfilePlaceholder": "Leave empty for event default",
     "taxProfile": "Tax Profile ID (Optional)",
@@ -1239,11 +1245,22 @@
     "title": "ID Verification",
     "tier1Manual": "Tier 1 - Manual Verification",
     "tier2AgeFlag": "Tier 2 - Age Flag",
+    "tier3Footprint": "Tier 3 - Footprint ID Verification",
     "noRawIdStored": "No raw ID data stored",
     "ageVerified": "Age Verified",
     "verificationLog": "Verification Log",
     "employeeId": "Employee ID",
     "timestamp": "Timestamp"
+  },
+  "verification": {
+    "tier3Title": "Tier 3 - Identity Verification",
+    "tier3Description": "Complete identity verification using Footprint. This includes document scanning and identity validation.",
+    "startVerification": "Start Verification",
+    "loading": "Loading...",
+    "inProgress": "Verification in progress...",
+    "success": "Verification Successful",
+    "failed": "Verification Failed",
+    "tryAgain": "Try Again"
   },
   "adminVisibility": {
     "title": "Admin Visibility",

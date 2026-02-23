@@ -11,6 +11,50 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.VITE_SUPABASE_URL!;
 const supabaseServiceKey = process.env.VITE_SUPABASE_ANON_KEY!;
 
+/**
+ * Check the verification tier requirement for a gateway/venue
+ */
+async function checkVerificationTier(supabase: any, gateway_id: string, venue_id: string): Promise<number> {
+  try {
+    // First check if gateway_id is a valid UUID and exists in gateway_points
+    const { data: gateway } = await supabase
+      .from('gateway_points')
+      .select('id')
+      .eq('id', gateway_id)
+      .single();
+    
+    if (gateway) {
+      // Check stations table for this gateway
+      const { data: station } = await supabase
+        .from('stations')
+        .select('id_verification_level')
+        .eq('station_id', gateway_id)
+        .single();
+      
+      if (station?.id_verification_level) {
+        return station.id_verification_level;
+      }
+    }
+    
+    // Check QR/NFC assets
+    const { data: asset } = await supabase
+      .from('qr_nfc_assets')
+      .select('id_verification_level')
+      .eq('asset_code', gateway_id)
+      .single();
+    
+    if (asset?.id_verification_level) {
+      return asset.id_verification_level;
+    }
+    
+    // Default to Tier-1 if not specified
+    return 1;
+  } catch (error) {
+    console.error('Error checking verification tier:', error);
+    return 1; // Default to Tier-1 on error
+  }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Handle CORS
   if (req.method === 'OPTIONS') {
@@ -105,6 +149,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
       }
       
+      // Check verification tier requirement
+      const verificationTier = await checkVerificationTier(supabase, gateway_id, venue_id);
+      
+      if (verificationTier === 3) {
+        // Tier-3 requires Footprint verification
+        const { data: wallet } = await supabase
+          .from('wallets')
+          .select('user_id')
+          .eq('wallet_binding_id', sessionData.wallet_binding_id)
+          .single();
+        
+        if (wallet?.user_id) {
+          const { data: user } = await supabase
+            .from('users')
+            .select('fp_id')
+            .eq('id', wallet.user_id)
+            .single();
+          
+          if (!user?.fp_id) {
+            // User needs to complete Footprint verification
+            return res.status(200).json({
+              status: 'DENIED',
+              message: 'Identity verification required',
+              receipt_id: venue_id || 'unknown',
+              verification_tier: 3,
+              footprint_verified: false
+            });
+          }
+        }
+      }
+      
       // All checks passed
       return res.status(200).json({
         status: 'APPROVED',
@@ -112,7 +187,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         receipt_id: venue_id || 'unknown',
         pass_id,
         gateway_id,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        verification_tier: verificationTier
       });
     }
 
@@ -125,6 +201,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
+    // Check verification tier requirement
+    const verificationTier = await checkVerificationTier(supabase, gateway_id, venue_id);
+    
+    if (verificationTier === 3) {
+      // Tier-3 requires Footprint verification
+      const { data: wallet } = await supabase
+        .from('wallets')
+        .select('user_id')
+        .eq('wallet_binding_id', session.wallet_binding_id)
+        .single();
+      
+      if (wallet?.user_id) {
+        const { data: user } = await supabase
+          .from('users')
+          .select('fp_id')
+          .eq('id', wallet.user_id)
+          .single();
+        
+        if (!user?.fp_id) {
+          // User needs to complete Footprint verification
+          return res.status(200).json({
+            status: 'DENIED',
+            message: 'Identity verification required',
+            receipt_id: venue_id || 'unknown',
+            verification_tier: 3,
+            footprint_verified: false
+          });
+        }
+      }
+    }
+
     // All checks passed
     return res.status(200).json({
       status: 'APPROVED',
@@ -132,7 +239,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       receipt_id: venue_id || 'unknown',
       pass_id,
       gateway_id,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      verification_tier: verificationTier
     });
 
   } catch (error) {

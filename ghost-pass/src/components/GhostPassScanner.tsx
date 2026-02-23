@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import GhostPassAutoSurface from './GhostPassAutoSurface';
+import { FootprintVerification } from './FootprintVerification';
 
 // HTML5 QR Code scanner
 import { Html5Qrcode, Html5QrcodeScannerState } from 'html5-qrcode';
@@ -63,7 +64,7 @@ interface EntryPermission {
 
 const GhostPassScanner: React.FC = () => {
   const { t } = useTranslation();
-  const [scanState, setScanState] = useState<'idle' | 'scanning' | 'processing' | 'success' | 'error'>('idle');
+  const [scanState, setScanState] = useState<'idle' | 'scanning' | 'processing' | 'success' | 'error' | 'verification_required'>('idle');
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [entryPermission, setEntryPermission] = useState<EntryPermission | null>(null);
   const [showAutoSurface, setShowAutoSurface] = useState(false);
@@ -469,6 +470,13 @@ const GhostPassScanner: React.FC = () => {
       }
 
       const result = await scanResponse.json();
+      
+      // Check if Tier-3 verification is required
+      if (result.verification_tier === 3 && !result.footprint_verified) {
+        // User needs to complete Footprint verification
+        setScanState('verification_required');
+        return;
+      }
       
       if (result.status === 'APPROVED') {
         setScanResult({
@@ -916,6 +924,59 @@ const GhostPassScanner: React.FC = () => {
                 )}
               </motion.button>
             </div>
+          </div>
+        );
+
+      case 'verification_required':
+        return (
+          <div className="space-y-6">
+            <div className="text-center space-y-2">
+              <div className="w-16 h-16 mx-auto bg-blue-500/20 rounded-full flex items-center justify-center border-2 border-blue-500/50">
+                <Shield className="w-8 h-8 text-blue-400" />
+              </div>
+              <h3 className="text-xl font-bold text-white">
+                {t('scanner.verificationRequired', 'Identity Verification Required')}
+              </h3>
+              <p className="text-slate-400 text-sm">
+                {t('scanner.tier3Required', 'This entry point requires Tier-3 identity verification')}
+              </p>
+            </div>
+
+            <FootprintVerification
+              onComplete={(verified) => {
+                if (verified) {
+                  // Verification successful - retry scan
+                  setScanState('processing');
+                  // Re-process the scan now that user is verified
+                  setTimeout(() => {
+                    setScanState('success');
+                    setScanResult({
+                      status: 'APPROVED',
+                      message: t('scanner.verificationComplete', 'Verification complete - Entry approved'),
+                      receipt_id: venueId
+                    });
+                  }, 1000);
+                } else {
+                  // Verification failed
+                  setScanState('error');
+                  setErrorMessage(t('scanner.verificationFailed', 'Identity verification failed'));
+                }
+              }}
+              onCancel={() => {
+                setScanState('idle');
+              }}
+            />
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                setScanState('idle');
+              }}
+              className="w-full bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600 text-slate-300 font-medium py-3 px-6 rounded-xl transition-all duration-300"
+            >
+              {t('common.cancel', 'Cancel')}
+            </motion.button>
           </div>
         );
 

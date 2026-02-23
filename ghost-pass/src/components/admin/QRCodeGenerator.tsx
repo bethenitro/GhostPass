@@ -193,6 +193,7 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
             >
               <option value={1}>{t('qr.tier1', 'Tier 1 - Manual Log')}</option>
               <option value={2}>{t('qr.tier2', 'Tier 2 - Age Verification')}</option>
+              <option value={3}>{t('qr.tier3', 'Tier 3 - Footprint ID Verification')}</option>
             </select>
           </div>
 
