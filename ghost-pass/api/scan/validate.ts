@@ -194,7 +194,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
       
       // All checks passed
-      return res.status(200).json({
+      const approvalResult = {
         status: 'APPROVED',
         message: 'Entry approved',
         receipt_id: venue_id || 'unknown',
@@ -202,7 +202,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         gateway_id,
         timestamp: new Date().toISOString(),
         verification_tier: verificationTier
-      });
+      };
+
+      // Log audit trail for successful scan
+      try {
+        await supabase.from('audit_logs').insert({
+          action: 'SCAN_APPROVED',
+          resource_type: 'scan',
+          resource_id: pass_id,
+          metadata: {
+            gateway_id,
+            venue_id,
+            verification_tier: verificationTier,
+            wallet_binding_id: sessionData.wallet_binding_id
+          }
+        });
+      } catch (auditError) {
+        console.error('Audit log error:', auditError);
+        // Don't fail the scan if audit logging fails
+      }
+
+      return res.status(200).json(approvalResult);
     }
 
     // Check if session has expired
@@ -255,7 +275,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // All checks passed
-    return res.status(200).json({
+    const approvalResult = {
       status: 'APPROVED',
       message: 'Entry approved',
       receipt_id: venue_id || 'unknown',
@@ -263,7 +283,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       gateway_id,
       timestamp: new Date().toISOString(),
       verification_tier: verificationTier
-    });
+    };
+
+    // Log audit trail for successful scan
+    try {
+      await supabase.from('audit_logs').insert({
+        action: 'SCAN_APPROVED',
+        resource_type: 'scan',
+        resource_id: pass_id,
+        metadata: {
+          gateway_id,
+          venue_id,
+          verification_tier: verificationTier,
+          wallet_binding_id: session.wallet_binding_id
+        }
+      });
+    } catch (auditError) {
+      console.error('Audit log error:', auditError);
+      // Don't fail the scan if audit logging fails
+    }
+
+    return res.status(200).json(approvalResult);
 
   } catch (error) {
     console.error('Scan validation error:', error);

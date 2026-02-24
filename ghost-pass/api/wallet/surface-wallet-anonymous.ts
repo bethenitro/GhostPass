@@ -97,6 +97,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       wallet = newWallet;
       
+      // Log wallet creation in audit logs
+      try {
+        await supabase.from('audit_logs').insert({
+          action: 'WALLET_CREATED',
+          resource_type: 'wallet',
+          resource_id: walletBindingId,
+          metadata: {
+            device_fingerprint,
+            venue_id: venue_id || 'default_venue',
+            event_name: event_name || 'default_event',
+            entry_fee_cents
+          }
+        });
+      } catch (auditError) {
+        console.error('Audit log error:', auditError);
+      }
+      
       // Create wallet session for new wallet - use UUID for session ID
       const sessionId = randomUUID();
       const expiresAt = new Date();

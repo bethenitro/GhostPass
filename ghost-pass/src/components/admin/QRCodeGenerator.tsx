@@ -95,6 +95,31 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
         if (assetResponse.ok) {
           const assetData = await assetResponse.json();
           assetCode = assetData.asset_code;
+          
+          // Log QR generation in audit logs
+          try {
+            await fetch('/api/audit/entry-point', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+              },
+              body: JSON.stringify({
+                action: 'QR_CODE_GENERATED',
+                resource_type: 'qr_asset',
+                resource_id: assetCode,
+                metadata: {
+                  venue_id: formData.venue_id || 'venue_001',
+                  event_id: formData.event_id || null,
+                  station_type: formData.station_type,
+                  verification_tier: formData.id_verification_level,
+                  wallet_binding_id: walletBindingId
+                }
+              })
+            });
+          } catch (auditError) {
+            console.warn('Audit logging failed:', auditError);
+          }
         }
       } catch (assetError) {
         console.warn('Failed to create QR asset record:', assetError);
