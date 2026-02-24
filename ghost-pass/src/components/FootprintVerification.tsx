@@ -6,11 +6,15 @@ import { useToast } from './ui/toast';
 interface FootprintVerificationProps {
   onComplete?: (verified: boolean, fp_id: string) => void;
   onCancel?: () => void;
+  walletBindingId?: string;
+  verificationTier?: number;
 }
 
 export const FootprintVerification: React.FC<FootprintVerificationProps> = ({ 
   onComplete, 
-  onCancel 
+  onCancel,
+  walletBindingId,
+  verificationTier = 3
 }) => {
   const { t } = useTranslation();
   const { showToast } = useToast();
@@ -41,22 +45,19 @@ export const FootprintVerification: React.FC<FootprintVerificationProps> = ({
       setLoading(true);
       setVerificationStatus('loading');
 
-      // Step 1: Create Footprint onboarding session
-      const authToken = localStorage.getItem('auth_token');
-      if (!authToken) {
-        showToast('Please login first', 'error');
-        setLoading(false);
-        setVerificationStatus('failed');
-        return;
-      }
+      // Get device fingerprint
+      const deviceFingerprint = localStorage.getItem('device_fingerprint') || '';
 
+      // Step 1: Create Footprint onboarding session (no auth required)
       const sessionResponse = await fetch('/api/footprint/create-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
         },
-        body: JSON.stringify({}),
+        body: JSON.stringify({
+          wallet_binding_id: walletBindingId,
+          device_fingerprint: deviceFingerprint
+        }),
       });
 
       if (!sessionResponse.ok) {
@@ -110,16 +111,19 @@ export const FootprintVerification: React.FC<FootprintVerificationProps> = ({
 
   const handleVerificationComplete = async (validationToken: string) => {
     try {
-      const authToken = localStorage.getItem('auth_token');
+      const deviceFingerprint = localStorage.getItem('device_fingerprint') || '';
       
-      // Step 3: Validate the token and store fp_id
+      // Step 3: Validate the token and store fp_id (no auth required)
       const validateResponse = await fetch('/api/footprint/validate-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
         },
-        body: JSON.stringify({ validation_token: validationToken }),
+        body: JSON.stringify({ 
+          validation_token: validationToken,
+          wallet_binding_id: walletBindingId,
+          device_fingerprint: deviceFingerprint
+        }),
       });
 
       if (!validateResponse.ok) {
@@ -168,12 +172,16 @@ export const FootprintVerification: React.FC<FootprintVerificationProps> = ({
       <div className="flex items-center space-x-3 mb-4">
         <Shield className="w-6 h-6 text-blue-400" />
         <h3 className="text-lg font-bold text-white">
-          {t('verification.tier3Title', 'Tier 3 - Identity Verification')}
+          {verificationTier === 2 
+            ? t('verification.tier2Title', 'Tier 2 - Footprint Real ID')
+            : t('verification.tier3Title', 'Tier 3 - Footprint Deep Check')}
         </h3>
       </div>
 
       <p className="text-slate-300 mb-6">
-        {t('verification.tier3Description', 'Complete identity verification using Footprint. This includes document scanning and identity validation.')}
+        {verificationTier === 2
+          ? t('verification.tier2Description', 'Complete identity verification using Footprint Real ID.')
+          : t('verification.tier3Description', 'Complete identity verification using Footprint Deep Check. This includes document scanning and identity validation.')}
       </p>
 
       {verificationStatus === 'idle' && (

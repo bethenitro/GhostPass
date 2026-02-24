@@ -15,12 +15,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   }
 
   try {
-    const user = await requireAuth(req, res);
-    if (!user) {
-      return; // Response already sent by requireAuth
-    }
-
-    const { validation_token } = req.body;
+    const { validation_token, wallet_binding_id, device_fingerprint } = req.body;
 
     if (!validation_token) {
       return res.status(400).json({ error: 'Validation token required' });
@@ -72,15 +67,35 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       return res.status(400).json({ error: 'No fp_id returned from Footprint' });
     }
 
-    // Update user record with fp_id
-    const { error: updateError } = await supabase
-      .from('users')
-      .update({ fp_id })
-      .eq('id', user.id);
+    // Store fp_id in wallet record for anonymous users
+    if (wallet_binding_id) {
+      try {
+        // Find wallet by wallet_binding_id
+        const { data: wallet } = await supabase
+          .from('wallets')
+          .select('id, user_id')
+          .eq('wallet_binding_id', wallet_binding_id)
+          .single();
 
-    if (updateError) {
-      console.error('Error updating user with fp_id:', updateError);
-      return res.status(500).json({ error: 'Failed to store verification data' });
+        if (wallet) {
+          // Update wallet record with fp_id (works for both anonymous and authenticated users)
+          await supabase
+            .from('wallets')
+            .update({ fp_id })
+            .eq('id', wallet.id);
+
+          // Also update user record if user exists
+          if (wallet.user_id) {
+            await supabase
+              .from('users')
+              .update({ fp_id })
+              .eq('id', wallet.user_id);
+          }
+        }
+      } catch (error) {
+        console.warn('Could not update wallet with fp_id:', error);
+        // Don't fail the verification if we can't update the database
+      }
     }
 
     return res.status(200).json({

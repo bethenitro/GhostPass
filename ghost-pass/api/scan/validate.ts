@@ -158,13 +158,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       
       if (verificationTier >= 2) {
         // Tier 2 or 3 requires Footprint verification
+        // Check wallet table first (works for both anonymous and authenticated users)
         const { data: wallet } = await supabase
           .from('wallets')
-          .select('user_id')
+          .select('fp_id, user_id')
           .eq('wallet_binding_id', sessionData.wallet_binding_id)
           .single();
         
-        if (wallet?.user_id) {
+        // Check if wallet has fp_id (stored at wallet level for anonymous users)
+        if (wallet?.fp_id) {
+          // Verification already completed - allow entry
+          console.log('Wallet has fp_id verification:', wallet.fp_id);
+        } else if (wallet?.user_id) {
+          // Check user table for authenticated users
           const { data: user } = await supabase
             .from('users')
             .select('fp_id')
@@ -182,7 +188,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             });
           }
         } else {
-          // No wallet/user found - require verification
+          // No wallet found or no fp_id - require verification
           return res.status(200).json({
             status: 'DENIED',
             message: `Identity verification required (Tier ${verificationTier})`,
@@ -267,13 +273,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     if (verificationTier >= 2) {
       // Tier 2 or 3 requires Footprint verification
+      // Check wallet table first (works for both anonymous and authenticated users)
       const { data: wallet } = await supabase
         .from('wallets')
-        .select('user_id')
+        .select('fp_id, user_id')
         .eq('wallet_binding_id', session.wallet_binding_id)
         .single();
       
-      if (wallet?.user_id) {
+      // Check if wallet has fp_id (stored at wallet level for anonymous users)
+      if (wallet?.fp_id) {
+        // Verification already completed - allow entry
+        console.log('Wallet has fp_id verification:', wallet.fp_id);
+      } else if (wallet?.user_id) {
+        // Check user table for authenticated users
         const { data: user } = await supabase
           .from('users')
           .select('fp_id')
@@ -291,7 +303,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           });
         }
       } else {
-        // No wallet/user found - require verification
+        // No wallet found or no fp_id - require verification
         return res.status(200).json({
           status: 'DENIED',
           message: `Identity verification required (Tier ${verificationTier})`,

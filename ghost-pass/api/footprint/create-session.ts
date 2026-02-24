@@ -14,12 +14,10 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   }
 
   try {
-    const user = await requireAuth(req, res);
-    if (!user) {
-      return; // Response already sent by requireAuth
-    }
+    const { user_external_id, playbook_key, wallet_binding_id, device_fingerprint } = req.body;
 
-    const { user_external_id, playbook_key } = req.body;
+    // For anonymous users, use wallet_binding_id or device_fingerprint as external ID
+    const externalId = user_external_id || wallet_binding_id || device_fingerprint || `anon_${Date.now()}`;
 
     // Get Footprint API key from environment
     const footprintApiKey = process.env.FOOTPRINT_SECRET_KEY;
@@ -43,7 +41,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       body: JSON.stringify({
         kind: 'onboard',
         key: playbookKey,
-        user_external_id: user_external_id || user.id,
+        user_external_id: externalId,
       }),
     });
 

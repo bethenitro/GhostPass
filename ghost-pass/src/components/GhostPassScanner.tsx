@@ -76,6 +76,7 @@ const GhostPassScanner: React.FC = () => {
   const [deviceFingerprint, setDeviceFingerprint] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+  const [currentVerificationTier, setCurrentVerificationTier] = useState(1);
   const processingRef = React.useRef(false);
   
   const scannerElementId = 'qr-scanner-container';
@@ -456,18 +457,9 @@ const GhostPassScanner: React.FC = () => {
         return;
       }
       
-      // Check if Tier 2 or 3 verification is required BEFORE making API call
-      if (qrVerificationTier >= 2) {
-        // Check if user has completed Footprint verification
-        const footprintId = localStorage.getItem('footprint_id');
-        
-        if (!footprintId) {
-          // User needs to complete Footprint verification
-          console.log(`Tier-${qrVerificationTier} verification required - redirecting to Footprint`);
-          setScanState('verification_required');
-          return;
-        }
-      }
+      // Note: Verification tier check is now handled by the backend API
+      // The API will check if the wallet has fp_id stored in the database
+      // This works across devices since fp_id is stored at the wallet level
 
       // Process the actual scan with the extracted UUID and verification tier
       const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -494,9 +486,11 @@ const GhostPassScanner: React.FC = () => {
 
       const result = await scanResponse.json();
       
-      // Check if Tier-3 verification is required
-      if (result.verification_tier === 3 && !result.footprint_verified) {
+      // Check if verification is required (API will return this if wallet doesn't have fp_id)
+      if (result.status === 'DENIED' && result.verification_tier && result.footprint_verified === false) {
         // User needs to complete Footprint verification
+        setCurrentVerificationTier(result.verification_tier);
+        setWalletBindingId(passId); // Store wallet_binding_id for verification
         setScanState('verification_required');
         return;
       }
@@ -961,11 +955,15 @@ const GhostPassScanner: React.FC = () => {
                 {t('scanner.verificationRequired', 'Identity Verification Required')}
               </h3>
               <p className="text-slate-400 text-sm">
-                {t('scanner.tier3Required', 'This entry point requires Tier-3 identity verification')}
+                {currentVerificationTier === 2 
+                  ? t('scanner.tier2Required', 'This entry point requires Tier-2 identity verification')
+                  : t('scanner.tier3Required', 'This entry point requires Tier-3 identity verification')}
               </p>
             </div>
 
             <FootprintVerification
+              walletBindingId={walletBindingId}
+              verificationTier={currentVerificationTier}
               onComplete={(verified) => {
                 if (verified) {
                   // Verification successful - retry scan
