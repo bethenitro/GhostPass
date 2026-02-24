@@ -27,7 +27,7 @@ export const VenueStaffManager: React.FC<VenueStaffManagerProps> = ({ venueId })
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    role: 'VENDOR' as 'VENDOR' | 'VENUE_ADMIN',
+    role: 'VENDOR' as string,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -225,10 +225,16 @@ export const VenueStaffManager: React.FC<VenueStaffManagerProps> = ({ venueId })
               <label className="block text-sm font-medium text-slate-300 mb-1">Role</label>
               <select
                 value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value as 'VENDOR' | 'VENUE_ADMIN' })}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
                 className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-indigo-500/50 focus:outline-none"
               >
                 <option value="VENDOR">Vendor</option>
+                <option value="VENDOR_MERCHANDISE">Vendor Merchandise</option>
+                <option value="VENDOR_FB">F&B</option>
+                <option value="SECURITY">Security</option>
+                <option value="GM">GM</option>
+                <option value="OWNER">Owner</option>
+                <option value="VALID_ADMIN">Valid Admin</option>
                 <option value="VENUE_ADMIN">Venue Admin</option>
               </select>
             </div>

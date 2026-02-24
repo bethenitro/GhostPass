@@ -192,8 +192,8 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
               className="w-full px-3 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-blue-500 focus:outline-none min-h-[44px]"
             >
               <option value={1}>{t('qr.tier1', 'Tier 1 - Manual Log')}</option>
-              <option value={2}>{t('qr.tier2', 'Tier 2 - Age Verification')}</option>
-              <option value={3}>{t('qr.tier3', 'Tier 3 - Footprint ID Verification')}</option>
+              <option value={2}>Tier 2 - Footprint Real ID</option>
+              <option value={3}>Tier 3 - Footprint Deep Check</option>
             </select>
           </div>
 

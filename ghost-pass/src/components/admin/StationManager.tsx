@@ -249,8 +249,8 @@ export const StationManager: React.FC<{ venueId: string; eventId?: string }> = (
                 className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-xl text-white focus:border-cyan-500/50 focus:outline-none"
               >
                 <option value={1}>{t('stations.tier1')}</option>
-                <option value={2}>{t('stations.tier2')}</option>
-                <option value={3}>{t('stations.tier3', 'Tier 3 - Footprint ID Verification')}</option>
+                <option value={2}>Tier 2 - Footprint Real ID</option>
+                <option value={3}>Tier 3 - Footprint Deep Check</option>
               </select>
             </div>
 

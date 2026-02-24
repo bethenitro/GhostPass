@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { eventApi, venueApi } from '../../lib/api-client';
+import { eventApi, venueApi, revenueProfileApi } from '../../lib/api-client';
 
 export const EventCreator: React.FC = () => {
   const { t } = useTranslation();
   const [venues, setVenues] = useState<any[]>([]);
+  const [revenueProfiles, setRevenueProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [useRevenueProfile, setUseRevenueProfile] = useState(false);
+  const [selectedRevenueProfileId, setSelectedRevenueProfileId] = useState('');
 
   const [formData, setFormData] = useState({
     event_id: '',
@@ -37,10 +40,31 @@ export const EventCreator: React.FC = () => {
 
   const loadData = async () => {
     try {
-      const venuesRes = await venueApi.list();
+      const [venuesRes, revenueProfilesRes] = await Promise.all([
+        venueApi.list(),
+        revenueProfileApi.list()
+      ]);
       setVenues(venuesRes.data);
+      setRevenueProfiles(revenueProfilesRes.data || []);
     } catch (error) {
       console.error('Failed to load data:', error);
+    }
+  };
+
+  const handleRevenueProfileChange = (profileId: string) => {
+    setSelectedRevenueProfileId(profileId);
+    if (profileId) {
+      const profile = revenueProfiles.find(p => p.id === profileId);
+      if (profile) {
+        setFormData({
+          ...formData,
+          valid_percentage: profile.valid_percentage,
+          vendor_percentage: profile.vendor_percentage,
+          pool_percentage: profile.pool_percentage,
+          promoter_percentage: profile.promoter_percentage,
+          executive_percentage: profile.executive_percentage || 0,
+        });
+      }
     }
   };
 
@@ -57,14 +81,21 @@ export const EventCreator: React.FC = () => {
         venue_name: selectedVenue?.venue_name || formData.venue_id
       });
       alert(t('events.eventCreated'));
+      
+      // Keep dates but reset other fields
+      const preservedDates = {
+        start_date: formData.start_date,
+        end_date: formData.end_date,
+      };
+      
       setFormData({
         event_id: '',
         venue_id: '',
         venue_name: '',
         event_name: '',
         description: '',
-        start_date: '',
-        end_date: '',
+        start_date: preservedDates.start_date,
+        end_date: preservedDates.end_date,
         ticket_price_cents: 0,
         entry_fee_cents: 0,
         re_entry_fee_cents: 0,
@@ -79,6 +110,8 @@ export const EventCreator: React.FC = () => {
         promoter_percentage: 0,
         executive_percentage: 0,
       });
+      setUseRevenueProfile(false);
+      setSelectedRevenueProfileId('');
     } catch (error: any) {
       // Handle duplicate event ID error
       if (error.response?.status === 409 || error.response?.data?.detail?.includes('duplicate')) {
@@ -216,7 +249,41 @@ export const EventCreator: React.FC = () => {
 
         {/* Revenue Split Configuration */}
         <div className="bg-slate-800/50 border border-slate-600 rounded-lg p-4">
-          <h3 className="text-sm font-semibold text-slate-300 mb-3">Revenue Split (%)</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-slate-300">Revenue Split (%)</h3>
+            <label className="flex items-center space-x-2 text-xs text-slate-400">
+              <input
+                type="checkbox"
+                checked={useRevenueProfile}
+                onChange={(e) => {
+                  setUseRevenueProfile(e.target.checked);
+                  if (!e.target.checked) {
+                    setSelectedRevenueProfileId('');
+                  }
+                }}
+                className="rounded border-slate-600 bg-slate-900/50 text-cyan-500 focus:ring-cyan-500/50"
+              />
+              <span>Use Profile</span>
+            </label>
+          </div>
+
+          {useRevenueProfile && (
+            <div className="mb-4">
+              <select
+                value={selectedRevenueProfileId}
+                onChange={(e) => handleRevenueProfileChange(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-cyan-500/50 focus:outline-none"
+              >
+                <option value="">Select Revenue Profile</option>
+                {revenueProfiles.map((profile) => (
+                  <option key={profile.id} value={profile.id}>
+                    {profile.profile_name} - VALID: {profile.valid_percentage}%, Vendor: {profile.vendor_percentage}%, Pool: {profile.pool_percentage}%
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-medium text-slate-400 mb-1">VALID</label>
@@ -229,6 +296,7 @@ export const EventCreator: React.FC = () => {
                 min="0"
                 max="100"
                 placeholder="0"
+                disabled={useRevenueProfile && !!selectedRevenueProfileId}
               />
             </div>
             <div>
@@ -242,6 +310,7 @@ export const EventCreator: React.FC = () => {
                 min="0"
                 max="100"
                 placeholder="0"
+                disabled={useRevenueProfile && !!selectedRevenueProfileId}
               />
             </div>
             <div>
@@ -255,6 +324,7 @@ export const EventCreator: React.FC = () => {
                 min="0"
                 max="100"
                 placeholder="0"
+                disabled={useRevenueProfile && !!selectedRevenueProfileId}
               />
             </div>
             <div>
@@ -268,6 +338,7 @@ export const EventCreator: React.FC = () => {
                 min="0"
                 max="100"
                 placeholder="0"
+                disabled={useRevenueProfile && !!selectedRevenueProfileId}
               />
             </div>
             <div>
@@ -281,6 +352,7 @@ export const EventCreator: React.FC = () => {
                 min="0"
                 max="100"
                 placeholder="0"
+                disabled={useRevenueProfile && !!selectedRevenueProfileId}
               />
             </div>
           </div>
@@ -359,8 +431,13 @@ export const EventCreator: React.FC = () => {
           </div>
           <div className="mt-3 p-2 bg-slate-900/50 rounded">
             <p className="text-xs text-slate-400">
-              Total Base Tax: <span className="text-white font-semibold">
+              Total Base Tax (State + Local): <span className="text-white font-semibold">
                 {(formData.state_tax_percentage + formData.local_tax_percentage).toFixed(2)}%
+              </span>
+            </p>
+            <p className="text-xs text-slate-400 mt-1">
+              Total All Taxes: <span className="text-white font-semibold">
+                {(formData.state_tax_percentage + formData.local_tax_percentage + formData.alcohol_tax_percentage + formData.food_tax_percentage).toFixed(2)}%
               </span>
             </p>
           </div>

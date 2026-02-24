@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Calendar, Plus, Edit2, Trash2, Loader2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { eventApi } from '@/lib/api-client';
+import { eventApi, revenueProfileApi } from '@/lib/api-client';
 import { useToast } from '../ui/toast';
 
 interface VenueEventManagerProps {
@@ -28,10 +28,13 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
   const { t } = useTranslation();
   const { showToast } = useToast();
   const [events, setEvents] = useState<Event[]>([]);
+  const [revenueProfiles, setRevenueProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [useRevenueProfile, setUseRevenueProfile] = useState(false);
+  const [selectedRevenueProfileId, setSelectedRevenueProfileId] = useState('');
 
   const [formData, setFormData] = useState({
     event_id: '',
@@ -67,8 +70,12 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
   const loadData = async () => {
     try {
       setLoading(true);
-      const eventsRes = await eventApi.list({ venue_id: venueId });
+      const [eventsRes, revenueProfilesRes] = await Promise.all([
+        eventApi.list({ venue_id: venueId }),
+        revenueProfileApi.list()
+      ]);
       setEvents(eventsRes.data || []);
+      setRevenueProfiles(revenueProfilesRes.data || []);
     } catch (error: any) {
       console.error('Failed to load data:', error);
       // Don't show error toast for 401 - the router will handle it
@@ -77,6 +84,23 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRevenueProfileChange = (profileId: string) => {
+    setSelectedRevenueProfileId(profileId);
+    if (profileId) {
+      const profile = revenueProfiles.find(p => p.id === profileId);
+      if (profile) {
+        setFormData({
+          ...formData,
+          valid_percentage: profile.valid_percentage,
+          vendor_percentage: profile.vendor_percentage,
+          pool_percentage: profile.pool_percentage,
+          promoter_percentage: profile.promoter_percentage,
+          executive_percentage: profile.executive_percentage || 0,
+        });
+      }
     }
   };
 
@@ -161,14 +185,20 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
   };
 
   const resetForm = () => {
+    // Preserve dates when resetting
+    const preservedDates = {
+      start_date: formData.start_date,
+      end_date: formData.end_date,
+    };
+    
     setFormData({
       event_id: '',
       venue_id: venueId,
       venue_name: '',
       event_name: '',
       description: '' as string | undefined,
-      start_date: '',
-      end_date: '',
+      start_date: preservedDates.start_date,
+      end_date: preservedDates.end_date,
       ticket_price_cents: 0,
       entry_fee_cents: 500,
       re_entry_fee_cents: 200,
@@ -185,6 +215,8 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
     });
     setErrors({});
     setEditingEvent(null);
+    setUseRevenueProfile(false);
+    setSelectedRevenueProfileId('');
   };
 
   if (loading) {
@@ -378,7 +410,41 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
 
             {/* Revenue Split Configuration */}
             <div className="bg-slate-800/50 border border-slate-600 rounded-lg p-4">
-              <h4 className="text-sm font-semibold text-slate-300 mb-3">Revenue Split (%)</h4>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-semibold text-slate-300">Revenue Split (%)</h4>
+                <label className="flex items-center space-x-2 text-xs text-slate-400">
+                  <input
+                    type="checkbox"
+                    checked={useRevenueProfile}
+                    onChange={(e) => {
+                      setUseRevenueProfile(e.target.checked);
+                      if (!e.target.checked) {
+                        setSelectedRevenueProfileId('');
+                      }
+                    }}
+                    className="rounded border-slate-600 bg-slate-900/50 text-purple-500 focus:ring-purple-500/50"
+                  />
+                  <span>Use Profile</span>
+                </label>
+              </div>
+
+              {useRevenueProfile && (
+                <div className="mb-4">
+                  <select
+                    value={selectedRevenueProfileId}
+                    onChange={(e) => handleRevenueProfileChange(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
+                  >
+                    <option value="">Select Revenue Profile</option>
+                    {revenueProfiles.map((profile) => (
+                      <option key={profile.id} value={profile.id}>
+                        {profile.profile_name} - VALID: {profile.valid_percentage}%, Vendor: {profile.vendor_percentage}%, Pool: {profile.pool_percentage}%
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-slate-400 mb-1">VALID</label>
@@ -390,6 +456,7 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                     step="0.01"
                     min="0"
                     max="100"
+                    disabled={useRevenueProfile && !!selectedRevenueProfileId}
                   />
                 </div>
                 <div>
@@ -402,6 +469,7 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                     step="0.01"
                     min="0"
                     max="100"
+                    disabled={useRevenueProfile && !!selectedRevenueProfileId}
                   />
                 </div>
                 <div>
@@ -414,6 +482,7 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                     step="0.01"
                     min="0"
                     max="100"
+                    disabled={useRevenueProfile && !!selectedRevenueProfileId}
                   />
                 </div>
                 <div>
@@ -426,6 +495,7 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                     step="0.01"
                     min="0"
                     max="100"
+                    disabled={useRevenueProfile && !!selectedRevenueProfileId}
                   />
                 </div>
                 <div>
@@ -438,6 +508,7 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                     step="0.01"
                     min="0"
                     max="100"
+                    disabled={useRevenueProfile && !!selectedRevenueProfileId}
                   />
                 </div>
               </div>
@@ -510,8 +581,12 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                 </div>
               </div>
               <div className="mt-2 p-2 bg-slate-900/50 rounded text-xs text-slate-400">
-                Total Base Tax: <span className="text-white font-semibold">
+                Total Base Tax (State + Local): <span className="text-white font-semibold">
                   {(formData.state_tax_percentage + formData.local_tax_percentage).toFixed(2)}%
+                </span>
+                <br />
+                Total All Taxes: <span className="text-white font-semibold">
+                  {(formData.state_tax_percentage + formData.local_tax_percentage + formData.alcohol_tax_percentage + formData.food_tax_percentage).toFixed(2)}%
                 </span>
               </div>
             </div>

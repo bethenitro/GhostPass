@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Globe, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface LanguageSwitcherProps {
@@ -39,7 +39,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
         className="flex items-center space-x-2 px-3 sm:px-4 py-2 bg-slate-700/50 hover:bg-slate-700 border border-slate-600 rounded-lg transition-all min-h-[44px]"
         title={i18n.language === 'en' ? 'Switch Language' : 'Cambiar Idioma'}
       >
-        <Globe className="w-4 h-4 text-slate-300" />
+        <span className="text-lg">{i18n.language === 'en' ? '🇺🇸' : '🇪🇸'}</span>
         {showLabel && (
           <span className="text-slate-300 text-sm font-medium uppercase">
             {i18n.language === 'en' ? 'EN' : 'ES'}
@@ -48,19 +48,25 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-32 bg-slate-800 border border-slate-600 rounded-lg shadow-xl overflow-hidden z-50">
+        <div className="absolute right-0 top-full mt-2 w-40 bg-slate-800 border border-slate-600 rounded-lg shadow-xl overflow-hidden z-50">
           <button
             onClick={() => changeLanguage('en')}
             className="w-full px-4 py-2 text-left text-sm text-slate-300 hover:bg-slate-700 transition-colors flex items-center justify-between"
           >
-            <span>English</span>
+            <span className="flex items-center gap-2">
+              <span className="text-lg">🇺🇸</span>
+              <span>English</span>
+            </span>
             {i18n.language === 'en' && <Check className="w-4 h-4 text-cyan-400" />}
           </button>
           <button
             onClick={() => changeLanguage('es')}
             className="w-full px-4 py-2 text-left text-sm text-slate-300 hover:bg-slate-700 transition-colors flex items-center justify-between"
           >
-            <span>Español</span>
+            <span className="flex items-center gap-2">
+              <span className="text-lg">🇪🇸</span>
+              <span>Español</span>
+            </span>
             {i18n.language === 'es' && <Check className="w-4 h-4 text-cyan-400" />}
           </button>
         </div>
