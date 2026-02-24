@@ -129,8 +129,8 @@ const GhostPassAdminPanel: React.FC<GhostPassAdminPanelProps> = ({ onClose }) =>
             <span className="text-slate-400">$</span>
             <input
               type="number"
-              value={(entryFee / 100).toFixed(2)}
-              onChange={(e) => setEntryFee(Math.round(parseFloat(e.target.value) * 100))}
+              value={entryFee / 100 || ''}
+              onChange={(e) => setEntryFee(e.target.value === '' ? 0 : Math.round(parseFloat(e.target.value) * 100))}
               className="flex-1 bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white"
               step="0.01"
               min="0"
@@ -154,8 +154,8 @@ const GhostPassAdminPanel: React.FC<GhostPassAdminPanelProps> = ({ onClose }) =>
             <span className="text-slate-400">$</span>
             <input
               type="number"
-              value={(barFee / 100).toFixed(2)}
-              onChange={(e) => setBarFee(Math.round(parseFloat(e.target.value) * 100))}
+              value={barFee / 100 || ''}
+              onChange={(e) => setBarFee(e.target.value === '' ? 0 : Math.round(parseFloat(e.target.value) * 100))}
               className="flex-1 bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white"
               step="0.01"
               min="0"
@@ -179,8 +179,8 @@ const GhostPassAdminPanel: React.FC<GhostPassAdminPanelProps> = ({ onClose }) =>
             <span className="text-slate-400">$</span>
             <input
               type="number"
-              value={(merchFee / 100).toFixed(2)}
-              onChange={(e) => setMerchFee(Math.round(parseFloat(e.target.value) * 100))}
+              value={merchFee / 100 || ''}
+              onChange={(e) => setMerchFee(e.target.value === '' ? 0 : Math.round(parseFloat(e.target.value) * 100))}
               className="flex-1 bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white"
               step="0.01"
               min="0"
@@ -204,8 +204,8 @@ const GhostPassAdminPanel: React.FC<GhostPassAdminPanelProps> = ({ onClose }) =>
             <span className="text-slate-400">$</span>
             <input
               type="number"
-              value={(generalFee / 100).toFixed(2)}
-              onChange={(e) => setGeneralFee(Math.round(parseFloat(e.target.value) * 100))}
+              value={generalFee / 100 || ''}
+              onChange={(e) => setGeneralFee(e.target.value === '' ? 0 : Math.round(parseFloat(e.target.value) * 100))}
               className="flex-1 bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white"
               step="0.01"
               min="0"
@@ -247,8 +247,8 @@ const GhostPassAdminPanel: React.FC<GhostPassAdminPanelProps> = ({ onClose }) =>
           <div className="flex items-center space-x-3">
             <input
               type="number"
-              value={validPct}
-              onChange={(e) => setValidPct(parseInt(e.target.value) || 0)}
+              value={validPct || ''}
+              onChange={(e) => setValidPct(e.target.value === '' ? 0 : parseInt(e.target.value))}
               className="flex-1 bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white"
               min="0"
               max="100"
@@ -264,8 +264,8 @@ const GhostPassAdminPanel: React.FC<GhostPassAdminPanelProps> = ({ onClose }) =>
           <div className="flex items-center space-x-3">
             <input
               type="number"
-              value={vendorPct}
-              onChange={(e) => setVendorPct(parseInt(e.target.value) || 0)}
+              value={vendorPct || ''}
+              onChange={(e) => setVendorPct(e.target.value === '' ? 0 : parseInt(e.target.value))}
               className="flex-1 bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white"
               min="0"
               max="100"
@@ -281,8 +281,8 @@ const GhostPassAdminPanel: React.FC<GhostPassAdminPanelProps> = ({ onClose }) =>
           <div className="flex items-center space-x-3">
             <input
               type="number"
-              value={poolPct}
-              onChange={(e) => setPoolPct(parseInt(e.target.value) || 0)}
+              value={poolPct || ''}
+              onChange={(e) => setPoolPct(e.target.value === '' ? 0 : parseInt(e.target.value))}
               className="flex-1 bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white"
               min="0"
               max="100"
@@ -298,8 +298,8 @@ const GhostPassAdminPanel: React.FC<GhostPassAdminPanelProps> = ({ onClose }) =>
           <div className="flex items-center space-x-3">
             <input
               type="number"
-              value={promoterPct}
-              onChange={(e) => setPromoterPct(parseInt(e.target.value) || 0)}
+              value={promoterPct || ''}
+              onChange={(e) => setPromoterPct(e.target.value === '' ? 0 : parseInt(e.target.value))}
               className="flex-1 bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white"
               min="0"
               max="100"

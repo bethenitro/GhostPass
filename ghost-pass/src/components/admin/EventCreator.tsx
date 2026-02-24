@@ -206,8 +206,8 @@ export const EventCreator: React.FC = () => {
             <label className="block text-sm font-medium text-slate-300 mb-1">{t('events.ticketPrice')} ($)</label>
             <input
               type="number"
-              value={formData.ticket_price_cents / 100}
-              onChange={(e) => setFormData({ ...formData, ticket_price_cents: parseFloat(e.target.value) * 100 })}
+              value={formData.ticket_price_cents / 100 || ''}
+              onChange={(e) => setFormData({ ...formData, ticket_price_cents: e.target.value === '' ? 0 : parseFloat(e.target.value) * 100 })}
               className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-xl text-white focus:border-cyan-500/50 focus:outline-none"
               step="0.01"
             />
@@ -216,8 +216,8 @@ export const EventCreator: React.FC = () => {
             <label className="block text-sm font-medium text-slate-300 mb-1">{t('events.entryFee')} ($)</label>
             <input
               type="number"
-              value={formData.entry_fee_cents / 100}
-              onChange={(e) => setFormData({ ...formData, entry_fee_cents: parseFloat(e.target.value) * 100 })}
+              value={formData.entry_fee_cents / 100 || ''}
+              onChange={(e) => setFormData({ ...formData, entry_fee_cents: e.target.value === '' ? 0 : parseFloat(e.target.value) * 100 })}
               className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-xl text-white focus:border-cyan-500/50 focus:outline-none"
               step="0.01"
             />
@@ -229,8 +229,8 @@ export const EventCreator: React.FC = () => {
             <label className="block text-sm font-medium text-slate-300 mb-1">{t('events.reEntryFee')} ($)</label>
             <input
               type="number"
-              value={formData.re_entry_fee_cents / 100}
-              onChange={(e) => setFormData({ ...formData, re_entry_fee_cents: parseFloat(e.target.value) * 100 })}
+              value={formData.re_entry_fee_cents / 100 || ''}
+              onChange={(e) => setFormData({ ...formData, re_entry_fee_cents: e.target.value === '' ? 0 : parseFloat(e.target.value) * 100 })}
               className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-xl text-white focus:border-cyan-500/50 focus:outline-none"
               step="0.01"
             />
@@ -239,8 +239,8 @@ export const EventCreator: React.FC = () => {
             <label className="block text-sm font-medium text-slate-300 mb-1">{t('events.platformFee')} ($)</label>
             <input
               type="number"
-              value={formData.platform_fee_cents / 100}
-              onChange={(e) => setFormData({ ...formData, platform_fee_cents: parseFloat(e.target.value) * 100 })}
+              value={formData.platform_fee_cents / 100 || ''}
+              onChange={(e) => setFormData({ ...formData, platform_fee_cents: e.target.value === '' ? 0 : parseFloat(e.target.value) * 100 })}
               className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-xl text-white focus:border-cyan-500/50 focus:outline-none"
               step="0.01"
             />
@@ -289,8 +289,8 @@ export const EventCreator: React.FC = () => {
               <label className="block text-xs font-medium text-slate-400 mb-1">VALID</label>
               <input
                 type="number"
-                value={formData.valid_percentage}
-                onChange={(e) => setFormData({ ...formData, valid_percentage: parseFloat(e.target.value || '0') })}
+                value={formData.valid_percentage || ''}
+                onChange={(e) => setFormData({ ...formData, valid_percentage: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                 className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-cyan-500/50 focus:outline-none"
                 step="0.01"
                 min="0"
@@ -303,8 +303,8 @@ export const EventCreator: React.FC = () => {
               <label className="block text-xs font-medium text-slate-400 mb-1">Vendor</label>
               <input
                 type="number"
-                value={formData.vendor_percentage}
-                onChange={(e) => setFormData({ ...formData, vendor_percentage: parseFloat(e.target.value || '0') })}
+                value={formData.vendor_percentage || ''}
+                onChange={(e) => setFormData({ ...formData, vendor_percentage: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                 className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-cyan-500/50 focus:outline-none"
                 step="0.01"
                 min="0"
@@ -317,8 +317,8 @@ export const EventCreator: React.FC = () => {
               <label className="block text-xs font-medium text-slate-400 mb-1">Pool</label>
               <input
                 type="number"
-                value={formData.pool_percentage}
-                onChange={(e) => setFormData({ ...formData, pool_percentage: parseFloat(e.target.value || '0') })}
+                value={formData.pool_percentage || ''}
+                onChange={(e) => setFormData({ ...formData, pool_percentage: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                 className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-cyan-500/50 focus:outline-none"
                 step="0.01"
                 min="0"
@@ -331,8 +331,8 @@ export const EventCreator: React.FC = () => {
               <label className="block text-xs font-medium text-slate-400 mb-1">Promoter</label>
               <input
                 type="number"
-                value={formData.promoter_percentage}
-                onChange={(e) => setFormData({ ...formData, promoter_percentage: parseFloat(e.target.value || '0') })}
+                value={formData.promoter_percentage || ''}
+                onChange={(e) => setFormData({ ...formData, promoter_percentage: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                 className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-cyan-500/50 focus:outline-none"
                 step="0.01"
                 min="0"
@@ -345,8 +345,8 @@ export const EventCreator: React.FC = () => {
               <label className="block text-xs font-medium text-slate-400 mb-1">Executive</label>
               <input
                 type="number"
-                value={formData.executive_percentage}
-                onChange={(e) => setFormData({ ...formData, executive_percentage: parseFloat(e.target.value || '0') })}
+                value={formData.executive_percentage || ''}
+                onChange={(e) => setFormData({ ...formData, executive_percentage: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                 className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-cyan-500/50 focus:outline-none"
                 step="0.01"
                 min="0"
@@ -380,8 +380,8 @@ export const EventCreator: React.FC = () => {
               <label className="block text-xs font-medium text-slate-400 mb-1">State Tax</label>
               <input
                 type="number"
-                value={formData.state_tax_percentage}
-                onChange={(e) => setFormData({ ...formData, state_tax_percentage: parseFloat(e.target.value || '0') })}
+                value={formData.state_tax_percentage || ''}
+                onChange={(e) => setFormData({ ...formData, state_tax_percentage: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                 className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-cyan-500/50 focus:outline-none"
                 step="0.01"
                 min="0"
@@ -393,8 +393,8 @@ export const EventCreator: React.FC = () => {
               <label className="block text-xs font-medium text-slate-400 mb-1">Local Tax</label>
               <input
                 type="number"
-                value={formData.local_tax_percentage}
-                onChange={(e) => setFormData({ ...formData, local_tax_percentage: parseFloat(e.target.value || '0') })}
+                value={formData.local_tax_percentage || ''}
+                onChange={(e) => setFormData({ ...formData, local_tax_percentage: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                 className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-cyan-500/50 focus:outline-none"
                 step="0.01"
                 min="0"
@@ -406,8 +406,8 @@ export const EventCreator: React.FC = () => {
               <label className="block text-xs font-medium text-slate-400 mb-1">Alcohol Tax</label>
               <input
                 type="number"
-                value={formData.alcohol_tax_percentage}
-                onChange={(e) => setFormData({ ...formData, alcohol_tax_percentage: parseFloat(e.target.value || '0') })}
+                value={formData.alcohol_tax_percentage || ''}
+                onChange={(e) => setFormData({ ...formData, alcohol_tax_percentage: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                 className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-cyan-500/50 focus:outline-none"
                 step="0.01"
                 min="0"
@@ -419,8 +419,8 @@ export const EventCreator: React.FC = () => {
               <label className="block text-xs font-medium text-slate-400 mb-1">Food Tax</label>
               <input
                 type="number"
-                value={formData.food_tax_percentage}
-                onChange={(e) => setFormData({ ...formData, food_tax_percentage: parseFloat(e.target.value || '0') })}
+                value={formData.food_tax_percentage || ''}
+                onChange={(e) => setFormData({ ...formData, food_tax_percentage: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                 className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-cyan-500/50 focus:outline-none"
                 step="0.01"
                 min="0"

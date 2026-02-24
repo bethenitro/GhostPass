@@ -297,7 +297,7 @@ const TrustCenter: React.FC = () => {
                           </span>
                           <input
                             type="number"
-                            value={source.amount}
+                            value={source.amount || ''}
                             onChange={(e) => updateSourceAmount(source.sourceId, e.target.value)}
                             placeholder="0.00"
                             className="w-full pl-6 sm:pl-7 pr-3 py-2 sm:py-2.5 text-sm sm:text-base bg-slate-800/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all duration-200 font-mono"

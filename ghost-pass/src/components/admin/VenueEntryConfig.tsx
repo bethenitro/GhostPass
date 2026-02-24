@@ -157,10 +157,10 @@ export const VenueEntryConfig: React.FC<VenueEntryConfigProps> = ({ venueId, eve
               <input
                 type="number"
                 step="0.01"
-                value={(config.initial_entry_fee_cents / 100).toFixed(2)}
+                value={config.initial_entry_fee_cents / 100 || ''}
                 onChange={(e) => setConfig(prev => ({ 
                   ...prev, 
-                  initial_entry_fee_cents: Math.round(parseFloat(e.target.value || '0') * 100) 
+                  initial_entry_fee_cents: e.target.value === '' ? 0 : Math.round(parseFloat(e.target.value) * 100) 
                 }))}
                 className="w-full pl-8 pr-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-purple-500 focus:outline-none"
               />
@@ -175,10 +175,10 @@ export const VenueEntryConfig: React.FC<VenueEntryConfigProps> = ({ venueId, eve
               <input
                 type="number"
                 step="0.01"
-                value={(config.venue_reentry_fee_cents / 100).toFixed(2)}
+                value={config.venue_reentry_fee_cents / 100 || ''}
                 onChange={(e) => setConfig(prev => ({ 
                   ...prev, 
-                  venue_reentry_fee_cents: Math.round(parseFloat(e.target.value || '0') * 100) 
+                  venue_reentry_fee_cents: e.target.value === '' ? 0 : Math.round(parseFloat(e.target.value) * 100) 
                 }))}
                 className="w-full pl-8 pr-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-purple-500 focus:outline-none"
               />
@@ -193,10 +193,10 @@ export const VenueEntryConfig: React.FC<VenueEntryConfigProps> = ({ venueId, eve
               <input
                 type="number"
                 step="0.01"
-                value={(config.valid_reentry_scan_fee_cents / 100).toFixed(2)}
+                value={config.valid_reentry_scan_fee_cents / 100 || ''}
                 onChange={(e) => setConfig(prev => ({ 
                   ...prev, 
-                  valid_reentry_scan_fee_cents: Math.round(parseFloat(e.target.value || '0') * 100) 
+                  valid_reentry_scan_fee_cents: e.target.value === '' ? 0 : Math.round(parseFloat(e.target.value) * 100) 
                 }))}
                 className="w-full pl-8 pr-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-purple-500 focus:outline-none"
               />

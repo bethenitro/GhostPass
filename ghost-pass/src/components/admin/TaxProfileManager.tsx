@@ -175,8 +175,8 @@ export const TaxProfileManager: React.FC = () => {
                 </label>
                 <input
                   type="number"
-                  value={formData.state_tax_percentage}
-                  onChange={(e) => setFormData({ ...formData, state_tax_percentage: parseFloat(e.target.value || '0') })}
+                  value={formData.state_tax_percentage || ''}
+                  onChange={(e) => setFormData({ ...formData, state_tax_percentage: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                   className={cn(
                     "w-full px-3 py-2 bg-slate-900/50 border rounded-lg text-white focus:outline-none transition-colors",
                     errors.state_tax_percentage ? 'border-red-500/50 focus:border-red-500' : 'border-slate-600 focus:border-amber-500/50'
@@ -196,8 +196,8 @@ export const TaxProfileManager: React.FC = () => {
                 </label>
                 <input
                   type="number"
-                  value={formData.local_tax_percentage}
-                  onChange={(e) => setFormData({ ...formData, local_tax_percentage: parseFloat(e.target.value || '0') })}
+                  value={formData.local_tax_percentage || ''}
+                  onChange={(e) => setFormData({ ...formData, local_tax_percentage: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                   className={cn(
                     "w-full px-3 py-2 bg-slate-900/50 border rounded-lg text-white focus:outline-none transition-colors",
                     errors.local_tax_percentage ? 'border-red-500/50 focus:border-red-500' : 'border-slate-600 focus:border-amber-500/50'
@@ -219,8 +219,8 @@ export const TaxProfileManager: React.FC = () => {
                 </label>
                 <input
                   type="number"
-                  value={formData.alcohol_tax_percentage}
-                  onChange={(e) => setFormData({ ...formData, alcohol_tax_percentage: parseFloat(e.target.value || '0') })}
+                  value={formData.alcohol_tax_percentage || ''}
+                  onChange={(e) => setFormData({ ...formData, alcohol_tax_percentage: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                   className={cn(
                     "w-full px-3 py-2 bg-slate-900/50 border rounded-lg text-white focus:outline-none transition-colors",
                     errors.alcohol_tax_percentage ? 'border-red-500/50 focus:border-red-500' : 'border-slate-600 focus:border-amber-500/50'
@@ -240,8 +240,8 @@ export const TaxProfileManager: React.FC = () => {
                 </label>
                 <input
                   type="number"
-                  value={formData.food_tax_percentage}
-                  onChange={(e) => setFormData({ ...formData, food_tax_percentage: parseFloat(e.target.value || '0') })}
+                  value={formData.food_tax_percentage || ''}
+                  onChange={(e) => setFormData({ ...formData, food_tax_percentage: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                   className={cn(
                     "w-full px-3 py-2 bg-slate-900/50 border rounded-lg text-white focus:outline-none transition-colors",
                     errors.food_tax_percentage ? 'border-red-500/50 focus:border-red-500' : 'border-slate-600 focus:border-amber-500/50'

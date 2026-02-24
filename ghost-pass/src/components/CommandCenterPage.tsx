@@ -490,8 +490,8 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                       min="0"
                       max="100"
                       step="0.1"
-                      value={feeConfig.valid_pct}
-                      onChange={(e) => handleFeeConfigChange('valid_pct', parseFloat(e.target.value) || 0)}
+                      value={feeConfig.valid_pct || ''}
+                      onChange={(e) => handleFeeConfigChange('valid_pct', e.target.value === '' ? 0 : parseFloat(e.target.value))}
                       className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-sm"
                       placeholder="30.0"
                     />
@@ -505,8 +505,8 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                       min="0"
                       max="100"
                       step="0.1"
-                      value={feeConfig.vendor_pct}
-                      onChange={(e) => handleFeeConfigChange('vendor_pct', parseFloat(e.target.value) || 0)}
+                      value={feeConfig.vendor_pct || ''}
+                      onChange={(e) => handleFeeConfigChange('vendor_pct', e.target.value === '' ? 0 : parseFloat(e.target.value))}
                       className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-sm"
                       placeholder="30.0"
                     />
@@ -520,8 +520,8 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                       min="0"
                       max="100"
                       step="0.1"
-                      value={feeConfig.pool_pct}
-                      onChange={(e) => handleFeeConfigChange('pool_pct', parseFloat(e.target.value) || 0)}
+                      value={feeConfig.pool_pct || ''}
+                      onChange={(e) => handleFeeConfigChange('pool_pct', e.target.value === '' ? 0 : parseFloat(e.target.value))}
                       className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-sm"
                       placeholder="30.0"
                     />
@@ -535,8 +535,8 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                       min="0"
                       max="100"
                       step="0.1"
-                      value={feeConfig.promoter_pct}
-                      onChange={(e) => handleFeeConfigChange('promoter_pct', parseFloat(e.target.value) || 0)}
+                      value={feeConfig.promoter_pct || ''}
+                      onChange={(e) => handleFeeConfigChange('promoter_pct', e.target.value === '' ? 0 : parseFloat(e.target.value))}
                       className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-sm"
                       placeholder="10.0"
                     />
@@ -667,8 +667,8 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                         min="1"
                         max="100"
                         step="1"
-                        value={pricing.one_day_cents / 100}
-                        onChange={(e) => setPricing(prev => ({ ...prev, one_day_cents: Math.round((parseFloat(e.target.value) || 0) * 100) }))}
+                        value={pricing.one_day_cents / 100 || ''}
+                        onChange={(e) => setPricing(prev => ({ ...prev, one_day_cents: e.target.value === '' ? 0 : Math.round(parseFloat(e.target.value) * 100) }))}
                         className="w-full pl-7 px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-sm"
                       />
                     </div>
@@ -686,8 +686,8 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                         min="1"
                         max="100"
                         step="1"
-                        value={pricing.three_day_cents / 100}
-                        onChange={(e) => setPricing(prev => ({ ...prev, three_day_cents: Math.round((parseFloat(e.target.value) || 0) * 100) }))}
+                        value={pricing.three_day_cents / 100 || ''}
+                        onChange={(e) => setPricing(prev => ({ ...prev, three_day_cents: e.target.value === '' ? 0 : Math.round(parseFloat(e.target.value) * 100) }))}
                         className="w-full pl-7 px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-sm"
                       />
                     </div>
@@ -724,8 +724,8 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                         min="1"
                         max="100"
                         step="1"
-                        value={pricing.seven_day_cents / 100}
-                        onChange={(e) => setPricing(prev => ({ ...prev, seven_day_cents: Math.round((parseFloat(e.target.value) || 0) * 100) }))}
+                        value={pricing.seven_day_cents / 100 || ''}
+                        onChange={(e) => setPricing(prev => ({ ...prev, seven_day_cents: e.target.value === '' ? 0 : Math.round(parseFloat(e.target.value) * 100) }))}
                         className="w-full pl-7 px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-sm"
                       />
                     </div>
@@ -762,8 +762,8 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                         min="1"
                         max="100"
                         step="1"
-                        value={pricing.fourteen_day_cents / 100}
-                        onChange={(e) => setPricing(prev => ({ ...prev, fourteen_day_cents: Math.round((parseFloat(e.target.value) || 0) * 100) }))}
+                        value={pricing.fourteen_day_cents / 100 || ''}
+                        onChange={(e) => setPricing(prev => ({ ...prev, fourteen_day_cents: e.target.value === '' ? 0 : Math.round(parseFloat(e.target.value) * 100) }))}
                         className="w-full pl-7 px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-sm"
                       />
                     </div>
@@ -781,8 +781,8 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                         min="1"
                         max="150"
                         step="1"
-                        value={pricing.thirty_day_cents / 100}
-                        onChange={(e) => setPricing(prev => ({ ...prev, thirty_day_cents: Math.round((parseFloat(e.target.value) || 0) * 100) }))}
+                        value={pricing.thirty_day_cents / 100 || ''}
+                        onChange={(e) => setPricing(prev => ({ ...prev, thirty_day_cents: e.target.value === '' ? 0 : Math.round(parseFloat(e.target.value) * 100) }))}
                         className="w-full pl-7 px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-sm"
                       />
                     </div>
@@ -924,8 +924,8 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                       type="number"
                       min="1"
                       max="365"
-                      value={retention.retention_days}
-                      onChange={(e) => setRetention(prev => ({ ...prev, retention_days: parseInt(e.target.value) || 60 }))}
+                      value={retention.retention_days || ''}
+                      onChange={(e) => setRetention(prev => ({ ...prev, retention_days: e.target.value === '' ? 60 : parseInt(e.target.value) }))}
                       className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-red-500 focus:outline-none text-sm"
                     />
                   </div>

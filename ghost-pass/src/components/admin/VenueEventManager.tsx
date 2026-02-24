@@ -172,14 +172,15 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
     }
   };
 
-  const handleDelete = async (_eventId: string) => {
+  const handleDelete = async (eventId: string) => {
     if (!confirm('Are you sure you want to delete this event?')) return;
 
     try {
-      // TODO: Implement delete endpoint
+      await eventApi.delete(eventId);
       showToast('Event deleted successfully', 'success');
       loadData();
     } catch (error: any) {
+      console.error('Failed to delete event:', error);
       showToast(error.response?.data?.error || 'Failed to delete event', 'error');
     }
   };
@@ -363,8 +364,8 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                 <label className="block text-sm font-medium text-slate-300 mb-1">{t('events.ticketPrice')} ($)</label>
                 <input
                   type="number"
-                  value={formData.ticket_price_cents / 100}
-                  onChange={(e) => setFormData({ ...formData, ticket_price_cents: Math.round(parseFloat(e.target.value || '0') * 100) })}
+                  value={formData.ticket_price_cents / 100 || ''}
+                  onChange={(e) => setFormData({ ...formData, ticket_price_cents: e.target.value === '' ? 0 : Math.round(parseFloat(e.target.value) * 100) })}
                   className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
                   step="0.01"
                   min="0"
@@ -375,8 +376,8 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                 <label className="block text-sm font-medium text-slate-300 mb-1">{t('events.entryFee')} ($)</label>
                 <input
                   type="number"
-                  value={formData.entry_fee_cents / 100}
-                  onChange={(e) => setFormData({ ...formData, entry_fee_cents: Math.round(parseFloat(e.target.value || '0') * 100) })}
+                  value={formData.entry_fee_cents / 100 || ''}
+                  onChange={(e) => setFormData({ ...formData, entry_fee_cents: e.target.value === '' ? 0 : Math.round(parseFloat(e.target.value) * 100) })}
                   className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
                   step="0.01"
                   min="0"
@@ -387,8 +388,8 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                 <label className="block text-sm font-medium text-slate-300 mb-1">{t('events.reEntryFee')} ($)</label>
                 <input
                   type="number"
-                  value={formData.re_entry_fee_cents / 100}
-                  onChange={(e) => setFormData({ ...formData, re_entry_fee_cents: Math.round(parseFloat(e.target.value || '0') * 100) })}
+                  value={formData.re_entry_fee_cents / 100 || ''}
+                  onChange={(e) => setFormData({ ...formData, re_entry_fee_cents: e.target.value === '' ? 0 : Math.round(parseFloat(e.target.value) * 100) })}
                   className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
                   step="0.01"
                   min="0"
@@ -399,8 +400,8 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                 <label className="block text-sm font-medium text-slate-300 mb-1">{t('events.platformFee')} ($)</label>
                 <input
                   type="number"
-                  value={formData.platform_fee_cents / 100}
-                  onChange={(e) => setFormData({ ...formData, platform_fee_cents: Math.round(parseFloat(e.target.value || '0') * 100) })}
+                  value={formData.platform_fee_cents / 100 || ''}
+                  onChange={(e) => setFormData({ ...formData, platform_fee_cents: e.target.value === '' ? 0 : Math.round(parseFloat(e.target.value) * 100) })}
                   className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
                   step="0.01"
                   min="0"
@@ -450,8 +451,8 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                   <label className="block text-xs font-medium text-slate-400 mb-1">VALID</label>
                   <input
                     type="number"
-                    value={formData.valid_percentage}
-                    onChange={(e) => setFormData({ ...formData, valid_percentage: parseFloat(e.target.value || '0') })}
+                    value={formData.valid_percentage || ''}
+                    onChange={(e) => setFormData({ ...formData, valid_percentage: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                     className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
                     step="0.01"
                     min="0"
@@ -463,8 +464,8 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                   <label className="block text-xs font-medium text-slate-400 mb-1">Vendor</label>
                   <input
                     type="number"
-                    value={formData.vendor_percentage}
-                    onChange={(e) => setFormData({ ...formData, vendor_percentage: parseFloat(e.target.value || '0') })}
+                    value={formData.vendor_percentage || ''}
+                    onChange={(e) => setFormData({ ...formData, vendor_percentage: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                     className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
                     step="0.01"
                     min="0"
@@ -476,8 +477,8 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                   <label className="block text-xs font-medium text-slate-400 mb-1">Pool</label>
                   <input
                     type="number"
-                    value={formData.pool_percentage}
-                    onChange={(e) => setFormData({ ...formData, pool_percentage: parseFloat(e.target.value || '0') })}
+                    value={formData.pool_percentage || ''}
+                    onChange={(e) => setFormData({ ...formData, pool_percentage: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                     className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
                     step="0.01"
                     min="0"
@@ -489,8 +490,8 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                   <label className="block text-xs font-medium text-slate-400 mb-1">Promoter</label>
                   <input
                     type="number"
-                    value={formData.promoter_percentage}
-                    onChange={(e) => setFormData({ ...formData, promoter_percentage: parseFloat(e.target.value || '0') })}
+                    value={formData.promoter_percentage || ''}
+                    onChange={(e) => setFormData({ ...formData, promoter_percentage: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                     className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
                     step="0.01"
                     min="0"
@@ -502,8 +503,8 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                   <label className="block text-xs font-medium text-slate-400 mb-1">Executive</label>
                   <input
                     type="number"
-                    value={formData.executive_percentage}
-                    onChange={(e) => setFormData({ ...formData, executive_percentage: parseFloat(e.target.value || '0') })}
+                    value={formData.executive_percentage || ''}
+                    onChange={(e) => setFormData({ ...formData, executive_percentage: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                     className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
                     step="0.01"
                     min="0"
@@ -535,8 +536,8 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                   <label className="block text-xs font-medium text-slate-400 mb-1">State Tax</label>
                   <input
                     type="number"
-                    value={formData.state_tax_percentage}
-                    onChange={(e) => setFormData({ ...formData, state_tax_percentage: parseFloat(e.target.value || '0') })}
+                    value={formData.state_tax_percentage || ''}
+                    onChange={(e) => setFormData({ ...formData, state_tax_percentage: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                     className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
                     step="0.01"
                     min="0"
@@ -547,8 +548,8 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                   <label className="block text-xs font-medium text-slate-400 mb-1">Local Tax</label>
                   <input
                     type="number"
-                    value={formData.local_tax_percentage}
-                    onChange={(e) => setFormData({ ...formData, local_tax_percentage: parseFloat(e.target.value || '0') })}
+                    value={formData.local_tax_percentage || ''}
+                    onChange={(e) => setFormData({ ...formData, local_tax_percentage: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                     className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
                     step="0.01"
                     min="0"
@@ -559,8 +560,8 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                   <label className="block text-xs font-medium text-slate-400 mb-1">Alcohol Tax</label>
                   <input
                     type="number"
-                    value={formData.alcohol_tax_percentage}
-                    onChange={(e) => setFormData({ ...formData, alcohol_tax_percentage: parseFloat(e.target.value || '0') })}
+                    value={formData.alcohol_tax_percentage || ''}
+                    onChange={(e) => setFormData({ ...formData, alcohol_tax_percentage: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                     className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
                     step="0.01"
                     min="0"
@@ -571,8 +572,8 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                   <label className="block text-xs font-medium text-slate-400 mb-1">Food Tax</label>
                   <input
                     type="number"
-                    value={formData.food_tax_percentage}
-                    onChange={(e) => setFormData({ ...formData, food_tax_percentage: parseFloat(e.target.value || '0') })}
+                    value={formData.food_tax_percentage || ''}
+                    onChange={(e) => setFormData({ ...formData, food_tax_percentage: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                     className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
                     step="0.01"
                     min="0"
@@ -647,14 +648,26 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                       // Extract metadata values if they exist
                       const metadata = (event as any).metadata || {};
                       
+                      // Format dates for datetime-local input (remove timezone and milliseconds)
+                      const formatDateForInput = (dateString: string) => {
+                        if (!dateString) return '';
+                        const date = new Date(dateString);
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const hours = String(date.getHours()).padStart(2, '0');
+                        const minutes = String(date.getMinutes()).padStart(2, '0');
+                        return `${year}-${month}-${day}T${hours}:${minutes}`;
+                      };
+                      
                       setFormData({
                         event_id: event.event_id,
                         venue_id: venueId,
                         venue_name: '',
                         event_name: event.event_name,
                         description: (event.description || '') as string | undefined,
-                        start_date: event.start_date,
-                        end_date: event.end_date,
+                        start_date: formatDateForInput(event.start_date),
+                        end_date: formatDateForInput(event.end_date),
                         ticket_price_cents: event.ticket_price_cents,
                         entry_fee_cents: event.entry_fee_cents,
                         re_entry_fee_cents: event.re_entry_fee_cents,

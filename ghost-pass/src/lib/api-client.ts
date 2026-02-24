@@ -29,6 +29,7 @@ export const eventApi = {
   list: (params?: any) => apiClient.get('/events/list', { params }),
   get: (eventId: string) => apiClient.get(`/events/${eventId}`),
   update: (eventId: string, data: any) => apiClient.put('/events/update', { ...data, event_id: eventId }),
+  delete: (eventId: string) => apiClient.delete(`/events/delete?event_id=${eventId}`),
 };
 
 // Revenue Profile APIs

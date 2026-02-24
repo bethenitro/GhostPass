@@ -269,10 +269,10 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
                   <input
                     type="number"
                     step="0.01"
-                    value={(config.initial_entry_fee_cents / 100).toFixed(2)}
+                    value={config.initial_entry_fee_cents / 100 || ''}
                     onChange={(e) => {
                       const value = e.target.value;
-                      if (value === '' || value === '.') {
+                      if (value === '') {
                         setConfig(prev => ({ ...prev, initial_entry_fee_cents: 0 }));
                       } else {
                         const parsed = parseFloat(value);
@@ -299,10 +299,10 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
                   <input
                     type="number"
                     step="0.01"
-                    value={(config.venue_reentry_fee_cents / 100).toFixed(2)}
+                    value={config.venue_reentry_fee_cents / 100 || ''}
                     onChange={(e) => {
                       const value = e.target.value;
-                      if (value === '' || value === '.') {
+                      if (value === '') {
                         setConfig(prev => ({ ...prev, venue_reentry_fee_cents: 0 }));
                       } else {
                         const parsed = parseFloat(value);
@@ -330,10 +330,10 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
                   <input
                     type="number"
                     step="0.01"
-                    value={(config.valid_reentry_scan_fee_cents / 100).toFixed(2)}
+                    value={config.valid_reentry_scan_fee_cents / 100 || ''}
                     onChange={(e) => {
                       const value = e.target.value;
-                      if (value === '' || value === '.') {
+                      if (value === '') {
                         setConfig(prev => ({ ...prev, valid_reentry_scan_fee_cents: 0 }));
                       } else {
                         const parsed = parseFloat(value);
@@ -684,10 +684,10 @@ const VendorItemSection: React.FC<{ venueId?: string; eventId?: string }> = ({ v
                 <input
                   type="number"
                   step="0.01"
-                  value={(newItem.price_cents / 100).toFixed(2)}
+                  value={newItem.price_cents / 100 || ''}
                   onChange={(e) => setNewItem(prev => ({ 
                     ...prev, 
-                    price_cents: Math.round(parseFloat(e.target.value || '0') * 100) 
+                    price_cents: e.target.value === '' ? 0 : Math.round(parseFloat(e.target.value) * 100) 
                   }))}
                   className="w-full pl-8 pr-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-purple-500 focus:outline-none"
                 />
@@ -750,10 +750,10 @@ const VendorItemSection: React.FC<{ venueId?: string; eventId?: string }> = ({ v
                       <input
                         type="number"
                         step="0.01"
-                        value={(editingItem.price_cents / 100).toFixed(2)}
+                        value={editingItem.price_cents / 100 || ''}
                         onChange={(e) => setEditingItem({ 
                           ...editingItem, 
-                          price_cents: Math.round(parseFloat(e.target.value || '0') * 100) 
+                          price_cents: e.target.value === '' ? 0 : Math.round(parseFloat(e.target.value) * 100) 
                         })}
                         className="w-full pl-8 pr-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-purple-500 focus:outline-none"
                       />

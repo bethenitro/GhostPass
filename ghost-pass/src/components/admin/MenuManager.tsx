@@ -193,23 +193,21 @@ export const MenuManager: React.FC<{ venueId: string; eventId?: string }> = ({ v
         ))}
       </div>
 
-      {/* Quick Add Buttons */}
-      {!showForm && (
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700 rounded-lg p-4">
-          <h3 className="text-sm font-semibold text-slate-300 mb-3">Quick Add Items</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-            {getQuickAddItems().map((item) => (
-              <button
-                key={item}
-                onClick={() => handleQuickAdd(item)}
-                className="px-3 py-2 bg-slate-800/50 border border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700/50 hover:border-cyan-500/50 hover:text-cyan-400 transition-colors text-sm min-h-[44px]"
-              >
-                {item}
-              </button>
-            ))}
-          </div>
+      {/* Quick Add Buttons - Always visible */}
+      <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700 rounded-lg p-4">
+        <h3 className="text-sm font-semibold text-slate-300 mb-3">Quick Add Items</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+          {getQuickAddItems().map((item) => (
+            <button
+              key={item}
+              onClick={() => handleQuickAdd(item)}
+              className="px-3 py-2 bg-slate-800/50 border border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700/50 hover:border-cyan-500/50 hover:text-cyan-400 transition-colors text-sm min-h-[44px]"
+            >
+              {item}
+            </button>
+          ))}
         </div>
-      )}
+      </div>
 
       {showForm && (
         <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700 rounded-lg p-4 sm:p-6">

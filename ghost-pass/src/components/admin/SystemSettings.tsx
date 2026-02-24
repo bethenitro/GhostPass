@@ -257,8 +257,8 @@ export const SystemSettings: React.FC = () => {
                 type="number"
                 min="0"
                 max="100"
-                value={revenueSplit.valid_pct}
-                onChange={(e) => setRevenueSplit(prev => ({ ...prev, valid_pct: parseInt(e.target.value) || 0 }))}
+                value={revenueSplit.valid_pct || ''}
+                onChange={(e) => setRevenueSplit(prev => ({ ...prev, valid_pct: e.target.value === '' ? 0 : parseInt(e.target.value) }))}
                 className="w-full px-3 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-cyan-500 focus:outline-none min-h-[44px]"
               />
             </div>
@@ -268,8 +268,8 @@ export const SystemSettings: React.FC = () => {
                 type="number"
                 min="0"
                 max="100"
-                value={revenueSplit.vendor_pct}
-                onChange={(e) => setRevenueSplit(prev => ({ ...prev, vendor_pct: parseInt(e.target.value) || 0 }))}
+                value={revenueSplit.vendor_pct || ''}
+                onChange={(e) => setRevenueSplit(prev => ({ ...prev, vendor_pct: e.target.value === '' ? 0 : parseInt(e.target.value) }))}
                 className="w-full px-3 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-cyan-500 focus:outline-none min-h-[44px]"
               />
             </div>
@@ -279,8 +279,8 @@ export const SystemSettings: React.FC = () => {
                 type="number"
                 min="0"
                 max="100"
-                value={revenueSplit.pool_pct}
-                onChange={(e) => setRevenueSplit(prev => ({ ...prev, pool_pct: parseInt(e.target.value) || 0 }))}
+                value={revenueSplit.pool_pct || ''}
+                onChange={(e) => setRevenueSplit(prev => ({ ...prev, pool_pct: e.target.value === '' ? 0 : parseInt(e.target.value) }))}
                 className="w-full px-3 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-cyan-500 focus:outline-none min-h-[44px]"
               />
             </div>
@@ -290,8 +290,8 @@ export const SystemSettings: React.FC = () => {
                 type="number"
                 min="0"
                 max="100"
-                value={revenueSplit.promoter_pct}
-                onChange={(e) => setRevenueSplit(prev => ({ ...prev, promoter_pct: parseInt(e.target.value) || 0 }))}
+                value={revenueSplit.promoter_pct || ''}
+                onChange={(e) => setRevenueSplit(prev => ({ ...prev, promoter_pct: e.target.value === '' ? 0 : parseInt(e.target.value) }))}
                 className="w-full px-3 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-cyan-500 focus:outline-none min-h-[44px]"
               />
             </div>
@@ -340,8 +340,8 @@ export const SystemSettings: React.FC = () => {
               <input
                 type="number"
                 step="0.01"
-                value={(scanFees.entry_scan_fee_cents / 100).toFixed(2)}
-                onChange={(e) => setScanFees(prev => ({ ...prev, entry_scan_fee_cents: Math.round(parseFloat(e.target.value || '0') * 100) }))}
+                value={scanFees.entry_scan_fee_cents / 100 || ''}
+                onChange={(e) => setScanFees(prev => ({ ...prev, entry_scan_fee_cents: e.target.value === '' ? 0 : Math.round(parseFloat(e.target.value) * 100) }))}
                 className="w-full pl-8 pr-4 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-cyan-500 focus:outline-none min-h-[44px]"
               />
             </div>
@@ -353,8 +353,8 @@ export const SystemSettings: React.FC = () => {
               <input
                 type="number"
                 step="0.01"
-                value={(scanFees.reentry_scan_fee_cents / 100).toFixed(2)}
-                onChange={(e) => setScanFees(prev => ({ ...prev, reentry_scan_fee_cents: Math.round(parseFloat(e.target.value || '0') * 100) }))}
+                value={scanFees.reentry_scan_fee_cents / 100 || ''}
+                onChange={(e) => setScanFees(prev => ({ ...prev, reentry_scan_fee_cents: e.target.value === '' ? 0 : Math.round(parseFloat(e.target.value) * 100) }))}
                 className="w-full pl-8 pr-4 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-cyan-500 focus:outline-none min-h-[44px]"
               />
             </div>
@@ -366,8 +366,8 @@ export const SystemSettings: React.FC = () => {
               <input
                 type="number"
                 step="0.01"
-                value={(scanFees.internal_scan_fee_cents / 100).toFixed(2)}
-                onChange={(e) => setScanFees(prev => ({ ...prev, internal_scan_fee_cents: Math.round(parseFloat(e.target.value || '0') * 100) }))}
+                value={scanFees.internal_scan_fee_cents / 100 || ''}
+                onChange={(e) => setScanFees(prev => ({ ...prev, internal_scan_fee_cents: e.target.value === '' ? 0 : Math.round(parseFloat(e.target.value) * 100) }))}
                 className="w-full pl-8 pr-4 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-cyan-500 focus:outline-none min-h-[44px]"
               />
             </div>
@@ -412,10 +412,10 @@ export const SystemSettings: React.FC = () => {
                 <input
                   type="number"
                   step="0.01"
-                  value={(ghostPassPricing[key as keyof typeof ghostPassPricing] / 100).toFixed(2)}
+                  value={ghostPassPricing[key as keyof typeof ghostPassPricing] / 100 || ''}
                   onChange={(e) => setGhostPassPricing(prev => ({ 
                     ...prev, 
-                    [key]: Math.round(parseFloat(e.target.value || '0') * 100) 
+                    [key]: e.target.value === '' ? 0 : Math.round(parseFloat(e.target.value) * 100) 
                   }))}
                   className="w-full pl-8 pr-4 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-purple-500 focus:outline-none min-h-[44px]"
                 />
