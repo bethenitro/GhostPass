@@ -204,6 +204,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         verification_tier: verificationTier
       };
 
+      // Log entry event for analytics
+      try {
+        // Check if this is initial entry or re-entry
+        const { count: previousEntryCount } = await supabase
+          .from('entry_events')
+          .select('*', { count: 'exact', head: true })
+          .eq('wallet_binding_id', sessionData.wallet_binding_id)
+          .eq('venue_id', venue_id || 'unknown');
+
+        const isInitialEntry = !previousEntryCount || previousEntryCount === 0;
+        const entryNumber = (previousEntryCount || 0) + 1;
+
+        await supabase.from('entry_events').insert({
+          wallet_binding_id: sessionData.wallet_binding_id,
+          venue_id: venue_id || 'unknown',
+          gateway_id,
+          entry_number: entryNumber,
+          entry_type: isInitialEntry ? 'initial' : 're_entry',
+          verification_tier: verificationTier,
+          status: 'APPROVED',
+          timestamp: new Date().toISOString(),
+          receipt_id: venue_id || 'unknown'
+        });
+      } catch (entryError) {
+        console.error('Entry event logging error:', entryError);
+        // Don't fail the scan if entry logging fails
+      }
+
       // Log audit trail for successful scan
       try {
         await supabase.from('audit_logs').insert({
@@ -284,6 +312,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       timestamp: new Date().toISOString(),
       verification_tier: verificationTier
     };
+
+    // Log entry event for analytics
+    try {
+      // Check if this is initial entry or re-entry
+      const { count: previousEntryCount } = await supabase
+        .from('entry_events')
+        .select('*', { count: 'exact', head: true })
+        .eq('wallet_binding_id', session.wallet_binding_id)
+        .eq('venue_id', venue_id || 'unknown');
+
+      const isInitialEntry = !previousEntryCount || previousEntryCount === 0;
+      const entryNumber = (previousEntryCount || 0) + 1;
+
+      await supabase.from('entry_events').insert({
+        wallet_binding_id: session.wallet_binding_id,
+        venue_id: venue_id || 'unknown',
+        gateway_id,
+        entry_number: entryNumber,
+        entry_type: isInitialEntry ? 'initial' : 're_entry',
+        verification_tier: verificationTier,
+        status: 'APPROVED',
+        timestamp: new Date().toISOString(),
+        receipt_id: venue_id || 'unknown'
+      });
+    } catch (entryError) {
+      console.error('Entry event logging error:', entryError);
+      // Don't fail the scan if entry logging fails
+    }
 
     // Log audit trail for successful scan
     try {

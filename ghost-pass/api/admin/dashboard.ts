@@ -60,11 +60,21 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       .from('transactions')
       .select('id', { count: 'exact', head: true });
 
-    // Get total scans from entry point audit logs
+    // Get total scans from entry events
     const { count: totalScans } = await supabase
-      .from('entry_point_audit_logs')
+      .from('entry_events')
+      .select('id', { count: 'exact', head: true });
+
+    // Get initial vs re-entry counts
+    const { count: initialEntries } = await supabase
+      .from('entry_events')
       .select('id', { count: 'exact', head: true })
-      .eq('action_type', 'SCAN');
+      .eq('entry_type', 'initial');
+
+    const { count: reentries } = await supabase
+      .from('entry_events')
+      .select('id', { count: 'exact', head: true })
+      .eq('entry_type', 're_entry');
 
     // Get revenue statistics (last 24h, 7d, 30d)
     const now = new Date();
@@ -103,6 +113,8 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       pending_payouts: pendingPayouts || 0,
       total_transactions: transactionsCount || 0,
       total_scans: totalScans || 0,
+      initial_entries: initialEntries || 0,
+      reentries: reentries || 0,
       revenue_today_cents: revenueTodayCents,
       revenue_week_cents: revenueWeekCents,
       revenue_month_cents: revenueMonthCents

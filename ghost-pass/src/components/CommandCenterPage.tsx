@@ -403,7 +403,11 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                       <p className="text-xl font-bold text-cyan-400">
                         {dashboard.stats.total_scans ?? 0}
                       </p>
-                      <p className="text-xs text-slate-500 mt-1">{t('commandCenter.stats.qrCodeScans')}</p>
+                      <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
+                        <span>Initial: {dashboard.stats.initial_entries ?? 0}</span>
+                        <span>•</span>
+                        <span>Re-entry: {dashboard.stats.reentries ?? 0}</span>
+                      </div>
                     </div>
                   </div>
                 </div>

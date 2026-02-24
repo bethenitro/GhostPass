@@ -41,18 +41,25 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
       // Calculate statistics
       const totalEntries = entries?.length || 0;
-      const totalReentries = entries?.filter(e => e.entry_type === 'RE_ENTRY').length || 0;
+      const initialEntries = entries?.filter(e => e.entry_type === 'initial').length || 0;
+      const totalReentries = entries?.filter(e => e.entry_type === 're_entry').length || 0;
       const uniqueAttendees = new Set(entries?.map(e => e.wallet_binding_id)).size;
 
-      // Calculate revenue
+      // Calculate revenue - separate initial entry fees from re-entry fees
       let totalRevenue = 0;
-      let venueRevenue = 0;
+      let initialEntryRevenue = 0;
+      let venueReentryRevenue = 0;
       let validRevenue = 0;
 
       entries?.forEach(entry => {
         totalRevenue += entry.total_fees_cents || 0;
-        venueRevenue += entry.venue_reentry_fee_cents || 0;
-        validRevenue += entry.valid_reentry_scan_fee_cents || 0;
+        
+        if (entry.entry_type === 'initial') {
+          initialEntryRevenue += entry.initial_entry_fee_cents || 0;
+        } else if (entry.entry_type === 're_entry') {
+          venueReentryRevenue += entry.venue_reentry_fee_cents || 0;
+          validRevenue += entry.valid_reentry_scan_fee_cents || 0;
+        }
       });
 
       // Get current capacity (active sessions)
@@ -75,9 +82,12 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
       const stats = {
         total_entries: totalEntries,
+        initial_entries: initialEntries,
         total_reentries: totalReentries,
         total_revenue_cents: totalRevenue,
-        venue_revenue_cents: venueRevenue,
+        initial_entry_revenue_cents: initialEntryRevenue,
+        venue_reentry_revenue_cents: venueReentryRevenue,
+        venue_revenue_cents: initialEntryRevenue + venueReentryRevenue, // Total venue revenue
         valid_revenue_cents: validRevenue,
         unique_attendees: uniqueAttendees,
         current_capacity: currentCapacity,
