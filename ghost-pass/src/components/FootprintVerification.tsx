@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Shield, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { useToast } from './ui/toast';
+import "@onefootprint/footprint-js/dist/footprint-js.css";
+import { onboarding } from "@onefootprint/footprint-js";
 
 interface FootprintVerificationProps {
   onComplete?: (verified: boolean, fp_id: string) => void;
@@ -21,81 +23,11 @@ export const FootprintVerification: React.FC<FootprintVerificationProps> = ({
   const [loading, setLoading] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<'idle' | 'loading' | 'success' | 'failed'>('idle');
   const [fpId, setFpId] = useState<string>('');
-  const [sdkLoaded, setSdkLoaded] = useState(false);
-  const [sdkError, setSdkError] = useState<string>('');
-
-  useEffect(() => {
-    // Check if SDK is already loaded
-    // @ts-ignore
-    if (typeof window.onboarding !== 'undefined') {
-      setSdkLoaded(true);
-      return;
-    }
-
-    // Load Footprint SDK
-    const script = document.createElement('script');
-    script.src = 'https://cdn.onefootprint.com/footprint-js/v5/footprint-js.js';
-    script.async = true;
-    
-    script.onload = () => {
-      console.log('Footprint SDK loaded successfully');
-      setSdkLoaded(true);
-    };
-    
-    script.onerror = () => {
-      console.error('Failed to load Footprint SDK');
-      setSdkError('Failed to load verification SDK. Please check your internet connection.');
-      setVerificationStatus('failed');
-    };
-    
-    document.body.appendChild(script);
-
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = 'https://cdn.onefootprint.com/footprint-js/v5/footprint-js.css';
-    document.head.appendChild(link);
-
-    return () => {
-      try {
-        if (document.body.contains(script)) {
-          document.body.removeChild(script);
-        }
-        if (document.head.contains(link)) {
-          document.head.removeChild(link);
-        }
-      } catch (e) {
-        console.warn('Error cleaning up Footprint SDK:', e);
-      }
-    };
-  }, []);
 
   const startVerification = async () => {
     try {
       setLoading(true);
       setVerificationStatus('loading');
-      setSdkError('');
-
-      // Wait for SDK to load if not loaded yet
-      if (!sdkLoaded) {
-        showToast('Loading verification system...', 'info');
-        
-        // Wait up to 10 seconds for SDK to load
-        let attempts = 0;
-        while (attempts < 20) {
-          // @ts-ignore
-          if (typeof window.onboarding !== 'undefined') {
-            setSdkLoaded(true);
-            break;
-          }
-          await new Promise(resolve => setTimeout(resolve, 500));
-          attempts++;
-        }
-        
-        // @ts-ignore
-        if (typeof window.onboarding === 'undefined') {
-          throw new Error('Verification system failed to load. Please refresh and try again.');
-        }
-      }
 
       // Get device fingerprint
       const deviceFingerprint = localStorage.getItem('device_fingerprint') || '';
@@ -119,14 +51,8 @@ export const FootprintVerification: React.FC<FootprintVerificationProps> = ({
 
       const sessionData = await sessionResponse.json();
 
-      // Step 2: Launch Footprint SDK
-      // @ts-ignore - Footprint SDK loaded dynamically
-      if (typeof window.onboarding === 'undefined') {
-        throw new Error('Verification system not ready. Please try again.');
-      }
-
-      // @ts-ignore
-      window.onboarding.initialize({
+      // Step 2: Launch Footprint SDK using the imported onboarding object
+      onboarding.initialize({
         onboardingSessionToken: sessionData.token,
         onComplete: async (validationToken: string) => {
           console.log('Footprint verification completed:', validationToken);
@@ -136,7 +62,6 @@ export const FootprintVerification: React.FC<FootprintVerificationProps> = ({
           console.error('Footprint verification error:', error);
           const errorMessage = error?.message || 'Verification failed';
           showToast(errorMessage, 'error');
-          setSdkError(errorMessage);
           setVerificationStatus('failed');
           setLoading(false);
         },
@@ -159,7 +84,6 @@ export const FootprintVerification: React.FC<FootprintVerificationProps> = ({
       console.error('Error starting verification:', error);
       const errorMessage = error.message || 'Failed to start verification';
       showToast(errorMessage, 'error');
-      setSdkError(errorMessage);
       setVerificationStatus('failed');
       setLoading(false);
     }
@@ -240,38 +164,16 @@ export const FootprintVerification: React.FC<FootprintVerificationProps> = ({
           : t('verification.tier3Description', 'Complete identity verification using Footprint Deep Check. This includes document scanning and identity validation.')}
       </p>
 
-      {sdkError && (
-        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-4">
-          <div className="flex items-start space-x-3">
-            <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
-            <div>
-              <p className="text-red-400 text-sm">{sdkError}</p>
-              <button
-                onClick={() => window.location.reload()}
-                className="text-xs text-blue-400 hover:text-blue-300 mt-2"
-              >
-                {t('verification.refresh', 'Refresh Page')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {verificationStatus === 'idle' && (
         <button
           onClick={startVerification}
-          disabled={loading || !sdkLoaded}
+          disabled={loading}
           className="w-full px-6 py-3 bg-blue-500/20 border border-blue-500 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
         >
           {loading ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin" />
               <span>{t('verification.loading', 'Loading...')}</span>
-            </>
-          ) : !sdkLoaded ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              <span>{t('verification.loadingSDK', 'Loading verification system...')}</span>
             </>
           ) : (
             <>
