@@ -69,9 +69,10 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
         throw new Error('No wallet binding ID returned from session creation');
       }
 
-      // Step 2: Create QR asset record for tracking (optional but recommended)
+      // Step 2: Create QR asset record for tracking with verification level
+      let assetCode = null;
       try {
-        await fetch('/api/qr-assets/provision', {
+        const assetResponse = await fetch('/api/qr-assets/provision', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -86,17 +87,25 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
             tax_profile_id: formData.tax_profile_id || null,
             fee_logic: {},
             re_entry_rules: {},
-            id_verification_level: formData.id_verification_level
+            id_verification_level: formData.id_verification_level,
+            wallet_binding_id: walletBindingId // Link the asset to the wallet
           })
         });
+        
+        if (assetResponse.ok) {
+          const assetData = await assetResponse.json();
+          assetCode = assetData.asset_code;
+        }
       } catch (assetError) {
         console.warn('Failed to create QR asset record:', assetError);
         // Continue anyway - the wallet session is what matters
       }
 
-      // Step 3: Generate QR code with the wallet binding ID in scanner-compatible format
-      // The scanner expects: "ghostpass:{uuid}" or "ghostsession:{uuid}"
-      const qrData = `ghostsession:${walletBindingId}`;
+      // Step 3: Generate QR code with both wallet binding ID and asset code
+      // Format: "ghostsession:{wallet_binding_id}:{asset_code}:{verification_tier}"
+      const qrData = assetCode 
+        ? `ghostsession:${walletBindingId}:${assetCode}:${formData.id_verification_level}`
+        : `ghostsession:${walletBindingId}::${formData.id_verification_level}`;
 
       const dataUrl = await QRCodeLib.toDataURL(qrData, {
         width: 512,

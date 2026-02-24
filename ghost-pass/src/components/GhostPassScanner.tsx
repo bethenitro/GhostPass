@@ -425,13 +425,22 @@ const GhostPassScanner: React.FC = () => {
         }
       }
 
-      // Extract UUID from QR data if it has a prefix
+      // Parse QR data format: "ghostsession:{wallet_binding_id}:{asset_code}:{verification_tier}"
       let passId = qrData;
+      let assetCode = '';
+      let qrVerificationTier = 1;
+      
       if (qrData.includes(':')) {
-        // Handle formats like "ghostsession:uuid" or "ghostpass:uuid"
         const parts = qrData.split(':');
-        if (parts.length >= 2) {
-          passId = parts[parts.length - 1]; // Get the last part (UUID)
+        
+        if (parts[0] === 'ghostsession' && parts.length >= 2) {
+          // New format with verification tier
+          passId = parts[1]; // wallet_binding_id
+          assetCode = parts[2] || ''; // asset_code (optional)
+          qrVerificationTier = parts[3] ? parseInt(parts[3]) : 1; // verification_tier
+        } else {
+          // Legacy format - just extract UUID
+          passId = parts[parts.length - 1];
         }
       }
 
@@ -446,8 +455,21 @@ const GhostPassScanner: React.FC = () => {
         setScanState('error');
         return;
       }
+      
+      // Check if Tier 2 or 3 verification is required BEFORE making API call
+      if (qrVerificationTier >= 2) {
+        // Check if user has completed Footprint verification
+        const footprintId = localStorage.getItem('footprint_id');
+        
+        if (!footprintId) {
+          // User needs to complete Footprint verification
+          console.log(`Tier-${qrVerificationTier} verification required - redirecting to Footprint`);
+          setScanState('verification_required');
+          return;
+        }
+      }
 
-      // Process the actual scan with the extracted UUID
+      // Process the actual scan with the extracted UUID and verification tier
       const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
       const scanResponse = await fetch(`${API_BASE_URL}/scan/validate`, {
         method: 'POST',
@@ -456,9 +478,10 @@ const GhostPassScanner: React.FC = () => {
           'X-Device-Fingerprint': localStorage.getItem('device_fingerprint') || ''
         },
         body: JSON.stringify({
-          pass_id: passId, // Use extracted UUID
-          gateway_id: gatewayId, // Use valid UUID
-          venue_id: venueId
+          pass_id: passId, // Use extracted wallet_binding_id
+          gateway_id: assetCode || gatewayId, // Use asset_code if available, otherwise gateway_id
+          venue_id: venueId,
+          verification_tier: qrVerificationTier // Pass the verification tier from QR code
         })
       });
 

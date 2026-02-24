@@ -132,6 +132,10 @@ export const FootprintVerification: React.FC<FootprintVerificationProps> = ({
       if (validationData.verified) {
         setVerificationStatus('success');
         setFpId(validationData.fp_id);
+        
+        // Store footprint_id in localStorage for scanner to check
+        localStorage.setItem('footprint_id', validationData.fp_id);
+        
         showToast('Identity verified successfully!', 'success');
         
         if (onComplete) {

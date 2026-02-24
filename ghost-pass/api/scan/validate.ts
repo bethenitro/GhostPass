@@ -66,7 +66,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { pass_id, gateway_id, venue_id } = req.body;
+    const { pass_id, gateway_id, venue_id, verification_tier } = req.body;
 
     // Validation
     if (!pass_id) {
@@ -85,6 +85,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
+    // Use verification tier from request if provided, otherwise check database
+    const requestedVerificationTier = verification_tier || 1;
+
     // For now, return a mock successful response
     // In production, this would validate against the database
     console.log('Scan validation request:', {
@@ -102,7 +105,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         receipt_id: venue_id || 'unknown',
         pass_id,
         gateway_id,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        verification_tier: requestedVerificationTier
       });
     }
 
@@ -149,11 +153,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
       }
       
-      // Check verification tier requirement
-      const verificationTier = await checkVerificationTier(supabase, gateway_id, venue_id);
+      // Use verification tier from request (from QR code) or check database
+      const verificationTier = requestedVerificationTier || await checkVerificationTier(supabase, gateway_id, venue_id);
       
-      if (verificationTier === 3) {
-        // Tier-3 requires Footprint verification
+      if (verificationTier >= 2) {
+        // Tier 2 or 3 requires Footprint verification
         const { data: wallet } = await supabase
           .from('wallets')
           .select('user_id')
@@ -171,12 +175,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             // User needs to complete Footprint verification
             return res.status(200).json({
               status: 'DENIED',
-              message: 'Identity verification required',
+              message: `Identity verification required (Tier ${verificationTier})`,
               receipt_id: venue_id || 'unknown',
-              verification_tier: 3,
+              verification_tier: verificationTier,
               footprint_verified: false
             });
           }
+        } else {
+          // No wallet/user found - require verification
+          return res.status(200).json({
+            status: 'DENIED',
+            message: `Identity verification required (Tier ${verificationTier})`,
+            receipt_id: venue_id || 'unknown',
+            verification_tier: verificationTier,
+            footprint_verified: false
+          });
         }
       }
       
@@ -201,11 +214,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // Check verification tier requirement
-    const verificationTier = await checkVerificationTier(supabase, gateway_id, venue_id);
+    // Use verification tier from request (from QR code) or check database
+    const verificationTier = requestedVerificationTier || await checkVerificationTier(supabase, gateway_id, venue_id);
     
-    if (verificationTier === 3) {
-      // Tier-3 requires Footprint verification
+    if (verificationTier >= 2) {
+      // Tier 2 or 3 requires Footprint verification
       const { data: wallet } = await supabase
         .from('wallets')
         .select('user_id')
@@ -223,12 +236,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           // User needs to complete Footprint verification
           return res.status(200).json({
             status: 'DENIED',
-            message: 'Identity verification required',
+            message: `Identity verification required (Tier ${verificationTier})`,
             receipt_id: venue_id || 'unknown',
-            verification_tier: 3,
+            verification_tier: verificationTier,
             footprint_verified: false
           });
         }
+      } else {
+        // No wallet/user found - require verification
+        return res.status(200).json({
+          status: 'DENIED',
+          message: `Identity verification required (Tier ${verificationTier})`,
+          receipt_id: venue_id || 'unknown',
+          verification_tier: verificationTier,
+          footprint_verified: false
+        });
       }
     }
 
