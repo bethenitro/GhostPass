@@ -27,8 +27,13 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       .eq('event_id', event_id)
       .single();
 
+    console.log('Delete event - Looking for event_id:', event_id);
+    console.log('Delete event - Found event:', existingEvent);
+    console.log('Delete event - Fetch error:', fetchError);
+
     if (fetchError || !existingEvent) {
-      return res.status(404).json({ error: 'Event not found' });
+      console.error('Event not found:', { event_id, fetchError });
+      return res.status(404).json({ error: 'Event not found', event_id, details: fetchError?.message });
     }
 
     // Check if user is admin or venue admin for this venue
@@ -37,8 +42,11 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     }
 
     // If venue admin, verify they own this venue
-    if (user.role === 'VENUE_ADMIN' && (user as any).venue_id !== existingEvent.venue_id) {
-      return res.status(403).json({ error: 'You can only delete events for your venue' });
+    if (user.role === 'VENUE_ADMIN') {
+      const userVenueId = (user as any).venue_id;
+      if (userVenueId && userVenueId !== existingEvent.venue_id) {
+        return res.status(403).json({ error: 'You can only delete events for your venue' });
+      }
     }
 
     // Delete the event
