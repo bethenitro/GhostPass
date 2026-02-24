@@ -177,6 +177,8 @@ export interface SystemStats {
   pending_payouts: number;
   total_transactions: number;
   total_scans: number;
+  initial_entries: number;
+  reentries: number;
   revenue_today_cents: number;
   revenue_week_cents: number;
   revenue_month_cents: number;
