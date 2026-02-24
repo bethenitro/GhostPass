@@ -37,7 +37,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     const { data: existingEvent, error: fetchError } = await supabase
       .from('events')
       .select('*')
-      .eq('event_id', event_id)
+      .eq('id', event_id) // Use 'id' column, not 'event_id'
       .single();
 
     if (fetchError || !existingEvent) {
@@ -56,7 +56,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     // Update event
     const updateData: any = {};
     if (venue_id !== undefined) updateData.venue_id = venue_id;
-    if (event_name !== undefined) updateData.event_name = event_name;
+    if (event_name !== undefined) updateData.name = event_name; // Use 'name' column, not 'event_name'
     if (description !== undefined) updateData.description = description;
     if (start_date !== undefined) updateData.start_date = start_date;
     if (end_date !== undefined) updateData.end_date = end_date;
@@ -70,7 +70,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     const { data: updatedEvent, error: updateError } = await supabase
       .from('events')
       .update(updateData)
-      .eq('event_id', event_id)
+      .eq('id', event_id) // Use 'id' column, not 'event_id'
       .select()
       .single();
 

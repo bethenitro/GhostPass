@@ -24,10 +24,10 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     const { data: existingEvent, error: fetchError } = await supabase
       .from('events')
       .select('*')
-      .eq('event_id', event_id)
+      .eq('id', event_id) // Use 'id' column, not 'event_id'
       .single();
 
-    console.log('Delete event - Looking for event_id:', event_id);
+    console.log('Delete event - Looking for id:', event_id);
     console.log('Delete event - Found event:', existingEvent);
     console.log('Delete event - Fetch error:', fetchError);
 
@@ -53,7 +53,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     const { error: deleteError } = await supabase
       .from('events')
       .delete()
-      .eq('event_id', event_id);
+      .eq('id', event_id); // Use 'id' column, not 'event_id'
 
     if (deleteError) {
       throw deleteError;
