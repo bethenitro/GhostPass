@@ -31,8 +31,8 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       id_verification_level
     } = req.body;
 
-    if (!asset_type || !venue_id) {
-      return res.status(400).json({ error: 'asset_type and venue_id are required' });
+    if (!asset_type || !event_id) {
+      return res.status(400).json({ error: 'asset_type and event_id are required' });
     }
 
     const asset_code = `${asset_type}_${uuidv4()}`;
@@ -42,8 +42,8 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       .insert({
         asset_code,
         asset_type,
-        venue_id,
-        event_id: event_id || null,
+        venue_id: venue_id || null,
+        event_id: event_id,
         station_id: station_id || null,
         revenue_profile_id: revenue_profile_id || null,
         tax_profile_id: tax_profile_id || null,
