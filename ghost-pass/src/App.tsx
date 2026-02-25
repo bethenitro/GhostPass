@@ -12,6 +12,7 @@ import WalletRecovery from './components/WalletRecovery';
 import TicketPurchase from './components/TicketPurchase';
 import GhostPassModesTester from './components/GhostPassModesTester';
 import CommandCenterRouter from './components/CommandCenterRouter';
+import WebAppInitializationPage from './components/WebAppInitializationPage';
 import GatewayManagerPage from './components/GatewayManagerPage';
 import AuditTrail from './components/AuditTrail';
 import OperatorLogin from './components/OperatorLogin';
@@ -48,11 +49,18 @@ const AppContent: React.FC = () => {
   const [showOperatorLogin, setShowOperatorLogin] = useState(false);
   const [showGatewayManager, setShowGatewayManager] = useState(false);
   const [showAuditTrail, setShowAuditTrail] = useState(false);
+  const [onboardingContext, setOnboardingContext] = useState<{ eventId: string, assetId: string } | null>(null);
   const queryClient = useQueryClient();
 
   // Initialize app (device fingerprint is handled in API client)
   useEffect(() => {
     setLoading(false);
+
+    // Check for boarding pass / onboarding route
+    const match = window.location.pathname.match(/^\/e\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)$/);
+    if (match) {
+      setOnboardingContext({ eventId: match[1], assetId: match[2] });
+    }
   }, []);
 
   // Check for existing wallet session on mount (FAST ENTRY FLOW)
@@ -61,13 +69,13 @@ const AppContent: React.FC = () => {
     if (walletSession) {
       try {
         const session = JSON.parse(walletSession);
-        
+
         // CRITICAL: Always load wallet context if session exists, regardless of expiration
         // User's money is in the wallet, so they must always have access
         if (import.meta.env.DEV) {
           console.log(t('appContent.fastEntry'));
         }
-        
+
         // Load fast entry context if available
         if (session.fast_entry) {
           setFastEntryMode(true);
@@ -79,10 +87,10 @@ const AppContent: React.FC = () => {
             entryFee: session.entry_fee
           });
         }
-        
+
         // Check if session is expired
         const isExpired = session.expires_at && new Date(session.expires_at) <= new Date();
-        
+
         // Only set initial route if no hash is present
         if (!window.location.hash || window.location.hash === '#/') {
           if (isExpired) {
@@ -125,7 +133,7 @@ const AppContent: React.FC = () => {
     const handleHashChange = () => {
       const newRoute = window.location.hash;
       setCurrentRoute(newRoute);
-      
+
       // Update active tab based on route
       if (newRoute === '#/wallet' || newRoute === '#/' || newRoute === '') {
         setActiveTab('wallet');
@@ -153,12 +161,12 @@ const AppContent: React.FC = () => {
         window.location.hash = '#/wallet';
       }
     };
-    
+
     window.addEventListener('hashchange', handleHashChange);
-    
+
     // Set initial route
     handleHashChange();
-    
+
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, [currentRoute]);
 
@@ -207,7 +215,7 @@ const AppContent: React.FC = () => {
   const handleOperatorPortal = () => {
     console.log(t('appContent.operatorPortal'));
     setShowRecovery(false);
-    
+
     // Check if already authenticated
     if (authApi.isAuthenticated()) {
       setShowOperatorPortal(true);
@@ -248,6 +256,13 @@ const AppContent: React.FC = () => {
     setShowGatewayManager(false);
   };
 
+  const handleHasTicket = (context: { venueId: string; eventId: string; venueName: string; eventName: string; entryFee: number }) => {
+    setFastEntryMode(true);
+    setFastEntryContext(context);
+    setOnboardingContext(null);
+    window.location.hash = '#/wallet';
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
@@ -256,6 +271,16 @@ const AppContent: React.FC = () => {
           <p className="text-slate-400">{t('common.loading')}</p>
         </div>
       </div>
+    );
+  }
+
+  if (onboardingContext) {
+    return (
+      <WebAppInitializationPage
+        eventId={onboardingContext.eventId}
+        assetId={onboardingContext.assetId}
+        onHasTicket={handleHasTicket}
+      />
     );
   }
 

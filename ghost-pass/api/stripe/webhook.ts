@@ -15,6 +15,7 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { buffer } from 'micro';
+import crypto from 'crypto';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2026-01-28.clover',
@@ -101,8 +102,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
   console.log('Processing checkout.session.completed:', session.id);
 
-  const { wallet_binding_id, device_fingerprint } = session.metadata || {};
+  const { type, wallet_binding_id, device_fingerprint } = session.metadata || {};
 
+  if (type === 'ticket_purchase') {
+    return handleTicketPurchaseCompleted(session);
+  }
+
+  // Default Wallet Funding Flow
   if (!wallet_binding_id) {
     console.error('Missing wallet_binding_id in session metadata');
     return;
@@ -173,7 +179,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
 
 async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
   console.log('Payment intent failed:', paymentIntent.id);
-  
+
   const { wallet_binding_id } = paymentIntent.metadata || {};
 
   if (!wallet_binding_id) {
@@ -198,4 +204,130 @@ async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
   });
 
   console.log(`❌ Payment failed for wallet ${wallet_binding_id}`);
+}
+
+async function handleTicketPurchaseCompleted(session: Stripe.Checkout.Session) {
+  console.log('Processing ticket purchase checkout.session.completed:', session.id);
+
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const metadata = session.metadata || {};
+  const deviceFingerprint = metadata.device_fingerprint;
+  let targetWalletBindingId = metadata.wallet_binding_id;
+
+  if (!deviceFingerprint) {
+    throw new Error('No device_fingerprint in session metadata');
+  }
+
+  // 1. Find or create the wallet based on the device_fingerprint
+  let { data: wallet } = await supabase
+    .from('wallets')
+    .select('*')
+    .eq('device_fingerprint', deviceFingerprint)
+    .single();
+
+  if (!wallet) {
+    targetWalletBindingId = targetWalletBindingId || `wallet_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const { data: newWallet, error: createError } = await supabase
+      .from('wallets')
+      .insert({
+        device_fingerprint: deviceFingerprint,
+        wallet_binding_id: targetWalletBindingId,
+        balance_cents: 0,
+        device_bound: true,
+        wallet_surfaced: false,
+        entry_count: 0,
+      })
+      .select()
+      .single();
+
+    if (createError || !newWallet) {
+      throw new Error(`Failed to create wallet for ${deviceFingerprint}: ${createError?.message}`);
+    }
+    wallet = newWallet;
+  } else {
+    targetWalletBindingId = wallet.wallet_binding_id;
+  }
+
+  // 2. Fetch event details to calculate validity window
+  const eventId = metadata.event_id;
+  const ticketTypeId = metadata.ticket_type_id;
+  const quantity = parseInt(metadata.quantity || '1', 10);
+  const totalCentsPaid = parseInt(metadata.total_cents || session.amount_total?.toString() || '0', 10);
+  const serviceFeeCents = parseInt(metadata.service_fee_cents || '0', 10);
+  const ticketPriceCents = totalCentsPaid - serviceFeeCents;
+
+  const { data: eventData } = await supabase
+    .from('events')
+    .select('start_date, end_date')
+    .eq('id', eventId)
+    .single();
+
+  const validFrom = eventData?.start_date || new Date().toISOString();
+  const validUntil = eventData?.end_date || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // Fallback +24h
+
+  // 3. Create the ticket record(s) - handle quantity > 1 if needed
+  // For GhostPass standard, we'll insert N records if quantity > 1
+  for (let i = 0; i < quantity; i++) {
+    const ticketId = `ticket_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`;
+    const ticketCode = crypto.randomBytes(16).toString('hex').toUpperCase();
+
+    const { error: ticketError } = await supabase
+      .from('event_tickets')
+      .insert({
+        id: ticketId,
+        ticket_code: ticketCode,
+        event_id: eventId,
+        ticket_type_id: ticketTypeId,
+        wallet_binding_id: targetWalletBindingId,
+        device_fingerprint: deviceFingerprint,
+        ticket_price_cents: Math.floor(ticketPriceCents / quantity),
+        service_fee_cents: Math.floor(serviceFeeCents / quantity),
+        total_paid_cents: Math.floor(totalCentsPaid / quantity),
+        status: 'active',
+        purchased_at: new Date().toISOString(),
+        valid_from: validFrom,
+        valid_until: validUntil,
+        entry_granted: false,
+        entry_count: 0,
+      });
+
+    if (ticketError) {
+      console.error('Failed to create ticket:', ticketError);
+    }
+  }
+
+  // 4. Record transaction in ledger
+  await supabase.from('transactions').insert({
+    wallet_binding_id: targetWalletBindingId,
+    type: 'TICKET_PURCHASE',
+    amount_cents: totalCentsPaid, // Assuming user pays Stripe and we just grant ticket. Cost logic: usually this shows as a debit, but since they paid via external card maybe it's 0 or we log an external payment?
+    description: `Ticket Purchase via Stripe for Event ${eventId}`,
+    status: 'completed',
+    payment_method: 'stripe',
+    stripe_session_id: session.id,
+    metadata: {
+      device_fingerprint: deviceFingerprint,
+      event_id: eventId,
+      ticket_type_id: ticketTypeId,
+      quantity,
+      service_fee_cents: serviceFeeCents,
+    },
+    created_at: new Date().toISOString(),
+  });
+
+  // 5. Update ticket type sold count safely
+  const { data: ticketType } = await supabase
+    .from('ticket_types')
+    .select('sold_count')
+    .eq('id', ticketTypeId)
+    .single();
+
+  if (ticketType) {
+    await supabase
+      .from('ticket_types')
+      .update({ sold_count: (ticketType.sold_count || 0) + quantity })
+      .eq('id', ticketTypeId);
+  }
+
+  console.log(`✅ Ticket purchase complete. Wallet ${targetWalletBindingId} created/updated.`);
 }
