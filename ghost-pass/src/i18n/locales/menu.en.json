@@ -1,0 +1,37 @@
+{
+  "menu": {
+    "title": "Menu",
+    "loading": "Loading menu...",
+    "noItems": "No menu items available",
+    "addToCart": "Add to Cart",
+    "cart": "Cart",
+    "cartCount": "Cart ({{count}})",
+    "subtotal": "Subtotal",
+    "tip": "Tip ({{percent}}%)",
+    "total": "Total",
+    "addTip": "Add Tip",
+    "customTip": "Custom %",
+    "walletBalance": "Wallet Balance",
+    "insufficientBalance": "Insufficient balance. Need ${{amount}} more.",
+    "addFunds": "Add ${{amount}} to Wallet",
+    "payFromWallet": "Pay from Wallet",
+    "nfcTapToPay": "NFC Tap to Pay",
+    "processing": "Processing...",
+    "paymentSuccessful": "Payment Successful!",
+    "receiptRecorded": "Receipt recorded",
+    "errors": {
+      "noVenueOrEvent": "Unable to load menu: venue or event information missing",
+      "loadFailed": "Failed to load menu items",
+      "addItemsToCart": "Please add items to cart",
+      "walletNotFound": "Wallet not found. Please refresh the page.",
+      "purchaseFailed": "Purchase failed. Please try again."
+    },
+    "categories": {
+      "food": "Food",
+      "beverage": "Beverage",
+      "alcohol": "Alcohol",
+      "merchandise": "Merchandise",
+      "other": "Other"
+    }
+  }
+}

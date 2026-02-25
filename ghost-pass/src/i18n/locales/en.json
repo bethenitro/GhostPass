@@ -541,6 +541,7 @@
     "walletUpdated": "Your wallet has been updated",
     "fastEntryTitle": "Fast Entry",
     "infoDescription": "Once funded, your entry will be processed automatically. Keep this wallet accessible for re-entry.",
+    "makePurchase": "Make Purchase",
     "comingSoon": "Coming Soon",
     "payment": {
       "stripe": "Stripe",

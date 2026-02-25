@@ -547,6 +547,7 @@
     "walletUpdated": "Tu cartera ha sido actualizada",
     "fastEntryTitle": "Entrada Rápida",
     "infoDescription": "Una vez financiado, tu entrada se procesará automáticamente. Mantén esta cartera accesible para reingresos.",
+    "makePurchase": "Realizar Compra",
     "comingSoon": "Próximamente",
     "payment": {
       "stripe": "Stripe",

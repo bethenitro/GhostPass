@@ -1,0 +1,37 @@
+{
+  "menu": {
+    "title": "Menú",
+    "loading": "Cargando menú...",
+    "noItems": "No hay artículos de menú disponibles",
+    "addToCart": "Agregar al Carrito",
+    "cart": "Carrito",
+    "cartCount": "Carrito ({{count}})",
+    "subtotal": "Subtotal",
+    "tip": "Propina ({{percent}}%)",
+    "total": "Total",
+    "addTip": "Agregar Propina",
+    "customTip": "% Personalizado",
+    "walletBalance": "Saldo de Billetera",
+    "insufficientBalance": "Saldo insuficiente. Necesita ${{amount}} más.",
+    "addFunds": "Agregar ${{amount}} a la Billetera",
+    "payFromWallet": "Pagar desde Billetera",
+    "nfcTapToPay": "Pago por NFC",
+    "processing": "Procesando...",
+    "paymentSuccessful": "¡Pago Exitoso!",
+    "receiptRecorded": "Recibo registrado",
+    "errors": {
+      "noVenueOrEvent": "No se puede cargar el menú: falta información del lugar o evento",
+      "loadFailed": "Error al cargar los artículos del menú",
+      "addItemsToCart": "Por favor agregue artículos al carrito",
+      "walletNotFound": "Billetera no encontrada. Por favor actualice la página.",
+      "purchaseFailed": "Compra fallida. Por favor intente de nuevo."
+    },
+    "categories": {
+      "food": "Comida",
+      "beverage": "Bebida",
+      "alcohol": "Alcohol",
+      "merchandise": "Mercancía",
+      "other": "Otro"
+    }
+  }
+}

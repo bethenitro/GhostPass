@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DollarSign, Percent, Check, X, Loader2, Plus, Minus, ShoppingCart } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useToast } from './ui/toast';
 
 interface MenuItem {
@@ -35,6 +36,7 @@ export const MenuBasedVendorPurchase: React.FC<MenuBasedVendorPurchaseProps> = (
   onClose,
   onSuccess,
 }) => {
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -54,7 +56,7 @@ export const MenuBasedVendorPurchase: React.FC<MenuBasedVendorPurchaseProps> = (
   useEffect(() => {
     if (!venueId && !eventId) {
       console.warn('No venueId or eventId provided to MenuBasedVendorPurchase');
-      showToast('Unable to load menu: venue or event information missing', 'error');
+      showToast(t('menu.errors.noVenueOrEvent'), 'error');
       setLoadingMenu(false);
       return;
     }
@@ -101,11 +103,11 @@ export const MenuBasedVendorPurchase: React.FC<MenuBasedVendorPurchaseProps> = (
       } else {
         const errorData = await response.json();
         console.error('Failed to load menu:', errorData);
-        showToast(errorData.error || 'Failed to load menu items', 'error');
+        showToast(errorData.error || t('menu.errors.loadFailed'), 'error');
       }
     } catch (error) {
       console.error('Failed to load menu:', error);
-      showToast('Failed to load menu', 'error');
+      showToast(t('menu.errors.loadFailed'), 'error');
     } finally {
       setLoadingMenu(false);
     }
@@ -159,7 +161,7 @@ export const MenuBasedVendorPurchase: React.FC<MenuBasedVendorPurchaseProps> = (
       const deviceFingerprint = localStorage.getItem('device_fingerprint');
 
       if (!walletBindingId || !deviceFingerprint) {
-        showToast('Wallet not found. Please refresh the page.', 'error');
+        showToast(t('menu.errors.walletNotFound'), 'error');
         return;
       }
 
@@ -181,7 +183,7 @@ export const MenuBasedVendorPurchase: React.FC<MenuBasedVendorPurchaseProps> = (
 
       if (!response.ok) {
         const errorData = await response.json();
-        showToast(errorData.error || 'Failed to create payment session', 'error');
+        showToast(errorData.error || t('menu.errors.loadFailed'), 'error');
         return;
       }
 
@@ -191,17 +193,17 @@ export const MenuBasedVendorPurchase: React.FC<MenuBasedVendorPurchaseProps> = (
         // Redirect to Stripe Checkout
         window.location.href = data.url;
       } else {
-        showToast('Failed to create payment session', 'error');
+        showToast(t('menu.errors.loadFailed'), 'error');
       }
     } catch (error) {
       console.error('Add funds error:', error);
-      showToast('Failed to add funds. Please try again.', 'error');
+      showToast(t('menu.errors.purchaseFailed'), 'error');
     }
   };
 
   const handlePurchase = async (method: 'QR' | 'NFC') => {
     if (cart.length === 0) {
-      showToast('Please add items to cart', 'error');
+      showToast(t('menu.errors.addItemsToCart'), 'error');
       return;
     }
 
@@ -211,7 +213,7 @@ export const MenuBasedVendorPurchase: React.FC<MenuBasedVendorPurchaseProps> = (
       const deviceFingerprint = localStorage.getItem('device_fingerprint');
 
       if (!walletBindingId || !deviceFingerprint) {
-        showToast('Wallet not found. Please refresh the page.', 'error');
+        showToast(t('menu.errors.walletNotFound'), 'error');
         setIsProcessing(false);
         return;
       }
@@ -245,7 +247,7 @@ export const MenuBasedVendorPurchase: React.FC<MenuBasedVendorPurchaseProps> = (
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        showToast(data.error || 'Purchase failed', 'error');
+        showToast(data.error || t('menu.errors.purchaseFailed'), 'error');
         setIsProcessing(false);
         return;
       }
@@ -257,7 +259,7 @@ export const MenuBasedVendorPurchase: React.FC<MenuBasedVendorPurchaseProps> = (
       }, 2000);
     } catch (error) {
       console.error('Purchase error:', error);
-      showToast('Purchase failed. Please try again.', 'error');
+      showToast(t('menu.errors.purchaseFailed'), 'error');
       setIsProcessing(false);
     }
   };
@@ -278,8 +280,8 @@ export const MenuBasedVendorPurchase: React.FC<MenuBasedVendorPurchaseProps> = (
           >
             <Check className="w-10 h-10 text-emerald-400" />
           </motion.div>
-          <h3 className="text-2xl font-bold text-white mb-2">Payment Successful!</h3>
-          <p className="text-slate-400 mb-4">Receipt recorded</p>
+          <h3 className="text-2xl font-bold text-white mb-2">{t('menu.paymentSuccessful')}</h3>
+          <p className="text-slate-400 mb-4">{t('menu.receiptRecorded')}</p>
           <div className="text-3xl font-bold text-emerald-400">
             ${(finalTotal / 100).toFixed(2)}
           </div>
@@ -306,7 +308,7 @@ export const MenuBasedVendorPurchase: React.FC<MenuBasedVendorPurchaseProps> = (
         >
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-white">Menu</h2>
+            <h2 className="text-xl font-bold text-white">{t('menu.title')}</h2>
             <button
               onClick={onClose}
               className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
@@ -319,11 +321,11 @@ export const MenuBasedVendorPurchase: React.FC<MenuBasedVendorPurchaseProps> = (
           {loadingMenu ? (
             <div className="text-center py-8">
               <Loader2 className="w-8 h-8 animate-spin text-cyan-400 mx-auto mb-2" />
-              <p className="text-slate-400">Loading menu...</p>
+              <p className="text-slate-400">{t('menu.loading')}</p>
             </div>
           ) : menuItems.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-slate-400">No menu items available</p>
+              <p className="text-slate-400">{t('menu.noItems')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
@@ -346,7 +348,7 @@ export const MenuBasedVendorPurchase: React.FC<MenuBasedVendorPurchaseProps> = (
                     className="w-full py-2 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500 text-cyan-400 rounded-lg transition-all flex items-center justify-center gap-2"
                   >
                     <Plus className="w-4 h-4" />
-                    Add to Cart
+                    {t('menu.addToCart')}
                   </button>
                 </div>
               ))}
@@ -358,7 +360,7 @@ export const MenuBasedVendorPurchase: React.FC<MenuBasedVendorPurchaseProps> = (
             <div className="bg-slate-800/50 rounded-lg p-4 mb-6">
               <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
                 <ShoppingCart className="w-4 h-4" />
-                Cart ({cart.length})
+                {t('menu.cartCount', { count: cart.length })}
               </h3>
               <div className="space-y-2 mb-4">
                 {cart.map((item) => (
@@ -391,7 +393,7 @@ export const MenuBasedVendorPurchase: React.FC<MenuBasedVendorPurchaseProps> = (
               {/* Tip Selection */}
               <div className="border-t border-slate-700 pt-4">
                 <label className="block text-sm font-medium text-slate-300 mb-3">
-                  Add Tip
+                  {t('menu.addTip')}
                 </label>
                 
                 <div className="grid grid-cols-4 gap-2 mb-3">
@@ -417,7 +419,7 @@ export const MenuBasedVendorPurchase: React.FC<MenuBasedVendorPurchaseProps> = (
                     value={customTipPercent}
                     onChange={(e) => handleCustomTip(e.target.value)}
                     onFocus={() => setIsCustom(true)}
-                    placeholder="Custom %"
+                    placeholder={t('menu.customTip')}
                     className={`w-full px-4 py-2 bg-slate-800/50 border-2 rounded-lg text-white placeholder-slate-500 focus:outline-none transition-all ${
                       isCustom
                         ? 'border-cyan-500 bg-cyan-500/10'
@@ -431,16 +433,16 @@ export const MenuBasedVendorPurchase: React.FC<MenuBasedVendorPurchaseProps> = (
               {/* Total Breakdown */}
               <div className="border-t border-slate-700 pt-4 mt-4 space-y-2">
                 <div className="flex justify-between text-slate-400">
-                  <span>Subtotal</span>
+                  <span>{t('menu.subtotal')}</span>
                   <span>${(subtotal / 100).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-slate-400">
-                  <span>Tip ({tipPercent.toFixed(1)}%)</span>
+                  <span>{t('menu.tip', { percent: tipPercent.toFixed(1) })}</span>
                   <span>${(tipAmount / 100).toFixed(2)}</span>
                 </div>
                 <div className="border-t border-slate-700 pt-2">
                   <div className="flex justify-between text-white font-bold text-lg">
-                    <span>Total</span>
+                    <span>{t('menu.total')}</span>
                     <span className="text-cyan-400">${(finalTotal / 100).toFixed(2)}</span>
                   </div>
                 </div>
@@ -454,14 +456,14 @@ export const MenuBasedVendorPurchase: React.FC<MenuBasedVendorPurchaseProps> = (
               {/* Wallet Balance Display */}
               <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-400 text-sm">Wallet Balance</span>
+                  <span className="text-slate-400 text-sm">{t('menu.walletBalance')}</span>
                   <span className={`font-mono font-semibold ${hasInsufficientBalance ? 'text-red-400' : 'text-cyan-400'}`}>
                     ${(walletBalance / 100).toFixed(2)}
                   </span>
                 </div>
                 {hasInsufficientBalance && (
                   <div className="mt-2 text-xs text-red-400">
-                    Insufficient balance. Need ${(shortfall / 100).toFixed(2)} more.
+                    {t('menu.insufficientBalance', { amount: (shortfall / 100).toFixed(2) })}
                   </div>
                 )}
               </div>
@@ -473,7 +475,7 @@ export const MenuBasedVendorPurchase: React.FC<MenuBasedVendorPurchaseProps> = (
                   className="w-full py-4 bg-emerald-500/20 border-2 border-emerald-500 text-emerald-400 rounded-lg hover:bg-emerald-500/30 transition-all flex items-center justify-center space-x-2 font-semibold"
                 >
                   <DollarSign className="w-5 h-5" />
-                  <span>Add ${((Math.max(shortfall, 500)) / 100).toFixed(2)} to Wallet</span>
+                  <span>{t('menu.addFunds', { amount: ((Math.max(shortfall, 500)) / 100).toFixed(2) })}</span>
                 </button>
               )}
 
@@ -488,12 +490,12 @@ export const MenuBasedVendorPurchase: React.FC<MenuBasedVendorPurchaseProps> = (
                     {isProcessing ? (
                       <>
                         <Loader2 className="w-5 h-5 animate-spin" />
-                        <span>Processing...</span>
+                        <span>{t('menu.processing')}</span>
                       </>
                     ) : (
                       <>
                         <DollarSign className="w-5 h-5" />
-                        <span>Pay from Wallet</span>
+                        <span>{t('menu.payFromWallet')}</span>
                       </>
                     )}
                   </button>
@@ -506,12 +508,12 @@ export const MenuBasedVendorPurchase: React.FC<MenuBasedVendorPurchaseProps> = (
                     {isProcessing ? (
                       <>
                         <Loader2 className="w-5 h-5 animate-spin" />
-                        <span>Processing...</span>
+                        <span>{t('menu.processing')}</span>
                       </>
                     ) : (
                       <>
                         <DollarSign className="w-5 h-5" />
-                        <span>NFC Tap to Pay</span>
+                        <span>{t('menu.nfcTapToPay')}</span>
                       </>
                     )}
                   </button>
