@@ -66,7 +66,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { pass_id, gateway_id, venue_id, verification_tier } = req.body;
+    const { pass_id, gateway_id, venue_id, event_id, verification_tier } = req.body;
 
     // Validation
     if (!pass_id) {
@@ -93,7 +93,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log('Scan validation request:', {
       pass_id,
       gateway_id,
-      venue_id
+      venue_id,
+      event_id
     });
 
     // Check if Supabase is configured
@@ -120,6 +121,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .eq('wallet_binding_id', pass_id)
       .eq('is_active', true)
       .single();
+
+    // Declare eventInfo at function scope so it's accessible throughout
+    let eventInfo: { event_id: string; event_name: string } | null = null;
 
     if (error || !session) {
       console.log('Wallet session not found, checking by session ID');
@@ -151,6 +155,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           message: 'Pass has expired',
           receipt_id: venue_id || 'unknown'
         });
+      }
+      
+      // First try to use event_id from QR code
+      if (event_id) {
+        const { data: event } = await supabase
+          .from('events')
+          .select('id, name')
+          .eq('id', event_id)
+          .single();
+        
+        if (event) {
+          eventInfo = {
+            event_id: event.id,
+            event_name: event.name
+          };
+        }
+      }
+      
+      // If no event_id in request, try to get from QR asset
+      if (!eventInfo && gateway_id) {
+        const { data: asset } = await supabase
+          .from('qr_nfc_assets')
+          .select('event_id, events(id, name)')
+          .eq('asset_code', gateway_id)
+          .single();
+        
+        if (asset?.event_id && asset.events && !Array.isArray(asset.events)) {
+          const events = asset.events as { id: string; name: string };
+          eventInfo = {
+            event_id: events.id,
+            event_name: events.name
+          };
+        }
       }
       
       // Use verification tier from request (from QR code) or check database
@@ -207,7 +244,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         pass_id,
         gateway_id,
         timestamp: new Date().toISOString(),
-        verification_tier: verificationTier
+        verification_tier: verificationTier,
+        event_name: eventInfo?.event_name || null
       };
 
       // Log entry event for analytics
@@ -225,6 +263,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         await supabase.from('entry_events').insert({
           wallet_binding_id: sessionData.wallet_binding_id,
           venue_id: venue_id || 'unknown',
+          event_id: event_id || eventInfo?.event_id || null,
           gateway_id,
           entry_number: entryNumber,
           entry_type: isInitialEntry ? 'initial' : 're_entry',
@@ -270,6 +309,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Use verification tier from request (from QR code) or check database
     const verificationTier = requestedVerificationTier || await checkVerificationTier(supabase, gateway_id, venue_id);
+    
+    // Get event information from request or QR asset (if not already retrieved)
+    if (!eventInfo) {
+      // First try to use event_id from QR code
+      if (event_id) {
+        const { data: event } = await supabase
+          .from('events')
+          .select('id, name')
+          .eq('id', event_id)
+          .single();
+        
+        if (event) {
+          eventInfo = {
+            event_id: event.id,
+            event_name: event.name
+          };
+        }
+      }
+      
+      // If no event_id in request, try to get from QR asset
+      if (!eventInfo && gateway_id) {
+        const { data: asset } = await supabase
+          .from('qr_nfc_assets')
+          .select('event_id, events(id, name)')
+          .eq('asset_code', gateway_id)
+          .single();
+        
+        if (asset?.event_id && asset.events && !Array.isArray(asset.events)) {
+          const events = asset.events as { id: string; name: string };
+          eventInfo = {
+            event_id: events.id,
+            event_name: events.name
+          };
+        }
+      }
+    }
     
     if (verificationTier >= 2) {
       // Tier 2 or 3 requires Footprint verification
@@ -322,7 +397,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       pass_id,
       gateway_id,
       timestamp: new Date().toISOString(),
-      verification_tier: verificationTier
+      verification_tier: verificationTier,
+      event_name: eventInfo?.event_name || null
     };
 
     // Log entry event for analytics
@@ -340,6 +416,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       await supabase.from('entry_events').insert({
         wallet_binding_id: session.wallet_binding_id,
         venue_id: venue_id || 'unknown',
+        event_id: event_id || eventInfo?.event_id || null,
         gateway_id,
         entry_number: entryNumber,
         entry_type: isInitialEntry ? 'initial' : 're_entry',

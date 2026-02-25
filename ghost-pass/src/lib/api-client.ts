@@ -57,7 +57,7 @@ export const stationApi = {
 export const menuApi = {
   list: (params?: any) => apiClient.get('/menu/manage', { params }),
   create: (data: any) => apiClient.post('/menu/manage', data),
-  update: (id: string, data: any) => apiClient.put(`/menu/manage?id=${id}`, data),
+  update: (id: string, data: any) => apiClient.put('/menu/manage', { id, ...data }),
   delete: (id: string) => apiClient.delete(`/menu/manage?id=${id}`),
 };
 

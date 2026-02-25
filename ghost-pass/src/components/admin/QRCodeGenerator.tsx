@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { QrCode, Download, Loader2, Plus, CheckCircle } from 'lucide-react';
 import QRCodeLib from 'qrcode';
@@ -15,6 +15,10 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
   const [loading, setLoading] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [selectedAsset, setSelectedAsset] = useState<any>(null);
+  const [events, setEvents] = useState<any[]>([]);
+  const [venues, setVenues] = useState<any[]>([]);
+  const [loadingEvents, setLoadingEvents] = useState(false);
+  const [loadingVenues, setLoadingVenues] = useState(false);
   
   const [formData, setFormData] = useState({
     asset_type: 'QR' as 'QR' | 'NFC',
@@ -26,6 +30,72 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
     tax_profile_id: '',
     id_verification_level: 1
   });
+
+  // Load venues on mount
+  useEffect(() => {
+    const loadVenues = async () => {
+      setLoadingVenues(true);
+      try {
+        const authToken = localStorage.getItem('auth_token');
+        if (!authToken) return;
+
+        const response = await fetch('/api/venues/list', {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setVenues(data || []);
+          
+          // Set first venue as default if no venue selected
+          if (!formData.venue_id && data.length > 0) {
+            setFormData(prev => ({ ...prev, venue_id: data[0].id }));
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load venues:', error);
+      } finally {
+        setLoadingVenues(false);
+      }
+    };
+
+    loadVenues();
+  }, []);
+
+  // Load events when venue is selected
+  useEffect(() => {
+    const loadEvents = async () => {
+      if (!formData.venue_id) {
+        setEvents([]);
+        return;
+      }
+
+      setLoadingEvents(true);
+      try {
+        const authToken = localStorage.getItem('auth_token');
+        if (!authToken) return;
+
+        const response = await fetch(`/api/events/list?venue_id=${formData.venue_id}`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setEvents(data || []);
+        }
+      } catch (error) {
+        console.error('Failed to load events:', error);
+      } finally {
+        setLoadingEvents(false);
+      }
+    };
+
+    loadEvents();
+  }, [formData.venue_id]);
 
   const generateQRCode = async () => {
     try {
@@ -126,11 +196,13 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
         // Continue anyway - the wallet session is what matters
       }
 
-      // Step 3: Generate QR code with both wallet binding ID and asset code
-      // Format: "ghostsession:{wallet_binding_id}:{asset_code}:{verification_tier}"
-      const qrData = assetCode 
-        ? `ghostsession:${walletBindingId}:${assetCode}:${formData.id_verification_level}`
-        : `ghostsession:${walletBindingId}::${formData.id_verification_level}`;
+      // Step 3: Generate QR code with complete information
+      // Format: "ghostsession:{wallet_binding_id}:{gateway_id}:{venue_id}:{event_id}:{verification_tier}"
+      const qrVenueId = formData.venue_id || 'venue_001';
+      const qrEventId = formData.event_id || '';
+      const qrGatewayId = assetCode || 'scanner_default';
+      
+      const qrData = `ghostsession:${walletBindingId}:${qrGatewayId}:${qrVenueId}:${qrEventId}:${formData.id_verification_level}`;
 
       const dataUrl = await QRCodeLib.toDataURL(qrData, {
         width: 512,
@@ -143,9 +215,10 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
 
       setQrDataUrl(dataUrl);
       setSelectedAsset({
-        asset_code: walletBindingId,
-        venue_id: formData.venue_id || 'venue_001',
-        event_id: formData.event_id || null,
+        asset_code: qrGatewayId,
+        wallet_binding_id: walletBindingId,
+        venue_id: qrVenueId,
+        event_id: qrEventId,
         station_id: formData.station_id,
         station_type: formData.station_type,
         session_data: sessionData
@@ -181,6 +254,40 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
         <h3 className="text-base sm:text-lg font-semibold text-white mb-4">{t('qr.assetConfig', 'Asset Configuration')}</h3>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <div>
+            <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">{t('qr.venue', 'Venue')}</label>
+            <select
+              value={formData.venue_id}
+              onChange={(e) => setFormData({ ...formData, venue_id: e.target.value, event_id: '' })}
+              className="w-full px-3 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-blue-500 focus:outline-none min-h-[44px]"
+              disabled={loadingVenues}
+            >
+              <option value="">{loadingVenues ? 'Loading venues...' : 'Select a venue'}</option>
+              {venues.map((venue) => (
+                <option key={venue.id} value={venue.id}>
+                  {venue.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">{t('qr.event', 'Link to Event (Optional)')}</label>
+            <select
+              value={formData.event_id}
+              onChange={(e) => setFormData({ ...formData, event_id: e.target.value })}
+              className="w-full px-3 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-blue-500 focus:outline-none min-h-[44px]"
+              disabled={loadingEvents || !formData.venue_id}
+            >
+              <option value="">{loadingEvents ? 'Loading events...' : 'No event (venue-wide)'}</option>
+              {events.map((event) => (
+                <option key={event.id} value={event.id}>
+                  {event.name || event.event_name}
+                </option>
+              ))}
+            </select>
+          </div>
+          
           <div>
             <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">{t('qr.assetType', 'Asset Type')}</label>
             <select

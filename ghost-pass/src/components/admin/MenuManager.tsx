@@ -3,9 +3,10 @@ import { menuApi, revenueProfileApi } from '../../lib/api-client';
 import { Plus, Loader2, Trash2, Beer, UtensilsCrossed, ShoppingBag, Edit2 } from 'lucide-react';
 import { useToast } from '../ui/toast';
 
-const BAR_ITEMS = ['Beer', 'Wine', 'Vodka', 'Whiskey', 'Bourbon', 'Tequila', 'Rum', 'Gin', 'Cocktails', 'Non-alcoholic'];
-const CONCESSION_ITEMS = ['Food items', 'Drinks'];
-const MERCH_ITEMS = ['Item name'];
+const BAR_ITEMS = ['Beer', 'Wine', 'Vodka', 'Whiskey', 'Bourbon', 'Tequila', 'Rum', 'Gin', 'Cocktails', 'Top Shelf', 'Shot', 'Non-alcoholic', 'Special Entry (create your own)'];
+const CONCESSION_ITEMS = ['Burger', 'Hot Dog', 'Pretzel', 'Pizza', 'Chicken', 'Empanada', 'Burrito', 'Extra', 'Special Entry (create your own)'];
+const DRINKS_ITEMS = ['Fountain', 'Water', 'Can/Bottle', 'Coffee', 'Special Entry (create your own)'];
+const MERCH_ITEMS = ['T-Shirt', 'Long Sleeve T', 'Hat', 'Sweatshirt', 'Back Packs', 'Hip Packs', 'Special (Create your own)'];
 
 export const MenuManager: React.FC<{ venueId: string; eventId?: string }> = ({ venueId, eventId }) => {
   const { showToast } = useToast();
@@ -142,7 +143,7 @@ export const MenuManager: React.FC<{ venueId: string; eventId?: string }> = ({ v
   const getQuickAddItems = () => {
     switch (selectedStation) {
       case 'BAR': return BAR_ITEMS;
-      case 'CONCESSION': return CONCESSION_ITEMS;
+      case 'CONCESSION': return [...CONCESSION_ITEMS, ...DRINKS_ITEMS];
       case 'MERCH': return MERCH_ITEMS;
       default: return [];
     }
@@ -297,23 +298,35 @@ export const MenuManager: React.FC<{ venueId: string; eventId?: string }> = ({ v
               </select>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-cyan-500/20 border border-cyan-500 text-cyan-400 py-3 px-4 rounded-lg hover:bg-cyan-500/30 disabled:opacity-50 flex items-center justify-center space-x-2 min-h-[44px]"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Processing...</span>
-                </>
-              ) : (
-                <>
-                  <Plus className="w-4 h-4" />
-                  <span>{editingItem ? 'Update Item' : 'Add Item'}</span>
-                </>
+            <div className="flex flex-col sm:flex-row gap-3">
+              {editingItem && (
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  disabled={loading}
+                  className="w-full sm:w-1/2 bg-slate-800/50 border border-slate-600 text-slate-300 py-3 px-4 rounded-lg hover:bg-slate-700/50 disabled:opacity-50 flex items-center justify-center space-x-2 min-h-[44px]"
+                >
+                  <span>Cancel</span>
+                </button>
               )}
-            </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className={`${editingItem ? 'w-full sm:w-1/2' : 'w-full'} bg-cyan-500/20 border border-cyan-500 text-cyan-400 py-3 px-4 rounded-lg hover:bg-cyan-500/30 disabled:opacity-50 flex items-center justify-center space-x-2 min-h-[44px]`}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Processing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4" />
+                    <span>{editingItem ? 'Update Item' : 'Add Item'}</span>
+                  </>
+                )}
+              </button>
+            </div>
           </form>
         </div>
       )}
