@@ -20,9 +20,14 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       .from('events')
       .select('*');
 
+    // Filter events based on user role and venue
     if (venue_id) {
       query = query.eq('venue_id', venue_id);
+    } else if (user.role === 'VENUE_ADMIN' && user.venue_id) {
+      // VENUE_ADMIN only sees events for their venue
+      query = query.eq('venue_id', user.venue_id);
     }
+    // ADMIN sees all events (no filter)
 
     if (status) {
       query = query.eq('status', status);

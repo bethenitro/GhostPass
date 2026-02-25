@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, Zap, ArrowLeftRight, Wallet } from 'lucide-react';
+import { Clock, Zap, ArrowLeftRight, Wallet, ShoppingCart } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { walletApi, ghostPassApi } from '../lib/api';
@@ -9,6 +9,7 @@ import RefundModal from './RefundModal';
 import { DurationWheelSelector } from './DurationWheelSelector';
 import GhostPassWalletManager from './GhostPassWalletManager';
 import WalletRecoveryCode from './WalletRecoveryCode';
+import { VendorPurchase } from './VendorPurchase';
 
 interface WalletDashboardProps {
   onPurchase: (duration: number) => void;
@@ -25,6 +26,7 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
   const [activeView, setActiveView] = useState<'traditional' | 'ghostpass'>('ghostpass');
   const [showRecoveryCode, setShowRecoveryCode] = useState(false);
   const [recoveryData, setRecoveryData] = useState<{ wallet_binding_id: string; recovery_code: string } | null>(null);
+  const [showVendorPurchase, setShowVendorPurchase] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: balance } = useQuery({
@@ -230,18 +232,31 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
                   ${balance?.balance_dollars?.toFixed(2) || '0.00'}
                 </motion.div>
 
-                {/* Refund Button */}
+                {/* Action Buttons */}
                 {balance && balance.balance_cents > 0 && (
-                  <motion.button
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                    onClick={() => setShowRefundModal(true)}
-                    className="mt-8 mx-auto w-fit flex items-center justify-center gap-2 px-4 py-2 bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600 hover:border-slate-500 rounded-lg text-slate-300 hover:text-white transition-all text-sm font-medium"
-                  >
-                    <ArrowLeftRight className="w-4 h-4" />
-                    {t('wallet.requestRefund')}
-                  </motion.button>
+                  <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+                    <motion.button
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.3 }}
+                      onClick={() => setShowVendorPurchase(true)}
+                      className="flex items-center justify-center gap-2 px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500 hover:border-cyan-400 rounded-lg text-cyan-400 hover:text-cyan-300 transition-all text-sm font-medium"
+                    >
+                      <ShoppingCart className="w-4 h-4" />
+                      Make Purchase
+                    </motion.button>
+                    
+                    <motion.button
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.3 }}
+                      onClick={() => setShowRefundModal(true)}
+                      className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600 hover:border-slate-500 rounded-lg text-slate-300 hover:text-white transition-all text-sm font-medium"
+                    >
+                      <ArrowLeftRight className="w-4 h-4" />
+                      {t('wallet.requestRefund')}
+                    </motion.button>
+                  </div>
                 )}
               </motion.div>
 
@@ -361,6 +376,19 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
           queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
         }}
       />
+
+      {/* Vendor Purchase Modal */}
+      {showVendorPurchase && (
+        <VendorPurchase
+          itemAmount={25}
+          itemName="Bar Purchase"
+          onClose={() => setShowVendorPurchase(false)}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+            queryClient.invalidateQueries({ queryKey: ['wallet-transactions'] });
+          }}
+        />
+      )}
     </div>
   );
 };

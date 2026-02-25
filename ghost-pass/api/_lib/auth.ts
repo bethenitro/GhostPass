@@ -1,5 +1,12 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import { User } from '@supabase/supabase-js';
 import { supabase } from './supabase.js';
+
+export interface ExtendedUser extends User {
+  role: string;
+  venue_id?: string | null;
+  event_id?: string | null;
+}
 
 export const verifyToken = async (token: string) => {
   try {
@@ -11,7 +18,7 @@ export const verifyToken = async (token: string) => {
   }
 };
 
-export const getCurrentUser = async (req: VercelRequest) => {
+export const getCurrentUser = async (req: VercelRequest): Promise<ExtendedUser | null> => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;
@@ -33,18 +40,20 @@ export const getCurrentUser = async (req: VercelRequest) => {
     return {
       ...user,
       role: userData?.role || 'USER',
-      venue_id: userData?.venue_id,
-      event_id: userData?.event_id
+      venue_id: userData?.venue_id || null,
+      event_id: userData?.event_id || null
     };
   } catch (error) {
     return {
       ...user,
-      role: 'USER'
+      role: 'USER',
+      venue_id: null,
+      event_id: null
     };
   }
 };
 
-export const requireAuth = async (req: VercelRequest, res: VercelResponse) => {
+export const requireAuth = async (req: VercelRequest, res: VercelResponse): Promise<ExtendedUser | null> => {
   const user = await getCurrentUser(req);
   if (!user) {
     res.status(401).json({ error: 'Unauthorized', detail: 'Authentication required' });
@@ -53,7 +62,7 @@ export const requireAuth = async (req: VercelRequest, res: VercelResponse) => {
   return user;
 };
 
-export const requireAdmin = async (req: VercelRequest, res: VercelResponse) => {
+export const requireAdmin = async (req: VercelRequest, res: VercelResponse): Promise<ExtendedUser | null> => {
   const user = await getCurrentUser(req);
   if (!user) {
     res.status(401).json({ error: 'Unauthorized', detail: 'Authentication required' });

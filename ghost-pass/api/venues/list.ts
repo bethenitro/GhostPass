@@ -20,6 +20,13 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       .from('venues')
       .select('*');
 
+    // Filter venues based on user role
+    // ADMIN (supercommandcentre) sees all venues
+    // VENUE_ADMIN only sees their assigned venue
+    if (user.role === 'VENUE_ADMIN' && user.venue_id) {
+      query = query.eq('id', user.venue_id);
+    }
+
     if (status) {
       query = query.eq('status', status);
     }

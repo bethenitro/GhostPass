@@ -41,6 +41,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       item_id,
       gateway_id,
       quantity = 1,
+      item_amount_cents,
+      tip_amount_cents = 0,
+      tip_percent = 0,
+      interaction_method = 'QR',
     } = req.body;
 
     // Get device fingerprint from header
@@ -58,26 +62,44 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get vendor item
-    const { data: item, error: itemError } = await supabase
-      .from('vendor_items')
-      .select('*')
-      .eq('id', item_id)
-      .single();
+    // Handle manual entry (no item lookup needed)
+    let item = null;
+    let itemTotal = 0;
+    let venue_id = null;
 
-    if (itemError || !item) {
-      return res.status(404).json({ error: 'Item not found' });
+    if (item_id === 'manual_entry') {
+      // Manual entry - use provided amount
+      if (!item_amount_cents) {
+        return res.status(400).json({ error: 'item_amount_cents required for manual entry' });
+      }
+      itemTotal = item_amount_cents * quantity;
+      // For manual entry, we'll need to get venue_id from gateway or use a default
+      venue_id = 'manual_entry_venue';
+    } else {
+      // Get vendor item from database
+      const { data: itemData, error: itemError } = await supabase
+        .from('vendor_items')
+        .select('*')
+        .eq('id', item_id)
+        .single();
+
+      if (itemError || !itemData) {
+        return res.status(404).json({ error: 'Item not found' });
+      }
+
+      if (!itemData.available) {
+        return res.status(400).json({ error: 'Item not available' });
+      }
+
+      item = itemData;
+      itemTotal = item.price_cents * quantity;
+      venue_id = item.venue_id;
     }
 
-    if (!item.available) {
-      return res.status(400).json({ error: 'Item not available' });
-    }
-
-    // Calculate costs
-    const itemTotal = item.price_cents * quantity;
+    // Calculate costs with tip
     const platformFee = Math.floor(itemTotal * (PLATFORM_FEE_PERCENTAGE / 100));
     const vendorPayout = itemTotal - platformFee;
-    const totalCharged = itemTotal;
+    const totalCharged = itemTotal + tip_amount_cents;
 
     // Get wallet
     const { data: wallet, error: walletError } = await supabase
@@ -128,18 +150,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       balance_before_cents: wallet.balance_cents,
       balance_after_cents: newBalance,
       gateway_id,
-      venue_id: item.venue_id,
-      vendor_name: item.name,
+      venue_id,
+      vendor_name: item?.name || 'Manual Entry',
       platform_fee_cents: platformFee,
       vendor_payout_cents: vendorPayout,
-      interaction_method: 'QR',
+      interaction_method,
       metadata: {
         item_id,
-        item_name: item.name,
-        item_category: item.category,
+        item_name: item?.name || 'Manual Entry',
+        item_category: item?.category || 'manual',
         quantity,
-        unit_price_cents: item.price_cents,
+        unit_price_cents: item?.price_cents || item_amount_cents,
         purchase_type: 'vendor_item',
+        tip_amount_cents,
+        tip_percent,
+        subtotal_cents: itemTotal,
       },
     });
 
@@ -148,14 +173,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Don't fail the whole request if transaction logging fails
     }
 
+    // Log audit entry
+    await supabase.from('audit_logs').insert({
+      user_id: wallet.user_id,
+      action: 'VENDOR_PURCHASE',
+      resource_type: 'transaction',
+      resource_id: wallet.id,
+      details: {
+        item_id,
+        item_name: item?.name || 'Manual Entry',
+        quantity,
+        subtotal_cents: itemTotal,
+        tip_amount_cents,
+        tip_percent,
+        total_charged_cents: totalCharged,
+        platform_fee_cents: platformFee,
+        vendor_payout_cents: vendorPayout,
+        gateway_id,
+        venue_id,
+        interaction_method,
+      },
+      ip_address: req.headers['x-forwarded-for'] as string || req.socket.remoteAddress,
+      user_agent: req.headers['user-agent'] as string,
+    });
+
     // Return success response
     res.status(200).json({
       success: true,
       message: 'Purchase successful',
       transaction: {
-        item_name: item.name,
+        item_name: item?.name || 'Manual Entry',
         quantity,
         item_total_cents: itemTotal,
+        tip_amount_cents,
+        tip_percent,
         platform_fee_cents: platformFee,
         vendor_payout_cents: vendorPayout,
         total_charged_cents: totalCharged,
