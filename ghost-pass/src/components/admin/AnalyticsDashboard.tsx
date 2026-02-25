@@ -11,6 +11,13 @@ export const AnalyticsDashboard: React.FC = () => {
 
   useEffect(() => {
     loadDashboard();
+    
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(() => {
+      loadDashboard();
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const loadDashboard = async () => {

@@ -7,13 +7,15 @@ import {
   Eye, 
   EyeOff,
   CheckCircle, 
-  AlertTriangle
+  AlertTriangle,
+  ShoppingCart
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { walletApi } from '../lib/api';
 import { cn } from '@/lib/utils';
 import GhostPassInteractionSimulator from './GhostPassInteractionSimulator';
 import WalletRecoveryCode from './WalletRecoveryCode';
+import { MenuBasedVendorPurchase } from './MenuBasedVendorPurchase';
 
 interface GhostPassWalletManagerProps {
   balance: number; // in cents
@@ -65,6 +67,7 @@ const GhostPassWalletManager: React.FC<GhostPassWalletManagerProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [showRecoveryCode, setShowRecoveryCode] = useState(false);
   const [recoveryData, setRecoveryData] = useState<{ wallet_binding_id: string; recovery_code: string } | null>(null);
+  const [showVendorPurchase, setShowVendorPurchase] = useState(false);
 
   useEffect(() => {
     initializeWallet();
@@ -383,6 +386,20 @@ const GhostPassWalletManager: React.FC<GhostPassWalletManagerProps> = ({
         </div>
         <div className="text-sm text-gray-400">{t('ghostPass.availableBalance')}</div>
         
+        {/* Vendor Purchase Button */}
+        {balance > 0 && (
+          <motion.button
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            onClick={() => setShowVendorPurchase(true)}
+            className="mt-4 flex items-center justify-center gap-2 px-4 py-2 mx-auto bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500 hover:border-cyan-400 rounded-lg text-cyan-400 hover:text-cyan-300 transition-all text-sm font-medium"
+          >
+            <ShoppingCart className="w-4 h-4" />
+            Make Purchase
+          </motion.button>
+        )}
+        
         {/* Platform Fee Info */}
         {platformFeeConfig && (
           <div className="mt-3 text-xs text-slate-400">
@@ -601,6 +618,20 @@ const GhostPassWalletManager: React.FC<GhostPassWalletManagerProps> = ({
         {t('ghostPass.manager.auditTrailNote')}
       </motion.div>
         </>
+      )}
+
+      {/* Vendor Purchase Modal */}
+      {showVendorPurchase && (
+        <MenuBasedVendorPurchase
+          venueId={undefined}
+          eventId={undefined}
+          onClose={() => setShowVendorPurchase(false)}
+          onSuccess={() => {
+            if (onBalanceUpdate) {
+              onBalanceUpdate();
+            }
+          }}
+        />
       )}
     </div>
   );

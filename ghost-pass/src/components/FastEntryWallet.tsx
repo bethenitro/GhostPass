@@ -7,7 +7,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { CreditCard, Zap, CheckCircle, AlertCircle, Loader2, QrCode } from 'lucide-react';
+import { CreditCard, Zap, CheckCircle, AlertCircle, Loader2, QrCode, ShoppingCart } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { walletApi } from '../lib/api';
@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import PushNotificationSettings from './PushNotificationSettings';
 import WalletRecoveryCode from './WalletRecoveryCode';
 import { useToast } from './ui/toast';
+import { MenuBasedVendorPurchase } from './MenuBasedVendorPurchase';
 
 interface FastEntryWalletProps {
   walletBindingId?: string;
@@ -36,6 +37,7 @@ const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
   const [showRecoveryCode, setShowRecoveryCode] = useState(false);
   const [recoveryData, setRecoveryData] = useState<{ wallet_binding_id: string; recovery_code: string } | null>(null);
   const [selectedQuickAmount, setSelectedQuickAmount] = useState<number | null>(null);
+  const [showVendorPurchase, setShowVendorPurchase] = useState(false);
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const { t } = useTranslation();
@@ -271,6 +273,20 @@ const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
               </span>
             </div>
           </div>
+
+          {/* Vendor Purchase Button */}
+          {currentBalance > 0 && (
+            <motion.button
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              onClick={() => setShowVendorPurchase(true)}
+              className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500 hover:border-cyan-400 rounded-lg text-cyan-400 hover:text-cyan-300 transition-all text-sm font-medium"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              Make Purchase
+            </motion.button>
+          )}
         </div>
       </motion.div>
 
@@ -435,6 +451,18 @@ const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
           </div>
         </div>
       </motion.div>
+
+      {/* Vendor Purchase Modal */}
+      {showVendorPurchase && (
+        <MenuBasedVendorPurchase
+          venueId={undefined}
+          eventId={undefined}
+          onClose={() => setShowVendorPurchase(false)}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+          }}
+        />
+      )}
     </div>
   );
 };

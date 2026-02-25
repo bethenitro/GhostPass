@@ -9,7 +9,7 @@ import RefundModal from './RefundModal';
 import { DurationWheelSelector } from './DurationWheelSelector';
 import GhostPassWalletManager from './GhostPassWalletManager';
 import WalletRecoveryCode from './WalletRecoveryCode';
-import { VendorPurchase } from './VendorPurchase';
+import { MenuBasedVendorPurchase } from './MenuBasedVendorPurchase';
 
 interface WalletDashboardProps {
   onPurchase: (duration: number) => void;
@@ -379,9 +379,9 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
 
       {/* Vendor Purchase Modal */}
       {showVendorPurchase && (
-        <VendorPurchase
-          itemAmount={25}
-          itemName="Bar Purchase"
+        <MenuBasedVendorPurchase
+          venueId={undefined}
+          eventId={undefined}
           onClose={() => setShowVendorPurchase(false)}
           onSuccess={() => {
             queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
