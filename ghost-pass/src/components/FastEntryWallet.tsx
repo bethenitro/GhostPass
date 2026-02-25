@@ -50,10 +50,17 @@ const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
   
   useEffect(() => {
     if (import.meta.env.DEV) {
-      console.log('💳 [FastEntryWallet] Wallet binding ID:', walletBindingId);
-      console.log('💳 [FastEntryWallet] From localStorage:', localStorage.getItem('wallet_binding_id'));
+      console.log('💳 [FastEntryWallet] Props received:', {
+        walletBindingId,
+        venueId,
+        eventId,
+        venueName,
+        eventName,
+        entryFee
+      });
+      console.log('💳 [FastEntryWallet] Wallet binding ID from localStorage:', localStorage.getItem('wallet_binding_id'));
     }
-  }, [walletBindingId]);
+  }, [walletBindingId, venueId, eventId]);
 
   const { data: balance } = useQuery({
     queryKey: ['wallet-balance'],

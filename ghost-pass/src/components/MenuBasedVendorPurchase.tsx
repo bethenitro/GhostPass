@@ -46,7 +46,18 @@ export const MenuBasedVendorPurchase: React.FC<MenuBasedVendorPurchaseProps> = (
   const [loadingMenu, setLoadingMenu] = useState(true);
   const [walletBalance, setWalletBalance] = useState<number>(0);
 
+  // Debug logging
   useEffect(() => {
+    console.log('MenuBasedVendorPurchase mounted with:', { venueId, eventId });
+  }, []);
+
+  useEffect(() => {
+    if (!venueId && !eventId) {
+      console.warn('No venueId or eventId provided to MenuBasedVendorPurchase');
+      showToast('Unable to load menu: venue or event information missing', 'error');
+      setLoadingMenu(false);
+      return;
+    }
     loadMenuItems();
     checkWalletBalance();
   }, [venueId, eventId]);
@@ -74,27 +85,23 @@ export const MenuBasedVendorPurchase: React.FC<MenuBasedVendorPurchaseProps> = (
   const loadMenuItems = async () => {
     setLoadingMenu(true);
     try {
-      const authToken = localStorage.getItem('auth_token');
-      if (!authToken) {
-        showToast('Please login first', 'error');
-        return;
-      }
-
-      let url = '/api/menu/manage?';
+      // Use public endpoint - no auth required for viewing menu
+      let url = '/api/menu/public?';
       if (venueId) url += `venue_id=${venueId}&`;
       if (eventId) url += `event_id=${eventId}&`;
 
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
+      console.log('Loading menu items from:', url);
+
+      const response = await fetch(url);
 
       if (response.ok) {
         const data = await response.json();
+        console.log('Menu items loaded:', data);
         setMenuItems(data || []);
       } else {
-        showToast('Failed to load menu items', 'error');
+        const errorData = await response.json();
+        console.error('Failed to load menu:', errorData);
+        showToast(errorData.error || 'Failed to load menu items', 'error');
       }
     } catch (error) {
       console.error('Failed to load menu:', error);
