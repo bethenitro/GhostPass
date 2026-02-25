@@ -20,6 +20,7 @@ import { MenuBasedVendorPurchase } from './MenuBasedVendorPurchase';
 interface FastEntryWalletProps {
   walletBindingId?: string;
   venueId?: string;
+  eventId?: string;
   venueName?: string;
   eventName?: string;
   entryFee?: number; // in cents
@@ -27,6 +28,8 @@ interface FastEntryWalletProps {
 
 const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
   walletBindingId: walletBindingIdProp = '',
+  venueId,
+  eventId,
   venueName = 'Venue',
   eventName = 'Event',
   entryFee = 500 // Default $5.00
@@ -274,19 +277,17 @@ const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
             </div>
           </div>
 
-          {/* Vendor Purchase Button */}
-          {currentBalance > 0 && (
-            <motion.button
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              onClick={() => setShowVendorPurchase(true)}
-              className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500 hover:border-cyan-400 rounded-lg text-cyan-400 hover:text-cyan-300 transition-all text-sm font-medium"
-            >
-              <ShoppingCart className="w-4 h-4" />
-              Make Purchase
-            </motion.button>
-          )}
+          {/* Vendor Purchase Button - Always show, will prompt for funds if needed */}
+          <motion.button
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            onClick={() => setShowVendorPurchase(true)}
+            className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500 hover:border-cyan-400 rounded-lg text-cyan-400 hover:text-cyan-300 transition-all text-sm font-medium"
+          >
+            <ShoppingCart className="w-4 h-4" />
+            Make Purchase
+          </motion.button>
         </div>
       </motion.div>
 
@@ -455,8 +456,8 @@ const FastEntryWallet: React.FC<FastEntryWalletProps> = ({
       {/* Vendor Purchase Modal */}
       {showVendorPurchase && (
         <MenuBasedVendorPurchase
-          venueId={undefined}
-          eventId={undefined}
+          venueId={venueId}
+          eventId={eventId}
           onClose={() => setShowVendorPurchase(false)}
           onSuccess={() => {
             queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });

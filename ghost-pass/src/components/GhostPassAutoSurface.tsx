@@ -65,6 +65,7 @@ interface PWAInstallPrompt extends Event {
 const GhostPassAutoSurface: React.FC<AutoSurfaceProps> = ({
   walletBindingId,
   deviceFingerprint,
+  eventId,
   venueId,
   eventName = "Event",
   venueName = "Venue",
@@ -116,6 +117,7 @@ const GhostPassAutoSurface: React.FC<AutoSurfaceProps> = ({
         console.log('🎫 [AutoSurface] Starting wallet surface with:', {
           deviceFingerprint,
           venueId,
+          eventId,
           eventName,
           venueName
         });
@@ -131,6 +133,7 @@ const GhostPassAutoSurface: React.FC<AutoSurfaceProps> = ({
         body: JSON.stringify({
           device_fingerprint: deviceFingerprint,
           venue_id: venueId,
+          event_id: eventId,
           event_name: eventName,
           venue_name: venueName,
           entry_fee_cents: 500 // Default entry fee

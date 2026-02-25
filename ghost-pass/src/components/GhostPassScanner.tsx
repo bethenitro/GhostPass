@@ -73,6 +73,7 @@ const GhostPassScanner: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [walletBindingId, setWalletBindingId] = useState('');
   const [eventName, setEventName] = useState<string | null>(null);
+  const [eventId, setEventId] = useState<string | null>(null);
   const [venueId, setVenueId] = useState<string>('venue_001');
   const [deviceFingerprint, setDeviceFingerprint] = useState('');
   const [isScanning, setIsScanning] = useState(false);
@@ -395,7 +396,7 @@ const GhostPassScanner: React.FC = () => {
       // Parse QR data format: "ghostsession:{wallet_binding_id}:{gateway_id}:{venue_id}:{event_id}:{verification_tier}"
       let passId = qrData;
       let gatewayId = 'scanner_default';
-      let qrVenueId = 'venue_001';
+      let qrVenueId = '';
       let qrEventId = '';
       let qrVerificationTier = 1;
       
@@ -406,7 +407,7 @@ const GhostPassScanner: React.FC = () => {
           // New format with gateway, venue, event, and verification tier
           passId = parts[1]; // wallet_binding_id
           gatewayId = parts[2] || 'scanner_default'; // gateway_id (asset_code)
-          qrVenueId = parts[3] || 'venue_001'; // venue_id
+          qrVenueId = parts[3] || ''; // venue_id (optional)
           qrEventId = parts[4] || ''; // event_id (optional)
           qrVerificationTier = parts[5] ? parseInt(parts[5]) : 1; // verification_tier
         } else {
@@ -442,7 +443,7 @@ const GhostPassScanner: React.FC = () => {
         body: JSON.stringify({
           pass_id: passId, // Use extracted wallet_binding_id
           gateway_id: gatewayId, // Use gateway_id from QR code
-          venue_id: qrVenueId, // Use venue_id from QR code
+          venue_id: qrVenueId || null, // Use venue_id from QR code (null if empty)
           event_id: qrEventId || null, // Use event_id from QR code
           verification_tier: qrVerificationTier // Pass the verification tier from QR code
         })
@@ -472,8 +473,9 @@ const GhostPassScanner: React.FC = () => {
           setEventName(result.event_name);
         }
         
-        // Store venue_id for later use
+        // Store venue_id and event_id for later use
         setVenueId(qrVenueId);
+        setEventId(qrEventId);
         
         // Check if this is first scan (no existing wallet session)
         const isFirstScan = !localStorage.getItem('ghost_pass_wallet_session');
@@ -1103,13 +1105,15 @@ const GhostPassScanner: React.FC = () => {
             walletBindingId={walletBindingId}
             deviceFingerprint={deviceFingerprint}
             venueId={venueId}
+            eventId={eventId || undefined}
             eventName={eventName || "Test Event"}
             venueName="Test Venue"
             onSurfaceComplete={(sessionId) => {
               console.log('✅ Wallet surfaced with session:', sessionId);
-              // Keep the auto surface visible for a moment before closing
+              // Navigate to wallet after successful surfacing
               setTimeout(() => {
                 setShowAutoSurface(false);
+                window.location.hash = '#/wallet';
               }, 500);
             }}
             onError={(error) => {

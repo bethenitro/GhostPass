@@ -37,6 +37,7 @@ const AppContent: React.FC = () => {
   const [fastEntryMode, setFastEntryMode] = useState(false);
   const [fastEntryContext, setFastEntryContext] = useState<{
     venueId?: string;
+    eventId?: string;
     venueName?: string;
     eventName?: string;
     entryFee?: number;
@@ -72,6 +73,7 @@ const AppContent: React.FC = () => {
           setFastEntryMode(true);
           setFastEntryContext({
             venueId: session.venue_id,
+            eventId: session.event_id,
             venueName: session.venue_name,
             eventName: session.event_name,
             entryFee: session.entry_fee
@@ -307,6 +309,7 @@ const AppContent: React.FC = () => {
           return (
             <FastEntryWallet
               venueId={fastEntryContext.venueId}
+              eventId={fastEntryContext.eventId}
               venueName={fastEntryContext.venueName}
               eventName={fastEntryContext.eventName}
               entryFee={fastEntryContext.entryFee}
@@ -339,6 +342,7 @@ const AppContent: React.FC = () => {
           return (
             <FastEntryWallet
               venueId={fastEntryContext.venueId}
+              eventId={fastEntryContext.eventId}
               venueName={fastEntryContext.venueName}
               eventName={fastEntryContext.eventName}
               entryFee={fastEntryContext.entryFee}

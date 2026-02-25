@@ -42,6 +42,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const {
       device_fingerprint,
       venue_id,
+      event_id,
       event_name,
       venue_name,
       entry_fee_cents = 500
@@ -106,6 +107,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           metadata: {
             device_fingerprint,
             venue_id: venue_id || 'default_venue',
+            event_id: event_id || 'default_event',
             event_name: event_name || 'default_event',
             entry_fee_cents
           }
@@ -128,12 +130,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           created_at: new Date().toISOString(),
           last_accessed: new Date().toISOString(),
           expires_at: expiresAt.toISOString(),
-          event_id: event_name || 'default_event',
+          event_id: event_id || event_name || 'default_event',
           venue_id: venue_id || 'default_venue',
           is_active: true,
           force_surface: true,
           session_data: {
             fast_entry: true,
+            venue_id: venue_id || 'default_venue',
+            event_id: event_id || 'default_event',
             venue_name,
             event_name,
             entry_fee_cents
@@ -147,6 +151,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         expires_at: expiresAt.toISOString(),
         fast_entry: true,
         venue_id: venue_id || 'default_venue',
+        event_id: event_id || 'default_event',
         venue_name,
         event_name,
         entry_fee: entry_fee_cents
@@ -181,12 +186,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         created_at: new Date().toISOString(),
         last_accessed: new Date().toISOString(),
         expires_at: expiresAt.toISOString(),
-        event_id: event_name || 'default_event',
+        event_id: event_id || event_name || 'default_event',
         venue_id: venue_id || 'default_venue',
         is_active: true,
         force_surface: true,
         session_data: {
           fast_entry: true,
+          venue_id: venue_id || 'default_venue',
+          event_id: event_id || 'default_event',
           venue_name,
           event_name,
           entry_fee_cents
@@ -208,6 +215,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       expires_at: expiresAt.toISOString(),
       fast_entry: true,
       venue_id: venue_id || 'default_venue',
+      event_id: event_id || 'default_event',
       venue_name,
       event_name,
       entry_fee: entry_fee_cents

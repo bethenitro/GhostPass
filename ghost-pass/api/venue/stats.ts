@@ -28,11 +28,15 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       // Build query for entry events
       let entryQuery = supabase
         .from('entry_events')
-        .select('*')
-        .eq('venue_id', targetVenueId);
+        .select('*');
 
+      // Filter by venue_id or event_id
       if (event_id) {
+        // If event_id is provided, filter by that
         entryQuery = entryQuery.eq('event_id', event_id);
+      } else {
+        // Otherwise filter by venue_id
+        entryQuery = entryQuery.eq('venue_id', targetVenueId);
       }
 
       const { data: entries, error: entriesError } = await entryQuery;
