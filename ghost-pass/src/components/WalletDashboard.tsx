@@ -10,6 +10,7 @@ import { DurationWheelSelector } from './DurationWheelSelector';
 import GhostPassWalletManager from './GhostPassWalletManager';
 import WalletRecoveryCode from './WalletRecoveryCode';
 import { MenuBasedVendorPurchase } from './MenuBasedVendorPurchase';
+import WalletRecovery from './WalletRecovery';
 
 interface WalletDashboardProps {
   onPurchase: (duration: number) => void;
@@ -27,6 +28,7 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
   const [showRecoveryCode, setShowRecoveryCode] = useState(false);
   const [recoveryData, setRecoveryData] = useState<{ wallet_binding_id: string; recovery_code: string } | null>(null);
   const [showVendorPurchase, setShowVendorPurchase] = useState(false);
+  const [showWalletRecovery, setShowWalletRecovery] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: balance } = useQuery({
@@ -113,6 +115,19 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
         </>
       )}
 
+      {showWalletRecovery && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <WalletRecovery
+            onRecoverySuccess={() => {
+              setShowWalletRecovery(false);
+              queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+              queryClient.refetchQueries({ queryKey: ['wallet-balance'] });
+            }}
+            onCancel={() => setShowWalletRecovery(false)}
+          />
+        </div>
+      )}
+
       {/* View Toggle */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -157,7 +172,7 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
         />
       )}
 
-      {/* Traditional Wallet View */}
+      {/* Event Multi-Day WALLET View */}
       {activeView === 'traditional' && (
         <>
           {/* Check if wallet exists */}
@@ -171,7 +186,7 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
               <div className="w-20 h-20 mx-auto bg-cyan-500/20 rounded-full flex items-center justify-center border-2 border-cyan-500/50">
                 <Wallet className="w-10 h-10 text-cyan-400" />
               </div>
-              
+
               <div className="space-y-2">
                 <h2 className="text-xl font-bold text-white">{t('wallet.noWalletFound')}</h2>
                 <p className="text-slate-400 max-w-md mx-auto">
@@ -190,7 +205,14 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
                 {t('wallet.createWallet')}
               </button>
 
-              <div className="text-xs text-slate-500 max-w-sm mx-auto">
+              <button
+                onClick={() => setShowWalletRecovery(true)}
+                className="block mx-auto mt-4 px-6 py-2 bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition-all text-sm font-medium"
+              >
+                {t('walletRecovery.recoverWallet')}
+              </button>
+
+              <div className="text-xs text-slate-500 max-w-sm mx-auto mt-6">
                 <p>{t('wallet.walletFeatures.title')}</p>
                 <ul className="mt-2 space-y-1 text-left">
                   <li>• {t('wallet.walletFeatures.boundToDevice')}</li>
@@ -245,7 +267,7 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
                       <ShoppingCart className="w-4 h-4" />
                       Make Purchase
                     </motion.button>
-                    
+
                     <motion.button
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -308,60 +330,60 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
                         <p className="text-slate-400 text-sm">
                           {t('ghostPass.activeAt')} <span className="text-cyan-400">{ghostPass.venue_name}</span>
                         </p>
+                      )}
+                    </div>
+                  )}
+
+                  {ghostPass?.status !== 'ACTIVE' && (
+                    <p className="text-slate-400 text-center">{t('ghostPass.noActivePass')}</p>
                   )}
                 </div>
-              )}
+              </motion.div>
 
-              {ghostPass?.status !== 'ACTIVE' && (
-                <p className="text-slate-400 text-center">{t('ghostPass.noActivePass')}</p>
-              )}
-            </div>
-          </motion.div>
+              {/* Purchase Options - Wheel Selector */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="space-y-4"
+              >
+                <h2 className="text-xl sm:text-2xl font-semibold text-white text-center">{t('ghostPass.purchase')}</h2>
 
-          {/* Purchase Options - Wheel Selector */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="space-y-4"
-          >
-            <h2 className="text-xl sm:text-2xl font-semibold text-white text-center">{t('ghostPass.purchase')}</h2>
-            
-            <DurationWheelSelector
-              onSelect={handleDurationSelect}
-              disabled={isPurchasing}
-            />
+                <DurationWheelSelector
+                  onSelect={handleDurationSelect}
+                  disabled={isPurchasing}
+                />
 
-            {/* Purchase Button */}
-            <motion.button
-              whileTap={{ scale: 0.98 }}
-              onClick={handlePurchase}
-              disabled={isPurchasing || (balance?.balance_dollars || 0) < selectedPrice}
-              className={cn(
-                "w-full py-4 rounded-lg font-semibold transition-all duration-300 text-base",
-                isPurchasing
-                  ? 'bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 opacity-75 cursor-not-allowed'
-                  : (balance?.balance_dollars || 0) < selectedPrice
-                    ? 'bg-slate-700/50 border border-slate-600 text-slate-500 cursor-not-allowed'
-                    : 'bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/30 hover:shadow-lg hover:shadow-cyan-500/20'
-              )}
-            >
-              {isPurchasing ? (
-                <div className="flex items-center justify-center space-x-2">
-                  <div className="w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
-                  <span>{t('ghostPass.processing')}</span>
-                </div>
-              ) : (balance?.balance_dollars || 0) < selectedPrice ? (
-                t('ghostPass.insufficientBalance')
-              ) : (
-                t('ghostPass.purchaseButton', {
-                  duration: selectedDuration,
-                  unit: selectedDuration === 1 ? t('ghostPass.day') : t('ghostPass.days'),
-                  price: selectedPrice
-                })
-              )}
-            </motion.button>
-          </motion.div>
+                {/* Purchase Button */}
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handlePurchase}
+                  disabled={isPurchasing || (balance?.balance_dollars || 0) < selectedPrice}
+                  className={cn(
+                    "w-full py-4 rounded-lg font-semibold transition-all duration-300 text-base",
+                    isPurchasing
+                      ? 'bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 opacity-75 cursor-not-allowed'
+                      : (balance?.balance_dollars || 0) < selectedPrice
+                        ? 'bg-slate-700/50 border border-slate-600 text-slate-500 cursor-not-allowed'
+                        : 'bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/30 hover:shadow-lg hover:shadow-cyan-500/20'
+                  )}
+                >
+                  {isPurchasing ? (
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+                      <span>{t('ghostPass.processing')}</span>
+                    </div>
+                  ) : (balance?.balance_dollars || 0) < selectedPrice ? (
+                    t('ghostPass.insufficientBalance')
+                  ) : (
+                    t('ghostPass.purchaseButton', {
+                      duration: selectedDuration,
+                      unit: selectedDuration === 1 ? t('ghostPass.day') : t('ghostPass.days'),
+                      price: selectedPrice
+                    })
+                  )}
+                </motion.button>
+              </motion.div>
             </>
           )}
         </>

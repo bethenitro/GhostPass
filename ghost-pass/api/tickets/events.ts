@@ -1,7 +1,10 @@
 /**
- * List Events API
- * 
- * Returns all active events available for ticket purchase.
+ * List / Fetch Events API
+ *
+ * GET /api/tickets/events            – Returns all active, non-expired events.
+ * GET /api/tickets/events?event_id=X – Returns a single event by its ID
+ *                                       (no expiry filter, so it works for
+ *                                        recently-ended events as well).
  */
 
 import { VercelRequest, VercelResponse } from '@vercel/node';
@@ -24,7 +27,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get all active events
+    const { event_id } = req.query;
+
+    // --- Single-event lookup (used by the WebApp onboarding flow) ---
+    if (event_id && typeof event_id === 'string') {
+      const { data: event, error: eventError } = await supabase
+        .from('events')
+        .select('*')
+        .eq('id', event_id)
+        .single();
+
+      if (eventError || !event) {
+        return res.status(404).json({ error: 'Event not found' });
+      }
+
+      // Return in the same shape as the list endpoint so the frontend
+      // code can work with both responses seamlessly.
+      return res.status(200).json({
+        events: [event],
+        count: 1,
+      });
+    }
+
+    // --- Full list (used by TicketPurchase, etc.) ---
     const { data: events, error: eventsError } = await supabase
       .from('events')
       .select('*')
@@ -43,7 +68,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   } catch (error) {
     console.error('List events error:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'Internal server error',
       details: error instanceof Error ? error.message : 'Unknown error'
     });

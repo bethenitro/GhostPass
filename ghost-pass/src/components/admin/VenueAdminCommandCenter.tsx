@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { 
-  Calendar, Store, LayoutGrid, FileText, 
-  BarChart3, Users, DollarSign, Settings, LogOut, MapPin, ArrowLeft, ExternalLink 
+import {
+  Calendar, Store, LayoutGrid, FileText,
+  BarChart3, Users, DollarSign, Settings, LogOut, MapPin, ArrowLeft, ExternalLink, Ticket
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { authApi } from '@/lib/api';
@@ -17,6 +17,7 @@ import { VenuePayouts } from './VenuePayouts';
 import { VenueEntryConfig } from './VenueEntryConfig';
 import { GatewayManager } from './GatewayManager';
 import { QRCodeGenerator } from './QRCodeGenerator';
+import { VenueTicketTypeManager } from './VenueTicketTypeManager';
 import { LanguageSwitcher } from '../LanguageSwitcher';
 
 interface VenueAdminCommandCenterProps {
@@ -25,13 +26,13 @@ interface VenueAdminCommandCenterProps {
   onBack?: () => void;
 }
 
-export const VenueAdminCommandCenter: React.FC<VenueAdminCommandCenterProps> = ({ 
-  venueId, 
+export const VenueAdminCommandCenter: React.FC<VenueAdminCommandCenterProps> = ({
+  venueId,
   eventId,
-  onBack 
+  onBack
 }) => {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'analytics' | 'events' | 'stations' | 'menu' | 'ledger' | 'staff' | 'payouts' | 'config' | 'gateway' | 'qr'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'events' | 'tickets' | 'stations' | 'menu' | 'ledger' | 'staff' | 'payouts' | 'config' | 'gateway' | 'qr'>('analytics');
 
   const handleLogout = async () => {
     if (confirm('Are you sure you want to logout?')) {
@@ -43,6 +44,7 @@ export const VenueAdminCommandCenter: React.FC<VenueAdminCommandCenterProps> = (
   const tabs = [
     { id: 'analytics' as const, label: t('analytics.title'), icon: BarChart3, color: 'cyan' },
     { id: 'events' as const, label: t('events.myEvents'), icon: Calendar, color: 'purple' },
+    { id: 'tickets' as const, label: 'Ticket Types', icon: Ticket, color: 'emerald' },
     { id: 'gateway' as const, label: 'Gateway', icon: MapPin, color: 'blue' },
     { id: 'qr' as const, label: 'QR Codes', icon: Settings, color: 'indigo' },
     { id: 'config' as const, label: 'Entry Config', icon: Settings, color: 'amber' },
@@ -153,14 +155,15 @@ export const VenueAdminCommandCenter: React.FC<VenueAdminCommandCenterProps> = (
           className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-xl p-3 sm:p-4 md:p-6"
         >
           {activeTab === 'analytics' && <VenueAnalytics venueId={venueId} eventId={eventId} />}
-          {activeTab === 'events' && <VenueEventManager venueId={venueId} />}
-          {activeTab === 'gateway' && <GatewayManager venueId={venueId} />}
+          {activeTab === 'events' && <VenueEventManager venueId={venueId} eventId={eventId} />}
+          {activeTab === 'tickets' && <VenueTicketTypeManager venueId={venueId} />}
+          {activeTab === 'gateway' && <GatewayManager venueId={venueId} eventId={eventId} />}
           {activeTab === 'qr' && <QRCodeGenerator venueId={venueId} eventId={eventId} />}
           {activeTab === 'config' && <VenueEntryConfig venueId={venueId} eventId={eventId} />}
           {activeTab === 'stations' && <StationManager venueId={venueId} eventId={eventId || ''} />}
           {activeTab === 'menu' && <MenuManager venueId={venueId} eventId={eventId || ''} />}
           {activeTab === 'ledger' && <VenueTransactionLedger venueId={venueId} eventId={eventId} />}
-          {activeTab === 'staff' && <VenueStaffManager venueId={venueId} />}
+          {activeTab === 'staff' && <VenueStaffManager venueId={venueId} eventId={eventId} />}
           {activeTab === 'payouts' && <VenuePayouts venueId={venueId} />}
         </motion.div>
       </div>

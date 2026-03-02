@@ -149,7 +149,7 @@ const TicketPurchase: React.FC = () => {
       }
 
       const data = await response.json();
-      
+
       setPurchasedTicket({
         id: data.ticket.id,
         ticket_code: data.ticket.ticket_code,
@@ -213,7 +213,7 @@ const TicketPurchase: React.FC = () => {
               ${(purchasedTicket.total_paid_cents / 100).toFixed(2)}
             </span>
           </div>
-          
+
           <div className="pt-4 border-t border-slate-700">
             <div className="bg-white p-4 rounded-lg">
               <div className="text-center">
@@ -313,7 +313,7 @@ const TicketPurchase: React.FC = () => {
           >
             {t('tickets.backToEvents')}
           </button>
-          
+
           <div>
             <h2 className="text-lg font-semibold text-white mb-1">{selectedEvent.name}</h2>
             <p className="text-slate-400 text-sm">{t('tickets.selectTicketType')}</p>
@@ -321,7 +321,8 @@ const TicketPurchase: React.FC = () => {
 
           {ticketTypes.map((ticketType) => {
             const total = calculateTotal(ticketType, selectedEvent.service_fee_percent);
-            const available = ticketType.max_quantity - ticketType.sold_count;
+            const isUnlimited = !ticketType.max_quantity || ticketType.max_quantity === 0;
+            const available = isUnlimited ? Infinity : ticketType.max_quantity - (ticketType.sold_count || 0);
             const soldOut = available <= 0;
 
             return (
@@ -349,7 +350,9 @@ const TicketPurchase: React.FC = () => {
                         </span>
                       )}
                       <span className="text-slate-500">
-                        {available} / {ticketType.max_quantity} {t('tickets.available')}
+                        {isUnlimited
+                          ? t('tickets.available')
+                          : `${available} / ${ticketType.max_quantity} ${t('tickets.available')}`}
                       </span>
                     </div>
                   </div>
@@ -380,7 +383,7 @@ const TicketPurchase: React.FC = () => {
 
           <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 space-y-4">
             <h2 className="text-lg font-semibold text-white">{t('tickets.confirmPurchase')}</h2>
-            
+
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-slate-400">{t('tickets.event')}</span>

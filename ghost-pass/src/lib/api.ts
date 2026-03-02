@@ -47,20 +47,22 @@ api.interceptors.request.use((config) => {
   if (deviceFingerprint) {
     config.headers['X-Device-Fingerprint'] = deviceFingerprint;
   }
-  
-  // Add Bearer token for admin, gateway, venue, audit, and auth endpoints (operator portal)
-  if (config.url?.startsWith('/admin/') || 
-      config.url?.startsWith('/gateway/') || 
-      config.url?.startsWith('/venue/') ||
-      config.url?.startsWith('/audit/') ||
-      config.url?.startsWith('/auth/me') ||
-      config.url?.startsWith('/auth/sso-token')) {
+
+  // Add Bearer token for admin, gateway, venue, audit, auth, events and staff endpoints (operator portal)
+  if (config.url?.startsWith('/admin/') ||
+    config.url?.startsWith('/gateway/') ||
+    config.url?.startsWith('/venue/') ||
+    config.url?.startsWith('/audit/') ||
+    config.url?.startsWith('/events/') ||
+    config.url?.startsWith('/staff/') ||
+    config.url?.startsWith('/auth/me') ||
+    config.url?.startsWith('/auth/sso-token')) {
     const authToken = localStorage.getItem('auth_token');
     if (authToken) {
       config.headers['Authorization'] = `Bearer ${authToken}`;
     }
   }
-  
+
   return config;
 });
 
@@ -84,7 +86,7 @@ export const authApi = {
     }
     return data;
   },
-  
+
   signUp: async (email: string, password: string) => {
     const { data } = await api.post('/auth/register', { email, password });
     if (data.access_token) {
@@ -110,13 +112,13 @@ export const authApi = {
     }
     return data;
   },
-  
+
   signOut: async () => {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user_data');
     localStorage.removeItem('ghost_pass_wallet_session');
   },
-  
+
   getCurrentUser: async () => {
     try {
       const { data } = await api.get('/auth/me');
@@ -125,15 +127,15 @@ export const authApi = {
       return null;
     }
   },
-  
+
   getToken: () => localStorage.getItem('auth_token'),
-  
+
   setToken: (token: string) => {
     localStorage.setItem('auth_token', token);
   },
-  
+
   isAuthenticated: () => !!localStorage.getItem('auth_token'),
-  
+
   getUserData: () => {
     const userData = localStorage.getItem('user_data');
     return userData ? JSON.parse(userData) : null;
@@ -454,17 +456,22 @@ export const adminApi = {
 };
 // Gateway API - ENTRY POINTS, INTERNAL AREAS, TABLES & SEATS
 export const gatewayApi = {
-  getEntryPoints: async () => {
-    const { data } = await api.get('/gateway/points?type=ENTRY_POINT');
+  getEntryPoints: async (params?: { venue_id?: string; event_id?: string }) => {
+    const queryParams: Record<string, string> = { type: 'ENTRY_POINT' };
+    if (params?.venue_id) queryParams.venue_id = params.venue_id;
+    if (params?.event_id) queryParams.event_id = params.event_id;
+    const { data } = await api.get('/gateway/points', { params: queryParams });
     return data;
   },
 
-  createEntryPoint: async (entryPoint: { 
-    name: string; 
+  createEntryPoint: async (entryPoint: {
+    name: string;
     status: 'ENABLED' | 'DISABLED';
     employee_name: string;
     employee_id: string;
     visual_identifier?: string;
+    venue_id?: string;
+    event_id?: string;
   }) => {
     const { data } = await api.post('/gateway/points', {
       ...entryPoint,
@@ -473,8 +480,8 @@ export const gatewayApi = {
     return data;
   },
 
-  updateEntryPoint: async (id: string, updates: { 
-    name?: string; 
+  updateEntryPoint: async (id: string, updates: {
+    name?: string;
     status?: 'ENABLED' | 'DISABLED';
     employee_name?: string;
     employee_id?: string;
@@ -834,7 +841,7 @@ export const venueApi = {
     const params = new URLSearchParams();
     if (venueId) params.append('venue_id', venueId);
     if (eventId) params.append('event_id', eventId);
-    
+
     const { data } = await api.get(`/venue/dashboard?${params.toString()}`);
     return data;
   },
@@ -844,7 +851,7 @@ export const venueApi = {
     const params = new URLSearchParams();
     if (venueId) params.append('venue_id', venueId);
     if (eventId) params.append('event_id', eventId);
-    
+
     const { data } = await api.get(`/venue/config?${params.toString()}`);
     return data;
   },
@@ -869,7 +876,7 @@ export const venueApi = {
     const params = new URLSearchParams();
     if (venueId) params.append('venue_id', venueId);
     if (eventId) params.append('event_id', eventId);
-    
+
     const { data } = await api.get(`/venue/stats?${params.toString()}`);
     return data;
   },
@@ -879,7 +886,7 @@ export const venueApi = {
     const params = new URLSearchParams();
     if (venueId) params.append('venue_id', venueId);
     if (eventId) params.append('event_id', eventId);
-    
+
     const { data } = await api.get(`/venue/payouts?${params.toString()}`);
     return data;
   },
@@ -890,7 +897,7 @@ export const venueApi = {
     if (venueId) params.append('venue_id', venueId);
     if (eventId) params.append('event_id', eventId);
     params.append('limit', limit.toString());
-    
+
     const { data } = await api.get(`/venue/audit-logs?${params.toString()}`);
     return data;
   },
@@ -900,7 +907,7 @@ export const venueApi = {
     const params = new URLSearchParams();
     if (venueId) params.append('venue_id', venueId);
     if (eventId) params.append('event_id', eventId);
-    
+
     const { data } = await api.get(`/venue/items?${params.toString()}`);
     return data;
   },

@@ -4,8 +4,8 @@ import { Plus, Loader2, Trash2, Beer, UtensilsCrossed, ShoppingBag, Edit2 } from
 import { useToast } from '../ui/toast';
 
 const BAR_ITEMS = ['Beer', 'Wine', 'Vodka', 'Whiskey', 'Bourbon', 'Tequila', 'Rum', 'Gin', 'Cocktails', 'Top Shelf', 'Shot', 'Non-alcoholic', 'Special Entry (create your own)'];
-const CONCESSION_ITEMS = ['Burger', 'Hot Dog', 'Pretzel', 'Pizza', 'Chicken', 'Empanada', 'Burrito', 'Extra', 'Special Entry (create your own)'];
-const DRINKS_ITEMS = ['Fountain', 'Water', 'Can/Bottle', 'Coffee', 'Special Entry (create your own)'];
+const CONCESSION_ITEMS = ['Burger', 'Hot Dog', 'Pretzel', 'Pizza', 'Chicken', 'Empanada', 'Burrito', 'Extra'];
+const DRINKS_ITEMS = ['Fountain', 'Water', 'Can/Bottle', 'Coffee'];
 const MERCH_ITEMS = ['T-Shirt', 'Long Sleeve T', 'Hat', 'Sweatshirt', 'Back Packs', 'Hip Packs', 'Special (Create your own)'];
 
 export const MenuManager: React.FC<{ venueId: string; eventId?: string }> = ({ venueId, eventId }) => {
@@ -143,7 +143,7 @@ export const MenuManager: React.FC<{ venueId: string; eventId?: string }> = ({ v
   const getQuickAddItems = () => {
     switch (selectedStation) {
       case 'BAR': return BAR_ITEMS;
-      case 'CONCESSION': return [...CONCESSION_ITEMS, ...DRINKS_ITEMS];
+      case 'CONCESSION': return [...CONCESSION_ITEMS, ...DRINKS_ITEMS, 'Special Entry (create your own)'];
       case 'MERCH': return MERCH_ITEMS;
       default: return [];
     }

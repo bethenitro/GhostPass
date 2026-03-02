@@ -7,8 +7,6 @@ import FastEntryWallet from './components/FastEntryWallet';
 import QRCodeView from './components/QRCodeView';
 import TrustCenter from './components/TrustCenter';
 import TransactionHistory from './components/TransactionHistory';
-import GhostPassScanner from './components/GhostPassScanner';
-import WalletRecovery from './components/WalletRecovery';
 import TicketPurchase from './components/TicketPurchase';
 import GhostPassModesTester from './components/GhostPassModesTester';
 import CommandCenterRouter from './components/CommandCenterRouter';
@@ -18,6 +16,9 @@ import AuditTrail from './components/AuditTrail';
 import OperatorLogin from './components/OperatorLogin';
 import EntryTester from './components/EntryTester';
 import { AdminDashboard } from './components/admin';
+import PortalAccessModal from './components/PortalAccessModal';
+import StaffLogin from './components/StaffLogin';
+import StaffDashboardRouter from './components/staff/StaffDashboardRouter';
 import { ghostPassApi, authApi } from './lib/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ToastProvider } from './components/ui/toast';
@@ -44,9 +45,12 @@ const AppContent: React.FC = () => {
     entryFee?: number;
   }>({});
   const [loading, setLoading] = useState(true);
-  const [showRecovery, setShowRecovery] = useState(false);
+  const [showPortalAccess, setShowPortalAccess] = useState(false);
   const [showOperatorPortal, setShowOperatorPortal] = useState(false);
   const [showOperatorLogin, setShowOperatorLogin] = useState(false);
+  const [showStaffLogin, setShowStaffLogin] = useState(false);
+  const [showStaffPortal, setShowStaffPortal] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
   const [showGatewayManager, setShowGatewayManager] = useState(false);
   const [showAuditTrail, setShowAuditTrail] = useState(false);
   const [onboardingContext, setOnboardingContext] = useState<{ eventId: string, assetId: string } | null>(null);
@@ -97,8 +101,8 @@ const AppContent: React.FC = () => {
             if (import.meta.env.DEV) {
               console.log(t('appContent.sessionExpired'));
             }
-            // Expired session - navigate to scan for re-entry
-            window.location.hash = '#/scan';
+            // Expired session - navigate to wallet to show expired state
+            window.location.hash = '#/wallet';
           } else {
             if (import.meta.env.DEV) {
               console.log(t('appContent.activeSession'));
@@ -120,7 +124,7 @@ const AppContent: React.FC = () => {
         console.log(t('appContent.noSession'));
       }
       if (!window.location.hash || window.location.hash === '#/') {
-        window.location.hash = '#/scan';
+        window.location.hash = '#/wallet';
       }
     }
   }, [t]);
@@ -137,8 +141,6 @@ const AppContent: React.FC = () => {
       // Update active tab based on route
       if (newRoute === '#/wallet' || newRoute === '#/' || newRoute === '') {
         setActiveTab('wallet');
-      } else if (newRoute === '#/scan') {
-        setActiveTab('scan');
       } else if (newRoute === '#/session') {
         setActiveTab('session');
       } else if (newRoute === '#/trust') {
@@ -187,8 +189,8 @@ const AppContent: React.FC = () => {
       // Force refetch of ghostpass status to ensure fresh data
       await queryClient.refetchQueries({ queryKey: ['ghostpass-status'] });
 
-      // Switch to QR code view after successful purchase
-      setActiveTab('scan');
+      // Switch to wallet view after successful purchase
+      setActiveTab('wallet');
       setPurchasingDuration(null);
     },
     onError: () => {
@@ -204,23 +206,30 @@ const AppContent: React.FC = () => {
     purchaseMutation.mutate(duration);
   };
 
-  const handleRecoverySuccess = () => {
-    console.log(t('appContent.walletRecovered'));
-    setShowRecovery(false);
-    setActiveTab('wallet');
-    // Reload the page to refresh wallet data
-    window.location.reload();
-  };
-
   const handleOperatorPortal = () => {
     console.log(t('appContent.operatorPortal'));
-    setShowRecovery(false);
+    setShowPortalAccess(false);
 
     // Check if already authenticated
     if (authApi.isAuthenticated()) {
       setShowOperatorPortal(true);
     } else {
       setShowOperatorLogin(true);
+    }
+  };
+
+  const handleStaffPortal = () => {
+    setShowPortalAccess(false);
+    if (authApi.isAuthenticated()) {
+      const user = authApi.getUserData();
+      if (user && ['DOOR', 'BAR', 'CONCESSION', 'MERCH', 'MANAGER', 'VENUE_ADMIN', 'ADMIN'].includes(user.role)) {
+        setUserData(user);
+        setShowStaffPortal(true);
+      } else {
+        setShowStaffLogin(true);
+      }
+    } else {
+      setShowStaffLogin(true);
     }
   };
 
@@ -232,6 +241,16 @@ const AppContent: React.FC = () => {
 
   const handleOperatorLoginCancel = () => {
     setShowOperatorLogin(false);
+  };
+
+  const handleStaffLoginSuccess = (_token: string, user: any) => {
+    setShowStaffLogin(false);
+    setUserData(user);
+    setShowStaffPortal(true);
+  };
+
+  const handleStaffLoginCancel = () => {
+    setShowStaffLogin(false);
   };
 
   const handleBackFromOperatorPortal = () => {
@@ -276,24 +295,53 @@ const AppContent: React.FC = () => {
 
   if (onboardingContext) {
     return (
-      <WebAppInitializationPage
-        eventId={onboardingContext.eventId}
-        assetId={onboardingContext.assetId}
-        onHasTicket={handleHasTicket}
+      <Layout activeTab="tickets" onTabChange={(tab) => {
+        setActiveTab(tab);
+        if (tab !== 'tickets') {
+          setOnboardingContext(null);
+          window.history.replaceState({}, '', '/');
+        }
+      }} onOperatorAccess={() => setShowPortalAccess(true)}>
+        <WebAppInitializationPage
+          eventId={onboardingContext.eventId}
+          assetId={onboardingContext.assetId}
+          onHasTicket={handleHasTicket}
+          onCancel={() => {
+            setOnboardingContext(null);
+            window.history.replaceState({}, '', '/');
+            window.location.hash = '#/wallet';
+          }}
+        />
+      </Layout>
+    );
+  }
+
+  // Show Portal Access selection modal if requested
+  if (showPortalAccess) {
+    return (
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <PortalAccessModal
+          onOperatorLogin={handleOperatorPortal}
+          onStaffLogin={handleStaffPortal}
+          onCancel={() => setShowPortalAccess(false)}
+        />
+      </div>
+    );
+  }
+
+  if (showStaffLogin) {
+    return (
+      <StaffLogin
+        onLoginSuccess={handleStaffLoginSuccess}
+        onCancel={handleStaffLoginCancel}
       />
     );
   }
 
-  // Show wallet recovery modal if requested
-  if (showRecovery) {
+  // Show Staff Portal
+  if (showStaffPortal && userData) {
     return (
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <WalletRecovery
-          onRecoverySuccess={handleRecoverySuccess}
-          onCancel={() => setShowRecovery(false)}
-          onOperatorPortal={handleOperatorPortal}
-        />
-      </div>
+      <StaffDashboardRouter user={userData} />
     );
   }
 
@@ -342,9 +390,6 @@ const AppContent: React.FC = () => {
           );
         }
         return <WalletDashboard onPurchase={handlePurchase} isPurchasing={purchaseMutation.isPending} purchasingDuration={purchasingDuration ?? undefined} />;
-      case 'scan':
-        // Scan tab shows the actual QR scanner for venue entry
-        return <GhostPassScanner />;
       case 'session':
         // Session tab shows the Ghost Pass session generator
         return <QRCodeView />;
@@ -380,10 +425,9 @@ const AppContent: React.FC = () => {
 
   return (
     <Layout
-      activeTab={activeTab}
+      activeTab={activeTab === 'scan' ? 'wallet' : activeTab}
       onTabChange={setActiveTab}
-      fastEntryMode={fastEntryMode}
-      onRecoverWallet={() => setShowRecovery(true)}
+      onOperatorAccess={() => setShowPortalAccess(true)}
     >
       {renderActiveTab()}
     </Layout>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Building2, Lock, Mail, ArrowRight, Loader2, AlertTriangle, Shield } from 'lucide-react';
+import { Building2, Lock, Mail, ArrowRight, Loader2, AlertTriangle, Shield, UserPlus, ArrowLeft, User } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 
@@ -11,14 +11,19 @@ interface OperatorLoginProps {
 
 const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onCancel }) => {
   const { t } = useTranslation();
+  const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [venueId, setVenueId] = useState('');
+  const [venueName, setVenueName] = useState('');
+  const [contactName, setContactName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email.trim() || !password.trim()) {
       setError(t('operator.enterBothFields'));
       return;
@@ -62,6 +67,50 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onCancel 
     }
   };
 
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!email.trim() || !password.trim() || !venueId.trim() || !venueName.trim() || !contactName.trim()) {
+      setError(t('operator.enterAllFields'));
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+      const response = await fetch(`${API_BASE_URL}/auth/register-venue-admin`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          venue_id: venueId,
+          venue_name: venueName,
+          contact_name: contactName
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || errorData.error || t('operator.registerError'));
+      }
+
+      setSuccess(t('operator.registrationSuccess'));
+      setMode('login');
+      setPassword(''); // Clear password for login
+    } catch (error) {
+      console.error('Registration error:', error);
+      setError(error instanceof Error ? error.message : t('operator.registerError'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <motion.div
@@ -72,15 +121,74 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onCancel 
         {/* Header */}
         <div className="text-center mb-6">
           <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-500/50">
-            <Building2 className="w-8 h-8 text-amber-400" />
+            {mode === 'login' ? (
+              <Building2 className="w-8 h-8 text-amber-400" />
+            ) : (
+              <UserPlus className="w-8 h-8 text-amber-400" />
+            )}
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">{t('operator.portalTitle')}</h2>
-          <p className="text-slate-400">{t('operator.signInSubtitle')}</p>
+          <h2 className="text-2xl font-bold text-white mb-2">
+            {mode === 'login' ? t('operator.portalTitle') : t('operator.registerButton')}
+          </h2>
+          <p className="text-slate-400">
+            {mode === 'login' ? t('operator.signInSubtitle') : t('operator.registerSubtitle')}
+          </p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleLogin} className="space-y-4">
-          {/* Email Input */}
+        <form onSubmit={mode === 'login' ? handleLogin : handleRegister} className="space-y-4">
+          {/* Registration Fields */}
+          {mode === 'register' && (
+            <>
+              <div className="space-y-2">
+                <label className="text-slate-300 text-sm font-medium flex items-center space-x-2">
+                  <User className="w-4 h-4" />
+                  <span>{t('operator.contactNameLabel')}</span>
+                </label>
+                <input
+                  type="text"
+                  value={contactName}
+                  onChange={(e) => setContactName(e.target.value)}
+                  placeholder={t('operator.contactNamePlaceholder')}
+                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 transition-all"
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <label className="text-slate-300 text-sm font-medium flex items-center space-x-2">
+                    <Building2 className="w-4 h-4" />
+                    <span>{t('operator.venueIdLabel')}</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={venueId}
+                    onChange={(e) => setVenueId(e.target.value)}
+                    placeholder={t('operator.venueIdPlaceholder')}
+                    className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 transition-all"
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-slate-300 text-sm font-medium flex items-center space-x-2">
+                    <Building2 className="w-4 h-4" />
+                    <span>{t('operator.venueNameLabel')}</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={venueName}
+                    onChange={(e) => setVenueName(e.target.value)}
+                    placeholder={t('operator.venueNamePlaceholder')}
+                    className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 transition-all"
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Common Fields */}
           <div className="space-y-2">
             <label className="text-slate-300 text-sm font-medium flex items-center space-x-2">
               <Mail className="w-4 h-4" />
@@ -97,7 +205,6 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onCancel 
             />
           </div>
 
-          {/* Password Input */}
           <div className="space-y-2">
             <label className="text-slate-300 text-sm font-medium flex items-center space-x-2">
               <Lock className="w-4 h-4" />
@@ -110,9 +217,20 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onCancel 
               placeholder={t('operator.passwordPlaceholder')}
               className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 transition-all"
               disabled={isLoading}
-              autoComplete="current-password"
+              autoComplete={mode === 'login' ? "current-password" : "new-password"}
             />
           </div>
+
+          {/* Success Message */}
+          {success && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3"
+            >
+              <p className="text-emerald-400 text-sm">{success}</p>
+            </motion.div>
+          )}
 
           {/* Error Message */}
           {error && (
@@ -138,6 +256,41 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onCancel 
             </div>
           </div>
 
+          {/* Mode Toggler */}
+          <div className="text-center pt-2">
+            <p className="text-slate-400 text-sm">
+              {mode === 'login' ? (
+                <>
+                  {t('operator.noAccount')}{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode('register');
+                      setError('');
+                      setSuccess('');
+                    }}
+                    className="text-amber-400 hover:text-amber-300 font-medium transition-colors"
+                  >
+                    {t('operator.createAccount')}
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('login');
+                    setError('');
+                    setSuccess('');
+                  }}
+                  className="text-amber-400 hover:text-amber-300 font-medium transition-colors flex items-center justify-center mx-auto space-x-1"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>{t('operator.backToLogin')}</span>
+                </button>
+              )}
+            </p>
+          </div>
+
           {/* Actions */}
           <div className="grid grid-cols-2 gap-3 pt-2">
             <button
@@ -150,10 +303,10 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onCancel 
             </button>
             <button
               type="submit"
-              disabled={isLoading || !email.trim() || !password.trim()}
+              disabled={isLoading || !email.trim() || !password.trim() || (mode === 'register' && (!venueId.trim() || !venueName.trim() || !contactName.trim()))}
               className={cn(
                 "px-4 py-3 rounded-lg font-medium transition-all flex items-center justify-center space-x-2",
-                isLoading || !email.trim() || !password.trim()
+                isLoading || !email.trim() || !password.trim() || (mode === 'register' && (!venueId.trim() || !venueName.trim() || !contactName.trim()))
                   ? "bg-slate-700/50 border border-slate-600 text-slate-500 cursor-not-allowed"
                   : "bg-amber-500/20 border border-amber-500/50 text-amber-400 hover:bg-amber-500/30"
               )}
@@ -161,11 +314,11 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onLoginSuccess, onCancel 
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>{t('operator.signingInButton')}</span>
+                  <span>{mode === 'login' ? t('operator.signingInButton') : t('operator.registeringButton')}</span>
                 </>
               ) : (
                 <>
-                  <span>{t('operator.signInButton')}</span>
+                  <span>{mode === 'login' ? t('operator.signInButton') : t('operator.registerButton')}</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}

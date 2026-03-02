@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wallet, Scan, Shield, History, Zap, Ticket } from 'lucide-react';
+import { Wallet, Shield, History, Zap, Ticket } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import LanguageSelector from './LanguageSelector';
@@ -8,26 +8,21 @@ interface LayoutProps {
   children: React.ReactNode;
   activeTab: 'wallet' | 'scan' | 'session' | 'trust' | 'history' | 'tickets' | 'modes' | 'entry-test' | 'admin';
   onTabChange: (tab: 'wallet' | 'scan' | 'session' | 'trust' | 'history' | 'tickets' | 'modes' | 'entry-test' | 'admin') => void;
-  fastEntryMode?: boolean; // Hide TopUp tab in fast entry mode
-  onRecoverWallet?: () => void;
+  onOperatorAccess?: () => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ 
-  children, 
-  activeTab, 
-  onTabChange, 
-  fastEntryMode = false,
-  onRecoverWallet
+const Layout: React.FC<LayoutProps> = ({
+  children,
+  activeTab,
+  onTabChange,
+  onOperatorAccess
 }) => {
   const { t } = useTranslation();
-  
+
   const tabs = [
-    { id: 'wallet' as const, icon: Wallet, label: t('nav.wallet') },
-    { id: 'scan' as const, icon: Scan, label: t('nav.scan') },
+    { id: 'wallet' as const, icon: Wallet, label: 'Wallet' },
     { id: 'tickets' as const, icon: Ticket, label: t('nav.tickets') },
     { id: 'session' as const, icon: Zap, label: t('nav.session') },
-    // Hide TopUp tab in fast entry mode (funding is integrated in wallet)
-    ...(!fastEntryMode ? [{ id: 'trust' as const, icon: Shield, label: t('nav.topup') }] : []),
     { id: 'history' as const, icon: History, label: t('nav.history') },
   ];
 
@@ -62,22 +57,22 @@ const Layout: React.FC<LayoutProps> = ({
               <h1 className="text-base sm:text-lg font-bold text-white truncate">{t('app.title')}</h1>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2 flex-shrink-0">
             {/* Language Selector - Mobile */}
             <div className="scale-90 sm:scale-100">
               <LanguageSelector />
             </div>
-            
-            {/* Recover Wallet / Operator Access Button - Mobile */}
-            {onRecoverWallet && (
+
+            {/* Operator/Staff Access Button - Mobile */}
+            {onOperatorAccess && (
               <button
-                onClick={onRecoverWallet}
+                onClick={onOperatorAccess}
                 className="flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-lg transition-all duration-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 min-h-[44px] min-w-[44px]"
-                title={t('nav.walletAccess')}
+                title="Staff / Operator Portal"
               >
                 <Shield size={18} className="sm:w-5 sm:h-5" />
-                <span className="text-[9px] sm:text-[10px] font-medium mt-0.5 hidden xs:block">{t('nav.walletAccess')}</span>
+                <span className="text-[9px] sm:text-[10px] font-medium mt-0.5 hidden xs:block">Access</span>
               </button>
             )}
           </div>
@@ -151,18 +146,18 @@ const Layout: React.FC<LayoutProps> = ({
         <div className="p-4 lg:p-6 border-t border-slate-700 space-y-3">
           {/* Language Selector */}
           <LanguageSelector />
-          
-          {/* Recover Wallet / Operator Access Button */}
-          {onRecoverWallet && (
+
+          {/* Operator/Staff Access Button */}
+          {onOperatorAccess && (
             <button
-              onClick={onRecoverWallet}
+              onClick={onOperatorAccess}
               className="w-full flex items-center justify-center space-x-2 p-3 lg:p-4 rounded-lg transition-all duration-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400"
             >
               <Shield size={20} />
-              <span className="hidden lg:block font-medium">{t('nav.walletAccess')}</span>
+              <span className="hidden lg:block font-medium">Operator / Staff Access</span>
             </button>
           )}
-          
+
           <div className="hidden lg:block text-xs text-slate-500 text-center">
             <p>{t('nav.secure')}</p>
           </div>

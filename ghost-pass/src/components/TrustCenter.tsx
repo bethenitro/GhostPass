@@ -270,7 +270,7 @@ const TrustCenter: React.FC = () => {
                         <span className="font-medium text-xs sm:text-sm leading-tight">{source.name}</span>
                         {!source.enabled && (
                           <span className="text-xs text-slate-500 bg-slate-700/50 px-1 py-0.5 sm:px-2 sm:py-1 rounded text-[10px] sm:text-xs">
-                            {t('common.soon')}
+                            coming soon
                           </span>
                         )}
                       </button>

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import GhostPassWalletPersistence from './GhostPassWalletPersistence';
 import GhostPassEntryManager from './GhostPassEntryManager';
+import TrustCenter from './TrustCenter';
 
 interface GhostPassWalletProps {
   balance: number; // in cents
@@ -38,8 +39,7 @@ const GhostPassWallet: React.FC<GhostPassWalletProps> = ({
   const [platformFeeConfig, setPlatformFeeConfig] = useState<any>(null);
   const [proofs, setProofs] = useState<CryptographicProof[]>([]);
   const [showProofs, setShowProofs] = useState(false);
-  const [biometricChallenge, setBiometricChallenge] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'wallet' | 'entry' | 'persistence'>('wallet');
+  const [activeTab, setActiveTab] = useState<'wallet' | 'entry' | 'persistence' | 'topup'>('wallet');
   const [currentBrightness, setCurrentBrightness] = useState<number>(100);
 
   useEffect(() => {
@@ -80,24 +80,6 @@ const GhostPassWallet: React.FC<GhostPassWalletProps> = ({
       setProofs(data.proofs || []);
     } catch (error) {
       console.error('Failed to fetch proofs:', error);
-    }
-  };
-
-  const generateBiometricChallenge = async () => {
-    try {
-      const response = await fetch('/api/wallet/biometric-challenge', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      const data = await response.json();
-      if (data.status === 'SUCCESS') {
-        setBiometricChallenge(data.challenge);
-      }
-    } catch (error) {
-      console.error('Failed to generate biometric challenge:', error);
     }
   };
 
@@ -241,6 +223,17 @@ const GhostPassWallet: React.FC<GhostPassWalletProps> = ({
           )}
         >
           {t('ghostPass.walletTab')}
+        </button>
+        <button
+          onClick={() => setActiveTab('topup')}
+          className={cn(
+            "flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors",
+            activeTab === 'topup'
+              ? "bg-cyan-600 text-white"
+              : "text-gray-400 hover:text-white"
+          )}
+        >
+          {t('ghostPass.topupTab')}
         </button>
         <button
           onClick={() => setActiveTab('entry')}
@@ -468,18 +461,6 @@ const GhostPassWallet: React.FC<GhostPassWalletProps> = ({
                   </div>
                 )}
               </button>
-
-              {/* Platform Fee Info */}
-              {platformFeeConfig && (
-                <div className="p-3 bg-yellow-900/20 border border-yellow-500/30 rounded-lg">
-                  <div className="text-yellow-400 text-sm font-medium mb-1">{t('ghostPass.platformFee')}</div>
-                  <div className="text-xs text-gray-300">
-                    {t('ghostPass.entry')}: {platformFeeConfig.context_fees?.entry} • 
-                    {t('ghostPass.bar')}: {platformFeeConfig.context_fees?.bar} • 
-                    {t('ghostPass.merch')}: {platformFeeConfig.context_fees?.merch}
-                  </div>
-                </div>
-              )}
             </motion.div>
           )}
 
@@ -505,38 +486,12 @@ const GhostPassWallet: React.FC<GhostPassWalletProps> = ({
               </div>
             </motion.div>
           )}
-
-          {/* Biometric Challenge Section */}
-          {deviceBound && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="space-y-3"
-            >
-              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                <Lock className="w-5 h-5 text-cyan-400" />
-                {t('ghostPass.biometricVerification')}
-              </h3>
-              
-              <button
-                onClick={generateBiometricChallenge}
-                className="w-full p-3 bg-gray-800/50 border border-gray-600 rounded-lg text-gray-300 hover:border-gray-500 transition-colors"
-              >
-                {t('ghostPass.generateChallenge')}
-              </button>
-
-              {biometricChallenge && (
-                <div className="p-3 bg-black/20 rounded-lg">
-                  <div className="text-xs text-gray-400 mb-1">{t('ghostPass.challenge')}:</div>
-                  <div className="text-xs font-mono text-cyan-400 break-all">
-                    {biometricChallenge}
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          )}
         </div>
+      )}
+
+      {/* TopUp Tab */}
+      {activeTab === 'topup' && (
+        <TrustCenter />
       )}
 
       {/* Entry Management Tab */}

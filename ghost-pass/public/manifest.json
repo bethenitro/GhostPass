@@ -1,7 +1,7 @@
 {
   "name": "Ghost Pass Wallet",
   "short_name": "GhostPass",
-  "description": "Your secure event wallet - instant access to venues and events",
+  "description": "Your secure  - instant access to venues and events",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",

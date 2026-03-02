@@ -63,11 +63,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       cancel_url: cancel_url ? 'present' : 'missing',
     });
 
-    // Validation
-    if (!amount || amount < 50) {
-      return res.status(400).json({ error: 'Amount must be at least $0.50' });
-    }
-
+    // Common validation
     if (!wallet_binding_id) {
       return res.status(400).json({ error: 'wallet_binding_id is required' });
     }
@@ -104,7 +100,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(404).json({ error: 'Ticket type not found' });
       }
 
-      if (ticketType.sold_count + quantity > ticketType.max_quantity) {
+      // Only enforce capacity when max_quantity > 0; 0 means unlimited
+      if (ticketType.max_quantity > 0 && ticketType.sold_count + quantity > ticketType.max_quantity) {
         return res.status(400).json({ error: 'Not enough tickets available' });
       }
 

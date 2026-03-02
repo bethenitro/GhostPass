@@ -10,18 +10,35 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   const user = await requireAuth(req, res);
   if (!user) return;
 
-  // GET /api/gateway/points?type=ENTRY_POINT (or INTERNAL_AREA or TABLE_SEAT)
+  // Helper: resolve the venue_id for this user
+  const resolveVenueId = async (queryVenueId?: string): Promise<string | null> => {
+    if (queryVenueId) return queryVenueId;
+    const { data: userData } = await supabase
+      .from('users')
+      .select('venue_id')
+      .eq('id', user.id)
+      .single();
+    return userData?.venue_id ?? null;
+  };
+
+  // GET /api/gateway/points?type=ENTRY_POINT&event_id=xxx (or INTERNAL_AREA or TABLE_SEAT)
   if (req.method === 'GET') {
     try {
-      const { type, status } = req.query;
-      
-      // TODO: Get actual venue_id from user context
-      const venueId = 'venue_001';
+      const { type, status, venue_id: queryVenueId, event_id: queryEventId } = req.query;
+
+      const venueId = await resolveVenueId(queryVenueId as string | undefined);
+      if (!venueId) {
+        return res.status(400).json({ detail: 'No venue_id found. Please ensure your account is linked to a venue.' });
+      }
 
       let query = supabase
         .from('gateway_points')
-        .select('id, venue_id, name, number, accepts_ghostpass, status, type, employee_name, employee_id, visual_identifier, linked_area_id, created_at, updated_at, created_by')
+        .select('id, venue_id, event_id, name, number, accepts_ghostpass, status, type, employee_name, employee_id, visual_identifier, linked_area_id, created_at, updated_at, created_by')
         .eq('venue_id', venueId);
+
+      if (queryEventId) {
+        query = query.eq('event_id', queryEventId as string);
+      }
 
       if (type) {
         query = query.eq('type', (type as string).toUpperCase());
@@ -52,20 +69,30 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         employee_id,
         visual_identifier,
         number,
+        event_id,
         accepts_ghostpass = true,
-        linked_area_id
+        linked_area_id,
+        venue_id: bodyVenueId,
       } = req.body;
 
-      // TODO: Get actual venue_id from user context
-      const venueId = 'venue_001';
+      const venueId = await resolveVenueId(bodyVenueId);
+      if (!venueId) {
+        return res.status(400).json({ detail: 'No venue_id found. Please ensure your account is linked to a venue.' });
+      }
 
-      // Check for duplicate name within same venue and type
-      const { data: existing } = await supabase
+      // Check for duplicate name within same venue, type, and optionally event
+      let dupQuery = supabase
         .from('gateway_points')
         .select('id')
         .eq('venue_id', venueId)
         .eq('name', name)
         .eq('type', type);
+
+      if (event_id) {
+        dupQuery = dupQuery.eq('event_id', event_id);
+      }
+
+      const { data: existing } = await dupQuery;
 
       if (existing && existing.length > 0) {
         return res.status(400).json({
@@ -84,6 +111,10 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         accepts_ghostpass,
         created_by: user.id
       };
+
+      if (event_id) {
+        newPoint.event_id = event_id;
+      }
 
       if (number !== undefined && number !== null) {
         newPoint.number = number;

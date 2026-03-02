@@ -9,17 +9,17 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   const user = await requireAuth(req, res);
   if (!user) return;
 
-  // Check if user is VENUE_ADMIN or ADMIN
-  if (user.role !== 'VENUE_ADMIN' && user.role !== 'ADMIN') {
-    return res.status(403).json({ error: 'Forbidden', detail: 'Venue admin access required' });
+  // Check if user is VENUE_ADMIN, ADMIN, or MANAGER
+  if (user.role !== 'VENUE_ADMIN' && user.role !== 'ADMIN' && user.role !== 'MANAGER') {
+    return res.status(403).json({ error: 'Forbidden', detail: 'Manager or Venue admin access required' });
   }
 
   if (req.method === 'GET') {
     try {
       const { venue_id, event_id } = req.query;
 
-      // For VENUE_ADMIN, use their assigned venue_id
-      const targetVenueId = user.role === 'VENUE_ADMIN' ? (user as any).venue_id : venue_id;
+      // For VENUE_ADMIN or MANAGER, use their assigned venue_id
+      const targetVenueId = (user.role === 'VENUE_ADMIN' || user.role === 'MANAGER') ? (user as any).venue_id : venue_id;
 
       if (!targetVenueId) {
         return res.status(400).json({ error: 'venue_id is required' });
@@ -58,9 +58,9 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       res.status(200).json(data);
     } catch (error: any) {
       console.error('Error fetching venue config:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Failed to fetch venue configuration',
-        detail: error.message 
+        detail: error.message
       });
     }
   } else if (req.method === 'POST' || req.method === 'PUT') {
@@ -94,16 +94,16 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         const MAX_REENTRY_FEE = 2000; // $20
 
         if (initial_entry_fee_cents > MAX_INITIAL_FEE) {
-          return res.status(400).json({ 
+          return res.status(400).json({
             error: 'Initial entry fee exceeds approved limit',
-            detail: `Maximum allowed: $${MAX_INITIAL_FEE / 100}` 
+            detail: `Maximum allowed: $${MAX_INITIAL_FEE / 100}`
           });
         }
 
         if (venue_reentry_fee_cents > MAX_REENTRY_FEE) {
-          return res.status(400).json({ 
+          return res.status(400).json({
             error: 'Re-entry fee exceeds approved limit',
-            detail: `Maximum allowed: $${MAX_REENTRY_FEE / 100}` 
+            detail: `Maximum allowed: $${MAX_REENTRY_FEE / 100}`
           });
         }
       }
@@ -149,9 +149,9 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       });
     } catch (error: any) {
       console.error('Error updating venue config:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Failed to update venue configuration',
-        detail: error.message 
+        detail: error.message
       });
     }
   } else {

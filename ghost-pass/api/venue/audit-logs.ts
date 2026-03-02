@@ -9,17 +9,17 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   const user = await requireAuth(req, res);
   if (!user) return;
 
-  // Check if user is VENUE_ADMIN or ADMIN
-  if (user.role !== 'VENUE_ADMIN' && user.role !== 'ADMIN') {
-    return res.status(403).json({ error: 'Forbidden', detail: 'Venue admin access required' });
+  // Check if user is VENUE_ADMIN, ADMIN, or MANAGER
+  if (user.role !== 'VENUE_ADMIN' && user.role !== 'ADMIN' && user.role !== 'MANAGER') {
+    return res.status(403).json({ error: 'Forbidden', detail: 'Manager or Venue admin access required' });
   }
 
   if (req.method === 'GET') {
     try {
       const { venue_id, event_id, limit = '50' } = req.query;
 
-      // For VENUE_ADMIN, use their assigned venue_id
-      const targetVenueId = user.role === 'VENUE_ADMIN' ? (user as any).venue_id : venue_id;
+      // For VENUE_ADMIN or MANAGER, use their assigned venue_id
+      const targetVenueId = (user.role === 'VENUE_ADMIN' || user.role === 'MANAGER') ? (user as any).venue_id : venue_id;
 
       if (!targetVenueId) {
         return res.status(400).json({ error: 'venue_id is required' });
@@ -51,9 +51,9 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       res.status(200).json(formattedLogs);
     } catch (error: any) {
       console.error('Error fetching venue audit logs:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Failed to fetch audit logs',
-        detail: error.message 
+        detail: error.message
       });
     }
   } else {

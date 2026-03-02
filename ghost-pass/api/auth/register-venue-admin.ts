@@ -1,195 +1,178 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { handleCors } from '../_lib/cors.js';
-import { supabase } from '../_lib/supabase.js';
+import { adminSupabase } from '../_lib/supabase.js';
 
 export default async (req: VercelRequest, res: VercelResponse) => {
   if (handleCors(req, res)) return;
 
-  if (req.method === 'POST') {
-    try {
-      const {
-        email,
-        password,
-        venue_id,
-        event_id,
-        venue_name,
-        contact_name,
-        contact_phone
-      } = req.body;
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
-      // Validate required fields
-      if (!email || !password || !venue_id || !venue_name || !contact_name) {
-        return res.status(400).json({
-          error: 'Missing required fields',
-          detail: 'email, password, venue_id, venue_name, and contact_name are required'
-        });
-      }
+  try {
+    const {
+      email,
+      password,
+      venue_id,
+      event_id,
+      venue_name,
+      contact_name,
+      contact_phone
+    } = req.body;
 
-      // Validate email format
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        return res.status(400).json({
-          error: 'Invalid email format'
-        });
-      }
-
-      // Validate password strength
-      if (password.length < 8) {
-        return res.status(400).json({
-          error: 'Password must be at least 8 characters long'
-        });
-      }
-
-      // Check if user with this email already exists in users table
-      const { data: existingUser, error: existingUserError } = await supabase
-        .from('users')
-        .select('id, email, role')
-        .eq('email', email)
-        .maybeSingle();
-
-      if (existingUser) {
-        return res.status(400).json({
-          error: 'Email already registered',
-          detail: 'An account with this email already exists. Please sign in instead.'
-        });
-      }
-
-      // Check if venue admin already exists for this venue
-      const { data: existingVenueAdmin, error: checkError } = await supabase
-        .from('users')
-        .select('id, email')
-        .eq('venue_id', venue_id)
-        .eq('role', 'VENUE_ADMIN');
-
-      if (checkError) {
-        console.error('Error checking existing venue admin:', checkError);
-      }
-
-      // If venue admin exists, return info (but don't block - multiple admins per venue is ok)
-      if (existingVenueAdmin && existingVenueAdmin.length > 0) {
-        console.log(`Note: Venue ${venue_id} already has ${existingVenueAdmin.length} admin(s)`);
-      }
-
-      // Create auth user in Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            role: 'VENUE_ADMIN',
-            venue_id,
-            event_id,
-            venue_name,
-            contact_name,
-            contact_phone
-          }
-        }
-      });
-
-      if (authError) {
-        console.error('Auth signup error:', authError);
-        return res.status(400).json({
-          error: 'Failed to create account',
-          detail: authError.message
-        });
-      }
-
-      if (!authData.user) {
-        return res.status(400).json({
-          error: 'Failed to create account',
-          detail: 'No user returned from signup'
-        });
-      }
-
-      // Create or update user record in users table with VENUE_ADMIN role
-      // Use upsert to handle case where user already exists
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .upsert({
-          id: authData.user.id,
-          email: email,
-          role: 'VENUE_ADMIN',
-          venue_id: venue_id,
-          event_id: event_id || null,
-          created_at: new Date().toISOString()
-        }, {
-          onConflict: 'id',
-          ignoreDuplicates: false
-        })
-        .select()
-        .single();
-
-      if (userError) {
-        console.error('User table upsert error:', userError);
-        // Try to clean up auth user if user table upsert fails
-        try {
-          await supabase.auth.admin.deleteUser(authData.user.id);
-        } catch (cleanupError) {
-          console.error('Failed to cleanup auth user:', cleanupError);
-        }
-        return res.status(500).json({
-          error: 'Failed to create user record',
-          detail: userError.message
-        });
-      }
-
-      // Create initial venue configuration if it doesn't exist
-      const { data: existingConfig } = await supabase
-        .from('venue_entry_configs')
-        .select('id')
-        .eq('venue_id', venue_id)
-        .eq('event_id', event_id || null)
-        .single();
-
-      if (!existingConfig) {
-        await supabase.from('venue_entry_configs').insert({
-          venue_id: venue_id,
-          event_id: event_id || null,
-          re_entry_allowed: true,
-          initial_entry_fee_cents: 0,
-          venue_reentry_fee_cents: 0,
-          valid_reentry_scan_fee_cents: 0,
-          created_by: authData.user.id
-        });
-      }
-
-      // Log the registration
-      await supabase.from('audit_logs').insert({
-        admin_user_id: authData.user.id,
-        admin_email: email,
-        action: 'VENUE_ADMIN_REGISTRATION',
-        resource_type: 'user',
-        resource_id: authData.user.id,
-        new_value: {
-          venue_id,
-          event_id,
-          venue_name,
-          contact_name
-        }
-      });
-
-      // Return success with session
-      res.status(201).json({
-        status: 'success',
-        message: 'Venue admin account created successfully',
-        user: {
-          id: authData.user.id,
-          email: email,
-          role: 'VENUE_ADMIN',
-          venue_id: venue_id,
-          event_id: event_id
-        },
-        session: authData.session,
-        access_token: authData.session?.access_token
-      });
-    } catch (error: any) {
-      console.error('Venue admin registration error:', error);
-      res.status(500).json({
-        error: 'Failed to register venue admin',
-        detail: error.message
+    // --- Validation ---
+    if (!email || !password || !venue_id || !venue_name || !contact_name) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        detail: 'email, password, venue_id, venue_name, and contact_name are required'
       });
     }
-  } else {
-    res.status(405).json({ error: 'Method not allowed' });
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters long' });
+    }
+
+    // --- Check if email already registered in users table (use adminSupabase to bypass RLS) ---
+    const { data: existingUser } = await adminSupabase
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle();
+
+    if (existingUser) {
+      return res.status(400).json({
+        error: 'Email already registered',
+        detail: 'An account with this email already exists. Please sign in instead.'
+      });
+    }
+
+    // Log how many admins already exist for this venue (informational only)
+    const { data: existingVenueAdmins } = await adminSupabase
+      .from('users')
+      .select('id')
+      .eq('venue_id', venue_id)
+      .eq('role', 'VENUE_ADMIN');
+
+    if (existingVenueAdmins && existingVenueAdmins.length > 0) {
+      console.log(`Note: Venue ${venue_id} already has ${existingVenueAdmins.length} admin(s). Adding another.`);
+    }
+
+    // --- Create Supabase Auth user using Admin API (bypasses email confirmation) ---
+    const { data: authData, error: authError } = await adminSupabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true, // Auto-confirm so they can log in immediately
+      user_metadata: {
+        role: 'VENUE_ADMIN',
+        venue_id,
+        event_id: event_id || null,
+        venue_name,
+        contact_name,
+        contact_phone: contact_phone || null
+      }
+    });
+
+    if (authError || !authData.user) {
+      console.error('Auth admin.createUser error:', authError);
+      return res.status(400).json({
+        error: 'Failed to create account',
+        detail: authError?.message || 'No user returned from signup'
+      });
+    }
+
+    const userId = authData.user.id;
+
+    // --- Upsert user into public.users table using adminSupabase (bypasses RLS) ---
+    // NOTE: The handle_new_user() trigger already inserts a row when the auth user is created.
+    // We upsert here to ensure the correct role, venue_id, and event_id are set.
+    const { error: userError } = await adminSupabase
+      .from('users')
+      .upsert({
+        id: userId,
+        email: email,
+        role: 'VENUE_ADMIN',
+        venue_id: venue_id,
+        event_id: event_id || null,
+      }, {
+        onConflict: 'id',
+        ignoreDuplicates: false
+      });
+
+    if (userError) {
+      console.error('User table insert error:', userError);
+      // Rollback: delete the auth user we just created
+      await adminSupabase.auth.admin.deleteUser(userId).catch(e =>
+        console.error('Failed to rollback auth user:', e)
+      );
+      return res.status(500).json({
+        error: 'Failed to create user record',
+        detail: userError.message
+      });
+    }
+
+    // --- Create initial venue entry config if none exists ---
+    const { data: existingConfig } = await adminSupabase
+      .from('venue_entry_configs')
+      .select('id')
+      .eq('venue_id', venue_id)
+      .maybeSingle();
+
+    if (!existingConfig) {
+      const { error: configError } = await adminSupabase.from('venue_entry_configs').insert({
+        venue_id: venue_id,
+        event_id: event_id || null,
+        re_entry_allowed: true,
+        initial_entry_fee_cents: 0,
+        venue_reentry_fee_cents: 0,
+        valid_reentry_scan_fee_cents: 0,
+        created_by: userId
+      });
+      if (configError) {
+        // Non-fatal: log but don't fail registration
+        console.warn('Could not create venue entry config:', configError.message);
+      }
+    }
+
+    // --- Audit log (non-fatal) ---
+    try {
+      await adminSupabase.from('audit_logs').insert({
+        admin_user_id: userId,
+        action: 'VENUE_ADMIN_REGISTRATION',
+        resource_type: 'user',
+        resource_id: userId,
+        new_value: {
+          venue_id,
+          event_id: event_id || null,
+          venue_name,
+          contact_name,
+        }
+      });
+    } catch (auditErr) {
+      console.warn('Audit log failed (non-fatal):', auditErr);
+    }
+
+    return res.status(201).json({
+      status: 'success',
+      message: 'Venue admin account created successfully. You can now sign in.',
+      user: {
+        id: userId,
+        email: email,
+        role: 'VENUE_ADMIN',
+        venue_id: venue_id,
+        event_id: event_id || null
+      }
+    });
+
+  } catch (error: any) {
+    console.error('Venue admin registration error:', error);
+    return res.status(500).json({
+      error: 'Failed to register venue admin',
+      detail: error.message
+    });
   }
 };

@@ -8,6 +8,7 @@ import { useToast } from '../ui/toast';
 
 interface VenueEventManagerProps {
   venueId: string;
+  eventId?: string;
 }
 
 interface Event {
@@ -62,6 +63,13 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Generate a unique event ID slug
+  const generateEventId = () => {
+    const ts = Date.now().toString(36);
+    const rand = Math.random().toString(36).slice(2, 5);
+    return `evt_${ts}_${rand}`;
+  };
 
   useEffect(() => {
     loadData();
@@ -132,7 +140,7 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       showToast('Please fix form errors', 'error');
       return;
@@ -145,7 +153,7 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
         ...formData,
         venue_name: formData.venue_name || venueId
       };
-      
+
       if (editingEvent) {
         // Update existing event
         await eventApi.update(editingEvent.event_id, submitData);
@@ -160,7 +168,7 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
       loadData();
     } catch (error: any) {
       console.error('Failed to save event:', error);
-      
+
       // Handle duplicate event ID error
       if (error.response?.status === 409 || error.response?.data?.detail?.includes('duplicate')) {
         showToast('Event ID already exists. Please use a different event ID.', 'error');
@@ -191,7 +199,7 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
       start_date: formData.start_date,
       end_date: formData.end_date,
     };
-    
+
     setFormData({
       event_id: '',
       venue_id: venueId,
@@ -232,9 +240,12 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-white">{t('events.myEvents')}</h2>
-        <button 
+        <button
           onClick={() => {
             resetForm();
+            if (!showForm) {
+              setFormData(prev => ({ ...prev, event_id: generateEventId() }));
+            }
             setShowForm(!showForm);
           }}
           className="flex items-center space-x-2 px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/50 rounded-lg text-purple-400 transition-all min-h-[44px]"
@@ -515,11 +526,10 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
               </div>
               <div className="mt-2 p-2 bg-slate-900/50 rounded text-xs">
                 <span className="text-slate-400">Total: </span>
-                <span className={`font-semibold ${
-                  (formData.valid_percentage + formData.vendor_percentage + formData.pool_percentage + formData.promoter_percentage + formData.executive_percentage) === 100 
-                    ? 'text-emerald-400' 
-                    : 'text-red-400'
-                }`}>
+                <span className={`font-semibold ${(formData.valid_percentage + formData.vendor_percentage + formData.pool_percentage + formData.promoter_percentage + formData.executive_percentage) === 100
+                  ? 'text-emerald-400'
+                  : 'text-red-400'
+                  }`}>
                   {(formData.valid_percentage + formData.vendor_percentage + formData.pool_percentage + formData.promoter_percentage + formData.executive_percentage).toFixed(2)}%
                 </span>
                 {(formData.valid_percentage + formData.vendor_percentage + formData.pool_percentage + formData.promoter_percentage + formData.executive_percentage) !== 100 && (
@@ -641,13 +651,13 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                   </div>
                 </div>
                 <div className="flex space-x-2 ml-4">
-                  <button 
+                  <button
                     onClick={() => {
                       setEditingEvent(event);
-                      
+
                       // Extract metadata values if they exist
                       const metadata = (event as any).metadata || {};
-                      
+
                       // Format dates for datetime-local input (remove timezone and milliseconds)
                       const formatDateForInput = (dateString: string) => {
                         if (!dateString) return '';
@@ -659,7 +669,7 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                         const minutes = String(date.getMinutes()).padStart(2, '0');
                         return `${year}-${month}-${day}T${hours}:${minutes}`;
                       };
-                      
+
                       setFormData({
                         event_id: event.event_id,
                         venue_id: venueId,
@@ -688,7 +698,7 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                   >
                     <Edit2 className="w-4 h-4 text-slate-400 hover:text-white" />
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleDelete(event.event_id)}
                     className="p-2 hover:bg-red-500/20 rounded-lg transition-all"
                   >

@@ -38,7 +38,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .single();
 
     if (walletError || !wallet) {
-      return res.status(404).json({ error: 'Wallet not found' });
+      // Wallet not found means no tickets yet
+      return res.status(200).json({ tickets: [], count: 0 });
     }
 
     // Get tickets
@@ -109,7 +110,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   } catch (error) {
     console.error('List tickets error:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'Internal server error',
       details: error instanceof Error ? error.message : 'Unknown error'
     });

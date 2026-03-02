@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Plus, Edit2, Trash2, Loader2, Activity } from 'lucide-react';
+import { MapPin, Plus, Edit2, Trash2, Loader2, Activity, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { gatewayApi } from '@/lib/api';
+import { eventApi } from '@/lib/api-client';
 import { useToast } from '../ui/toast';
 
 interface GatewayManagerProps {
   venueId?: string;
+  eventId?: string;
 }
 
 interface EntryPoint {
@@ -16,15 +18,18 @@ interface EntryPoint {
   employee_name?: string;
   employee_id?: string;
   venue_id?: string;
+  event_id?: string;
   metrics?: {
     total_scans: number;
     today_scans: number;
   };
 }
 
-export const GatewayManager: React.FC<GatewayManagerProps> = ({ venueId }) => {
+export const GatewayManager: React.FC<GatewayManagerProps> = ({ venueId, eventId: propEventId }) => {
   const { showToast } = useToast();
   const [entryPoints, setEntryPoints] = useState<EntryPoint[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string>(propEventId || '');
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -41,18 +46,30 @@ export const GatewayManager: React.FC<GatewayManagerProps> = ({ venueId }) => {
   const statusOptions: Array<'ENABLED' | 'DISABLED'> = ['ENABLED', 'DISABLED'];
 
   useEffect(() => {
+    // Load events for the venue
+    if (venueId) {
+      eventApi.list({ venue_id: venueId })
+        .then((res: { data: any[] }) => setEvents(res.data || []))
+        .catch(() => setEvents([]));
+    }
+  }, [venueId]);
+
+  useEffect(() => {
     loadEntryPoints();
-  }, [venueId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [venueId, selectedEventId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadEntryPoints = async () => {
     try {
       setLoading(true);
-      const points = await gatewayApi.getEntryPoints();
+      const params: { venue_id?: string; event_id?: string } = {};
+      if (venueId) params.venue_id = venueId;
+      if (selectedEventId) params.event_id = selectedEventId;
+      const points = await gatewayApi.getEntryPoints(params);
       setEntryPoints(points || []);
     } catch (error: any) {
       console.error('Failed to load entry points:', error);
       if (error.response?.status !== 401) {
-        showToast(error.response?.data?.error || 'Failed to load entry points', 'error');
+        showToast(error.response?.data?.error || error.response?.data?.detail || 'Failed to load entry points', 'error');
       }
     } finally {
       setLoading(false);
@@ -61,7 +78,7 @@ export const GatewayManager: React.FC<GatewayManagerProps> = ({ venueId }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       showToast('Entry point name is required', 'error');
       return;
@@ -78,7 +95,11 @@ export const GatewayManager: React.FC<GatewayManagerProps> = ({ venueId }) => {
         await gatewayApi.updateEntryPoint(editingPoint.id, formData);
         showToast('Entry point updated successfully', 'success');
       } else {
-        await gatewayApi.createEntryPoint(formData);
+        await gatewayApi.createEntryPoint({
+          ...formData,
+          ...(venueId ? { venue_id: venueId } : {}),
+          ...(selectedEventId ? { event_id: selectedEventId } : {}),
+        });
         showToast('Entry point created successfully', 'success');
       }
       setShowForm(false);
@@ -86,7 +107,7 @@ export const GatewayManager: React.FC<GatewayManagerProps> = ({ venueId }) => {
       loadEntryPoints();
     } catch (error: any) {
       console.error('Failed to save entry point:', error);
-      showToast(error.response?.data?.error || 'Failed to save entry point', 'error');
+      showToast(error.response?.data?.error || error.response?.data?.detail || 'Failed to save entry point', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -95,12 +116,16 @@ export const GatewayManager: React.FC<GatewayManagerProps> = ({ venueId }) => {
   const handleDelete = async (pointId: string) => {
     if (!confirm('Are you sure you want to delete this entry point?')) return;
 
+    // Optimistic update
+    setEntryPoints(prev => prev.filter(p => p.id !== pointId));
+
     try {
       await gatewayApi.deleteEntryPoint(pointId);
       showToast('Entry point deleted successfully', 'success');
-      loadEntryPoints();
     } catch (error: any) {
       showToast(error.response?.data?.error || 'Failed to delete entry point', 'error');
+      // Revert
+      loadEntryPoints();
     }
   };
 
@@ -127,7 +152,7 @@ export const GatewayManager: React.FC<GatewayManagerProps> = ({ venueId }) => {
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h2 className="text-lg sm:text-xl font-bold text-white">Gateway Entry Points</h2>
-        <button 
+        <button
           onClick={() => {
             resetForm();
             setShowForm(!showForm);
@@ -139,11 +164,36 @@ export const GatewayManager: React.FC<GatewayManagerProps> = ({ venueId }) => {
         </button>
       </div>
 
+      {/* Event Filter */}
+      {events.length > 0 && (
+        <div className="flex items-center gap-3 p-3 bg-slate-700/30 border border-slate-600 rounded-lg">
+          <Calendar className="w-4 h-4 text-purple-400 flex-shrink-0" />
+          <label className="text-sm text-slate-300 whitespace-nowrap">Filter by Event:</label>
+          <select
+            value={selectedEventId}
+            onChange={e => setSelectedEventId(e.target.value)}
+            className="flex-1 px-3 py-1.5 bg-slate-900/50 border border-slate-600 rounded-lg text-white text-sm focus:border-purple-500/50 focus:outline-none"
+          >
+            <option value="">All Events (Venue-wide)</option>
+            {events.map(ev => (
+              <option key={ev.event_id || ev.id} value={ev.event_id || ev.id}>
+                {ev.event_name || ev.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {showForm && (
         <div className="bg-slate-700/30 border border-slate-600 rounded-lg p-3 sm:p-4 md:p-6">
           <h3 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">
             {editingPoint ? 'Edit Entry Point' : 'Create New Entry Point'}
           </h3>
+          {selectedEventId && (
+            <p className="text-xs text-purple-400 mb-3 bg-purple-500/10 border border-purple-500/20 rounded px-3 py-1.5">
+              📌 This entry point will be scoped to the selected event
+            </p>
+          )}
           <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -223,7 +273,9 @@ export const GatewayManager: React.FC<GatewayManagerProps> = ({ venueId }) => {
         <div className="text-center py-8 sm:py-12">
           <MapPin className="w-12 h-12 sm:w-16 sm:h-16 text-slate-600 mx-auto mb-3 sm:mb-4" />
           <p className="text-slate-400 text-sm sm:text-base">No entry points configured</p>
-          <p className="text-slate-500 text-xs sm:text-sm mt-2">Create your first entry point to start tracking</p>
+          <p className="text-slate-500 text-xs sm:text-sm mt-2">
+            {selectedEventId ? 'No entry points for this event yet' : 'Create your first entry point to start tracking'}
+          </p>
         </div>
       ) : (
         <div className="grid gap-3 sm:gap-4">
@@ -240,11 +292,16 @@ export const GatewayManager: React.FC<GatewayManagerProps> = ({ venueId }) => {
                     <span className={cn(
                       "px-2 py-0.5 sm:py-1 rounded text-xs font-medium flex-shrink-0",
                       point.status === 'ENABLED' ? 'bg-emerald-500/20 text-emerald-400' :
-                      point.status === 'DISABLED' ? 'bg-red-500/20 text-red-400' :
-                      'bg-amber-500/20 text-amber-400'
+                        point.status === 'DISABLED' ? 'bg-red-500/20 text-red-400' :
+                          'bg-amber-500/20 text-amber-400'
                     )}>
                       {point.status}
                     </span>
+                    {point.event_id && (
+                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400 flex-shrink-0">
+                        Event-specific
+                      </span>
+                    )}
                   </div>
                   <p className="text-slate-400 text-xs sm:text-sm mt-1">{point.type.replace(/_/g, ' ')}</p>
                   {point.employee_name && (
@@ -268,7 +325,7 @@ export const GatewayManager: React.FC<GatewayManagerProps> = ({ venueId }) => {
                   )}
                 </div>
                 <div className="flex space-x-2 sm:ml-4">
-                  <button 
+                  <button
                     onClick={() => {
                       setEditingPoint(point);
                       setFormData({
@@ -284,7 +341,7 @@ export const GatewayManager: React.FC<GatewayManagerProps> = ({ venueId }) => {
                   >
                     <Edit2 className="w-4 h-4 text-slate-400 hover:text-white" />
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleDelete(point.id)}
                     className="flex-1 sm:flex-none p-2 hover:bg-red-500/20 rounded-lg transition-all min-h-[44px] flex items-center justify-center"
                   >

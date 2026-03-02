@@ -31,9 +31,10 @@ interface WebAppInitProps {
     eventId: string;
     assetId: string;
     onHasTicket: (context: { venueId: string; eventId: string; venueName: string; eventName: string; entryFee: number }) => void;
+    onCancel: () => void;
 }
 
-const WebAppInitializationPage: React.FC<WebAppInitProps> = ({ eventId, assetId, onHasTicket }) => {
+const WebAppInitializationPage: React.FC<WebAppInitProps> = ({ eventId, assetId, onHasTicket, onCancel }) => {
     const { t } = useTranslation();
     const { showToast } = useToast();
     const [loading, setLoading] = useState(true);
@@ -100,19 +101,20 @@ const WebAppInitializationPage: React.FC<WebAppInitProps> = ({ eventId, assetId,
                 return;
             }
 
-            // If no ticket, load event details
+            // Fetch the specific event by ID and its ticket types in parallel.
+            // Using ?event_id= fetches the event without an expiry filter so QR
+            // codes still work even when the event has just ended.
             const [eventsRes, typesRes] = await Promise.all([
-                fetch(`${API_BASE_URL}/tickets/events`, {
-                    headers: { 'X-Device-Fingerprint': deviceFingerprint },
-                }),
-                fetch(`${API_BASE_URL}/tickets/types?event_id=${eventId}`)
+                fetch(`${API_BASE_URL}/tickets/events?event_id=${encodeURIComponent(eventId)}`),
+                fetch(`${API_BASE_URL}/tickets/types?event_id=${encodeURIComponent(eventId)}`)
             ]);
 
             if (eventsRes.ok && typesRes.ok) {
                 const eventsData = await eventsRes.json();
                 const typesData = await typesRes.json();
 
-                const currentEvent = eventsData.events?.find((e: Event) => e.id === eventId);
+                // The endpoint returns { events: [event] } even for a single ID
+                const currentEvent = eventsData.events?.[0] ?? null;
                 if (currentEvent) {
                     setEvent(currentEvent);
                 } else {
@@ -123,8 +125,13 @@ const WebAppInitializationPage: React.FC<WebAppInitProps> = ({ eventId, assetId,
                 setTicketTypes(availableTypes);
 
                 // Auto-select the first available ticket type
-                const firstAvailable = availableTypes.find((tt: TicketType) => tt.max_quantity - tt.sold_count > 0);
+                const firstAvailable = availableTypes.find((tt: TicketType) => {
+                    const isUnlimited = !tt.max_quantity || tt.max_quantity === 0;
+                    return isUnlimited || (tt.max_quantity - (tt.sold_count || 0) > 0);
+                });
                 if (firstAvailable) setSelectedTicketType(firstAvailable);
+            } else if (eventsRes.status === 404) {
+                setError(t('events.notFound', 'Event not found.'));
             } else {
                 setError(t('events.fetchError', 'Failed to load event details.'));
             }
@@ -132,7 +139,9 @@ const WebAppInitializationPage: React.FC<WebAppInitProps> = ({ eventId, assetId,
             console.error(err);
             setError(t('events.fetchError', 'Failed to load event details.'));
         } finally {
-            if (!error) setLoading(false);
+            // Always stop loading - `error` is a stale closure here so we
+            // cannot rely on its value inside finally.
+            setLoading(false);
         }
     };
 
@@ -144,9 +153,58 @@ const WebAppInitializationPage: React.FC<WebAppInitProps> = ({ eventId, assetId,
 
         try {
             const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
-            const deviceFingerprint = localStorage.getItem('device_fingerprint') || '';
-            const walletBindingId = localStorage.getItem('wallet_binding_id') || '';
 
+            // Ensure we have a device fingerprint (generate one if missing)
+            let deviceFingerprint = localStorage.getItem('device_fingerprint') || '';
+            if (!deviceFingerprint) {
+                deviceFingerprint = `fp_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+                localStorage.setItem('device_fingerprint', deviceFingerprint);
+            }
+
+            // --- Ensure we have a wallet binding ID ---
+            // New users arriving via QR won't have one yet, so we surface /
+            // create an anonymous wallet for them first, then persist it.
+            let walletBindingId = localStorage.getItem('wallet_binding_id') || '';
+
+            if (!walletBindingId) {
+                const surfaceRes = await fetch(`${API_BASE_URL}/wallet/surface-wallet-anonymous`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        device_fingerprint: deviceFingerprint,
+                        event_id: event.id,
+                        event_name: event.name,
+                        venue_id: event.venue_id || null,
+                        venue_name: event.venue_name || null,
+                    }),
+                });
+
+                if (!surfaceRes.ok) {
+                    const surfaceErr = await surfaceRes.json();
+                    throw new Error(surfaceErr.error || 'Failed to initialise wallet');
+                }
+
+                const surfaceData = await surfaceRes.json();
+                walletBindingId =
+                    surfaceData.wallet?.wallet_binding_id ||
+                    surfaceData.session?.wallet_binding_id ||
+                    surfaceData.wallet_binding_id ||
+                    '';
+
+                if (!walletBindingId) {
+                    throw new Error('Wallet creation did not return a binding ID');
+                }
+
+                // Persist so the wallet is reusable across Stripe redirects
+                localStorage.setItem('wallet_binding_id', walletBindingId);
+
+                // Persist full session so the wallet tab works after redirect
+                if (surfaceData.session) {
+                    localStorage.setItem('ghost_pass_wallet_session', JSON.stringify(surfaceData.session));
+                }
+            }
+
+            // --- Create Stripe Checkout Session ---
             const returnUrl = `${window.location.origin}${window.location.pathname}`;
 
             const response = await fetch(`${API_BASE_URL}/stripe/create-checkout-session`, {
@@ -186,7 +244,7 @@ const WebAppInitializationPage: React.FC<WebAppInitProps> = ({ eventId, assetId,
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4">
+            <div className="flex items-center justify-center py-20">
                 <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
             </div>
         );
@@ -194,13 +252,13 @@ const WebAppInitializationPage: React.FC<WebAppInitProps> = ({ eventId, assetId,
 
     if (error || !event) {
         return (
-            <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4">
+            <div className="flex items-center justify-center py-20">
                 <div className="text-center space-y-4">
                     <AlertCircle className="w-12 h-12 text-red-400 mx-auto" />
                     <h2 className="text-xl font-bold">{error || 'Event not available'}</h2>
                     <button
-                        onClick={() => window.location.hash = '#/wallet'}
-                        className="px-6 py-2 bg-slate-800 rounded-lg font-medium"
+                        onClick={onCancel}
+                        className="px-6 py-2 bg-slate-800 hover:bg-slate-700 transition-colors rounded-lg font-medium"
                     >
                         Go to Wallet
                     </button>
@@ -214,137 +272,135 @@ const WebAppInitializationPage: React.FC<WebAppInitProps> = ({ eventId, assetId,
     const totalCents = subtotalCents + platformFeeCents;
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white p-4 pb-24 md:p-8 flex items-center justify-center">
-            <div className="max-w-md w-full mx-auto space-y-6">
+        <div className="w-full max-w-md mx-auto space-y-6 pb-20">
+            {/* Header Section */}
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-2">
+                <div className="w-16 h-16 mx-auto bg-cyan-500/10 rounded-2xl flex items-center justify-center mb-4 border border-cyan-500/20">
+                    <Ticket className="w-8 h-8 text-cyan-400" />
+                </div>
+                <h1 className="text-2xl font-bold text-white tracking-tight">{event.name}</h1>
 
-                {/* Header Section */}
-                <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-2">
-                    <div className="w-16 h-16 mx-auto bg-cyan-500/10 rounded-2xl flex items-center justify-center mb-4 border border-cyan-500/20">
-                        <Ticket className="w-8 h-8 text-cyan-400" />
+                <div className="flex flex-col items-center space-y-1 text-slate-400 text-sm mt-4">
+                    <div className="flex items-center space-x-2">
+                        <Calendar className="w-4 h-4 text-cyan-500" />
+                        <span>{new Date(event.start_date).toLocaleString()}</span>
                     </div>
-                    <h1 className="text-2xl font-bold text-white tracking-tight">{event.name}</h1>
-
-                    <div className="flex flex-col items-center space-y-1 text-slate-400 text-sm mt-4">
-                        <div className="flex items-center space-x-2">
-                            <Calendar className="w-4 h-4 text-cyan-500" />
-                            <span>{new Date(event.start_date).toLocaleString()}</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <MapPin className="w-4 h-4 text-cyan-500" />
-                            <span>{event.venue_name}</span>
-                        </div>
+                    <div className="flex items-center space-x-2">
+                        <MapPin className="w-4 h-4 text-cyan-500" />
+                        <span>{event.venue_name}</span>
                     </div>
-                </motion.div>
+                </div>
+            </motion.div>
 
-                {/* Ticket Selection */}
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="space-y-4 mt-8">
-                    <h2 className="text-lg font-semibold text-white">Select Tickets</h2>
+            {/* Ticket Selection */}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="space-y-4 mt-8">
+                <h2 className="text-lg font-semibold text-white">Select Tickets</h2>
 
-                    <div className="space-y-3">
-                        {ticketTypes.length === 0 ? (
-                            <p className="text-slate-400 text-sm text-center py-4">No ticket options available.</p>
-                        ) : (
-                            ticketTypes.map((tt) => {
-                                const available = tt.max_quantity - tt.sold_count;
-                                const soldOut = available <= 0;
-                                const isSelected = selectedTicketType?.id === tt.id;
+                <div className="space-y-3">
+                    {ticketTypes.length === 0 ? (
+                        <p className="text-slate-400 text-sm text-center py-4">No ticket options available.</p>
+                    ) : (
+                        ticketTypes.map((tt) => {
+                            const isUnlimited = !tt.max_quantity || tt.max_quantity === 0;
+                            const available = isUnlimited ? Infinity : tt.max_quantity - (tt.sold_count || 0);
+                            const soldOut = available <= 0;
+                            const isSelected = selectedTicketType?.id === tt.id;
 
-                                return (
-                                    <button
-                                        key={tt.id}
-                                        disabled={soldOut}
-                                        onClick={() => setSelectedTicketType(tt)}
-                                        className={cn(
-                                            "w-full p-4 rounded-xl border text-left transition-all flex items-start justify-between",
-                                            soldOut ? "bg-slate-900/50 border-slate-800 opacity-50 cursor-not-allowed" :
-                                                isSelected ? "bg-cyan-500/10 border-cyan-500 shadow-md shadow-cyan-500/10" : "bg-slate-800/50 border-slate-700 hover:border-slate-500"
+                            return (
+                                <button
+                                    key={tt.id}
+                                    disabled={soldOut}
+                                    onClick={() => setSelectedTicketType(tt)}
+                                    className={cn(
+                                        "w-full p-4 rounded-xl border text-left transition-all flex items-start justify-between",
+                                        soldOut ? "bg-slate-900/50 border-slate-800 opacity-50 cursor-not-allowed" :
+                                            isSelected ? "bg-cyan-500/10 border-cyan-500 shadow-md shadow-cyan-500/10" : "bg-slate-800/50 border-slate-700 hover:border-slate-500"
+                                    )}
+                                >
+                                    <div>
+                                        <h3 className="font-semibold text-white">{tt.name}</h3>
+                                        <p className="text-xs text-slate-400 mt-1">{tt.description}</p>
+                                        {available > 0 && available < 20 && (
+                                            <span className="inline-block mt-2 text-[10px] uppercase tracking-wider bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded font-medium">Only {available} left</span>
                                         )}
-                                    >
-                                        <div>
-                                            <h3 className="font-semibold text-white">{tt.name}</h3>
-                                            <p className="text-xs text-slate-400 mt-1">{tt.description}</p>
-                                            {available > 0 && available < 20 && (
-                                                <span className="inline-block mt-2 text-[10px] uppercase tracking-wider bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded font-medium">Only {available} left</span>
-                                            )}
-                                        </div>
-                                        <div className="text-right">
-                                            <span className="font-bold text-lg text-white">${(tt.price_cents / 100).toFixed(2)}</span>
-                                        </div>
-                                    </button>
-                                )
-                            })
-                        )}
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="font-bold text-lg text-white">${(tt.price_cents / 100).toFixed(2)}</span>
+                                    </div>
+                                </button>
+                            )
+                        })
+                    )}
+                </div>
+            </motion.div>
+
+            {/* Cost Breakdown */}
+            {selectedTicketType && (
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+
+                    <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+                        <span className="text-slate-300 font-medium">Quantity</span>
+                        <div className="flex items-center space-x-4 bg-slate-950 rounded-lg p-1 border border-slate-800">
+                            <button
+                                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                className="w-8 h-8 flex items-center justify-center rounded-md bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50"
+                                disabled={quantity <= 1}
+                            >-</button>
+                            <span className="w-4 text-center font-semibold">{quantity}</span>
+                            <button
+                                onClick={() => setQuantity(Math.min(10, quantity + 1))}
+                                className="w-8 h-8 flex items-center justify-center rounded-md bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50"
+                            >+</button>
+                        </div>
                     </div>
+
+                    <div className="space-y-2 text-sm">
+                        <div className="flex justify-between text-slate-400">
+                            <span>Subtotal ({quantity}x)</span>
+                            <span>${(subtotalCents / 100).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-slate-400">
+                            <span>Platform Fee ({event.service_fee_percent || 5}%)</span>
+                            <span>${(platformFeeCents / 100).toFixed(2)}</span>
+                        </div>
+                        {/* Venue Fee placeholder since we calculate it on the backend, assuming 0 here or platform fee includes it */}
+                        <div className="flex justify-between font-semibold text-white pt-2 border-t border-slate-800 mt-2">
+                            <span>Total</span>
+                            <span className="text-cyan-400 text-lg">${(totalCents / 100).toFixed(2)}</span>
+                        </div>
+                    </div>
+
                 </motion.div>
+            )}
 
-                {/* Cost Breakdown */}
-                {selectedTicketType && (
-                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+            {/* Disclaimer & Action */}
+            {selectedTicketType && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="space-y-4 text-center mt-8">
+                    <div className="flex flex-col items-center space-y-2">
+                        <ShieldCheck className="w-6 h-6 text-green-400" />
+                        <p className="text-xs text-slate-400 px-4 leading-relaxed">
+                            By purchasing, you are activating your GhostPass wallet for this event.
+                            This will act as your secure digital access pass and payment method. No separate app download required.
+                        </p>
+                    </div>
 
-                        <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-                            <span className="text-slate-300 font-medium">Quantity</span>
-                            <div className="flex items-center space-x-4 bg-slate-950 rounded-lg p-1 border border-slate-800">
-                                <button
-                                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                    className="w-8 h-8 flex items-center justify-center rounded-md bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50"
-                                    disabled={quantity <= 1}
-                                >-</button>
-                                <span className="w-4 text-center font-semibold">{quantity}</span>
-                                <button
-                                    onClick={() => setQuantity(Math.min(10, quantity + 1))}
-                                    className="w-8 h-8 flex items-center justify-center rounded-md bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50"
-                                >+</button>
-                            </div>
-                        </div>
+                    <button
+                        onClick={handleCheckout}
+                        disabled={purchasing}
+                        className="w-full relative overflow-hidden group py-4 rounded-xl font-semibold text-lg flex items-center justify-center space-x-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/25 transition-all"
+                    >
+                        {purchasing ? (
+                            <>
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                <span>Preparing...</span>
+                            </>
+                        ) : (
+                            <span>Checkout & Activate</span>
+                        )}
+                    </button>
+                </motion.div>
+            )}
 
-                        <div className="space-y-2 text-sm">
-                            <div className="flex justify-between text-slate-400">
-                                <span>Subtotal ({quantity}x)</span>
-                                <span>${(subtotalCents / 100).toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between text-slate-400">
-                                <span>Platform Fee ({event.service_fee_percent || 5}%)</span>
-                                <span>${(platformFeeCents / 100).toFixed(2)}</span>
-                            </div>
-                            {/* Venue Fee placeholder since we calculate it on the backend, assuming 0 here or platform fee includes it */}
-                            <div className="flex justify-between font-semibold text-white pt-2 border-t border-slate-800 mt-2">
-                                <span>Total</span>
-                                <span className="text-cyan-400 text-lg">${(totalCents / 100).toFixed(2)}</span>
-                            </div>
-                        </div>
-
-                    </motion.div>
-                )}
-
-                {/* Disclaimer & Action */}
-                {selectedTicketType && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="space-y-4 text-center mt-8">
-                        <div className="flex flex-col items-center space-y-2">
-                            <ShieldCheck className="w-6 h-6 text-green-400" />
-                            <p className="text-xs text-slate-400 px-4 leading-relaxed">
-                                By purchasing, you are activating your GhostPass wallet for this event.
-                                This will act as your secure digital access pass and payment method. No separate app download required.
-                            </p>
-                        </div>
-
-                        <button
-                            onClick={handleCheckout}
-                            disabled={purchasing}
-                            className="w-full relative overflow-hidden group py-4 rounded-xl font-semibold text-lg flex items-center justify-center space-x-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/25 transition-all"
-                        >
-                            {purchasing ? (
-                                <>
-                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                    <span>Preparing...</span>
-                                </>
-                            ) : (
-                                <span>Checkout & Activate</span>
-                            )}
-                        </button>
-                    </motion.div>
-                )}
-
-            </div>
         </div>
     );
 };

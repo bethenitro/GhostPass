@@ -19,7 +19,13 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
   const [venues, setVenues] = useState<any[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [loadingVenues, setLoadingVenues] = useState(false);
-  
+  const [revenueProfiles, setRevenueProfiles] = useState<any[]>([]);
+  const [taxProfiles, setTaxProfiles] = useState<any[]>([]);
+  const [stations, setStations] = useState<any[]>([]);
+  const [loadingRevenueProfiles, setLoadingRevenueProfiles] = useState(false);
+  const [loadingTaxProfiles, setLoadingTaxProfiles] = useState(false);
+  const [loadingStations, setLoadingStations] = useState(false);
+
   const [formData, setFormData] = useState({
     asset_type: 'QR' as 'QR' | 'NFC',
     venue_id: venueId || '',
@@ -31,73 +37,96 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
     id_verification_level: 1
   });
 
-  // Load venues on mount
+  // Load venues, revenue profiles, and tax profiles on mount
   useEffect(() => {
-    const loadVenues = async () => {
+    const loadInitialData = async () => {
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) return;
+
       setLoadingVenues(true);
+      setLoadingRevenueProfiles(true);
+      setLoadingTaxProfiles(true);
+
       try {
-        const authToken = localStorage.getItem('auth_token');
-        if (!authToken) return;
-
-        const response = await fetch('/api/venues/list', {
-          headers: {
-            'Authorization': `Bearer ${authToken}`
-          }
+        // Load Venues
+        const venueRes = await fetch('/api/venues/list', {
+          headers: { 'Authorization': `Bearer ${authToken}` }
         });
+        if (venueRes.ok) setVenues(await venueRes.json() || []);
 
-        if (response.ok) {
-          const data = await response.json();
-          setVenues(data || []);
-          
-          // Don't auto-select venue - keep it optional
-        }
+        // Load Revenue Profiles
+        const revRes = await fetch('/api/admin/revenue-profiles', {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (revRes.ok) setRevenueProfiles(await revRes.json() || []);
+
+        // Load Tax Profiles (initial load without venue filter)
+        const taxRes = await fetch('/api/admin/tax-profiles', {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (taxRes.ok) setTaxProfiles(await taxRes.json() || []);
+
       } catch (error) {
-        console.error('Failed to load venues:', error);
+        console.error('Failed to load initial data:', error);
       } finally {
         setLoadingVenues(false);
+        setLoadingRevenueProfiles(false);
+        setLoadingTaxProfiles(false);
       }
     };
 
-    loadVenues();
+    loadInitialData();
   }, []);
 
-  // Load events when venue is selected OR load all events if no venue selected
+  // Load events and stations when venue changes
   useEffect(() => {
-    const loadEvents = async () => {
-      setLoadingEvents(true);
-      try {
-        const authToken = localStorage.getItem('auth_token');
-        if (!authToken) return;
+    const loadVenueSpecificData = async () => {
+      const authToken = localStorage.getItem('auth_token');
+      if (!authToken) return;
 
-        // Build URL - if venue_id is provided, filter by it, otherwise get all events
-        const url = formData.venue_id 
+      setLoadingEvents(true);
+      setLoadingStations(true);
+
+      try {
+        // Load Events
+        const eventsUrl = formData.venue_id
           ? `/api/events/list?venue_id=${formData.venue_id}`
           : '/api/events/list';
-
-        const response = await fetch(url, {
-          headers: {
-            'Authorization': `Bearer ${authToken}`
-          }
+        const eventsRes = await fetch(eventsUrl, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
         });
+        if (eventsRes.ok) setEvents(await eventsRes.json() || []);
 
-        if (response.ok) {
-          const data = await response.json();
-          setEvents(data || []);
+        // Load Stations (Gateway Points)
+        if (formData.venue_id) {
+          const stationsRes = await fetch(`/api/gateway/points?venue_id=${formData.venue_id}`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+          });
+          if (stationsRes.ok) setStations(await stationsRes.json() || []);
+
+          // Reload Tax Profiles for specific venue
+          const taxRes = await fetch(`/api/admin/tax-profiles?venue_id=${formData.venue_id}`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+          });
+          if (taxRes.ok) setTaxProfiles(await taxRes.json() || []);
+        } else {
+          setStations([]);
         }
       } catch (error) {
-        console.error('Failed to load events:', error);
+        console.error('Failed to load venue-specific data:', error);
       } finally {
         setLoadingEvents(false);
+        setLoadingStations(false);
       }
     };
 
-    loadEvents();
+    loadVenueSpecificData();
   }, [formData.venue_id]);
 
   const generateQRCode = async () => {
     try {
       setLoading(true);
-      
+
       const authToken = localStorage.getItem('auth_token');
       if (!authToken) {
         showToast('Please login first', 'error');
@@ -130,14 +159,14 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
         const errorData = await sessionResponse.json();
         throw new Error(errorData.error || 'Failed to create wallet session');
       }
-      
+
       const sessionData = await sessionResponse.json();
-      
+
       // The wallet_binding_id can be in multiple places in the response
-      const walletBindingId = sessionData.wallet?.wallet_binding_id 
-        || sessionData.session?.wallet_binding_id 
+      const walletBindingId = sessionData.wallet?.wallet_binding_id
+        || sessionData.session?.wallet_binding_id
         || sessionData.wallet_binding_id;
-      
+
       if (!walletBindingId) {
         console.error('Session data:', sessionData);
         throw new Error('No wallet binding ID returned from session creation');
@@ -165,14 +194,14 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
             wallet_binding_id: walletBindingId // Link the asset to the wallet
           })
         });
-        
+
         if (assetResponse.ok) {
           const assetData = await assetResponse.json();
           assetCode = assetData.asset_code;
-          
+
           // Log QR generation in audit logs
           try {
-            await fetch('/api/audit/entry-point', {
+            await fetch('/api/audit/action', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -200,13 +229,14 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
         // Continue anyway - the wallet session is what matters
       }
 
-      // Step 3: Generate QR code with complete information
-      // Format: "ghostsession:{wallet_binding_id}:{gateway_id}:{venue_id}:{event_id}:{verification_tier}"
+      // Format: Web Application URL for QR Code Ticket Purchases
       const qrVenueId = formData.venue_id || '';
       const qrEventId = formData.event_id;
       const qrGatewayId = assetCode || 'scanner_default';
-      
-      const qrData = `ghostsession:${walletBindingId}:${qrGatewayId}:${qrVenueId}:${qrEventId}:${formData.id_verification_level}`;
+
+      // Use the actual application domain
+      const baseUrl = window.location.origin;
+      const qrData = `${baseUrl}/e/${qrEventId}/${qrGatewayId}`;
 
       const dataUrl = await QRCodeLib.toDataURL(qrData, {
         width: 512,
@@ -227,7 +257,7 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
         station_type: formData.station_type,
         session_data: sessionData
       });
-      
+
       showToast('QR Code generated successfully - Ready to scan!', 'success');
     } catch (error: any) {
       console.error('Error generating QR code:', error);
@@ -239,7 +269,7 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
 
   const downloadQRCode = () => {
     if (!qrDataUrl) return;
-    
+
     const link = document.createElement('a');
     link.download = `qr-${formData.station_type}-${formData.station_id || 'new'}.png`;
     link.href = qrDataUrl;
@@ -256,7 +286,7 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
       {/* Configuration Form */}
       <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700 rounded-lg p-4 sm:p-6">
         <h3 className="text-base sm:text-lg font-semibold text-white mb-4">{t('qr.assetConfig', 'Asset Configuration')}</h3>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div>
             <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">
@@ -295,7 +325,7 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
               ))}
             </select>
           </div>
-          
+
           <div>
             <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">{t('qr.assetType', 'Asset Type')}</label>
             <select
@@ -323,14 +353,22 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
           </div>
 
           <div>
-            <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">{t('qr.stationId', 'Station ID')}</label>
-            <input
-              type="text"
+            <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">
+              {t('qr.stationId', 'Station / Location')}
+            </label>
+            <select
               value={formData.station_id}
               onChange={(e) => setFormData({ ...formData, station_id: e.target.value })}
-              placeholder={t('qr.stationIdPlaceholder', 'e.g., DOOR-001')}
               className="w-full px-3 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-blue-500 focus:outline-none min-h-[44px]"
-            />
+              disabled={loadingStations}
+            >
+              <option value="">{loadingStations ? 'Loading stations...' : 'Select station or skip for auto-gen'}</option>
+              {stations.map((station) => (
+                <option key={station.id} value={station.id}>
+                  {station.name} {station.number ? `(#${station.number})` : ''} ({station.type})
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -347,25 +385,37 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
           </div>
 
           <div>
-            <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">{t('qr.revenueProfile', 'Revenue Profile ID (Optional)')}</label>
-            <input
-              type="text"
+            <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">{t('qr.revenueProfile', 'Revenue Profile')}</label>
+            <select
               value={formData.revenue_profile_id}
               onChange={(e) => setFormData({ ...formData, revenue_profile_id: e.target.value })}
-              placeholder={t('qr.revenueProfilePlaceholder', 'Leave empty for event default')}
               className="w-full px-3 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-blue-500 focus:outline-none min-h-[44px]"
-            />
+              disabled={loadingRevenueProfiles}
+            >
+              <option value="">{loadingRevenueProfiles ? 'Loading...' : 'Select profile (optional)'}</option>
+              {revenueProfiles.map((profile) => (
+                <option key={profile.id} value={profile.id}>
+                  {profile.profile_name} (Vendor: {profile.vendor_percentage}%)
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
-            <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">{t('qr.taxProfile', 'Tax Profile ID (Optional)')}</label>
-            <input
-              type="text"
+            <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">{t('qr.taxProfile', 'Tax Profile')}</label>
+            <select
               value={formData.tax_profile_id}
               onChange={(e) => setFormData({ ...formData, tax_profile_id: e.target.value })}
-              placeholder={t('qr.taxProfilePlaceholder', 'Leave empty for event default')}
               className="w-full px-3 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-blue-500 focus:outline-none min-h-[44px]"
-            />
+              disabled={loadingTaxProfiles}
+            >
+              <option value="">{loadingTaxProfiles ? 'Loading...' : 'Select profile (optional)'}</option>
+              {taxProfiles.map((profile) => (
+                <option key={profile.id} value={profile.id}>
+                  {profile.profile_name} ({parseFloat(profile.state_tax_percentage) + parseFloat(profile.local_tax_percentage)}% Total)
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -389,7 +439,7 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
           <h3 className="text-base sm:text-lg font-semibold text-white mb-4">
             {t('qr.generatedTitle', 'Generated QR Code')}
           </h3>
-          
+
           <div className="inline-block bg-white p-4 rounded-lg mb-4">
             <img src={qrDataUrl} alt="Generated QR Code" className="w-64 h-64 sm:w-80 sm:h-80" />
           </div>

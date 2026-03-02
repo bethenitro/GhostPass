@@ -34,7 +34,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
     let query = supabase
       .from('users')
-      .select('id, email, role, venue_id, created_at');
+      .select('id, email, role, venue_id, created_at, staff_profiles(name, station_type, event_ids)');
 
     // If VENUE_ADMIN, only show users from their venue
     if (user.role === 'VENUE_ADMIN' && currentUserData?.venue_id) {
