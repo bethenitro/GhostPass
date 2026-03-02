@@ -202,27 +202,7 @@ const ManagerDashboard: React.FC<ManagerDashboardProps> = ({ user }) => {
 
                 {/* Quick Actions / Status */}
                 <div className="space-y-4">
-                    <div className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-5">
-                        <h3 className="font-bold text-white flex items-center gap-2 mb-4">
-                            <Settings className="w-4 h-4 text-slate-400" />
-                            Venue Settings
-                        </h3>
-                        <div className="space-y-3">
-                            <div className="flex justify-between items-center bg-slate-800/30 p-3 rounded-lg border border-slate-700/50">
-                                <span className="text-sm text-slate-300">Sales Status</span>
-                                <span className="text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded">ACTIVE</span>
-                            </div>
-                            <div className="flex justify-between items-center bg-slate-800/30 p-3 rounded-lg border border-slate-700/50">
-                                <span className="text-sm text-slate-300">Entry Gates</span>
-                                <span className="text-xs font-bold text-cyan-400 bg-cyan-400/10 px-2 py-1 rounded">OPEN</span>
-                            </div>
-                        </div>
-                        {user.role === 'VENUE_ADMIN' && (
-                            <button className="w-full py-2.5 mt-4 bg-slate-800 hover:bg-slate-700 text-sm font-medium text-white rounded-lg transition-colors border border-slate-700">
-                                Configure Settings
-                            </button>
-                        )}
-                    </div>
+                    {/* Venue Settings section removed */}
                 </div>
 
             </div>
