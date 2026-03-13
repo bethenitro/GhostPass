@@ -1,0 +1,23 @@
+{
+  "errorLoadingDashboard": "Error al cargar el panel",
+  "retry": "Reintentar",
+  "eventTotals": "Totales del Evento",
+  "totalEntries": "Entradas Totales",
+  "reEntries": "Reingresos",
+  "totalRevenue": "Ingresos Totales",
+  "uniqueAttendees": "Asistentes Únicos",
+  "eventConfiguration": "Configuración del Evento",
+  "reEntryPermission": "Permiso de Reingreso",
+  "allowReEntry": "Permitir a los asistentes reingresar al lugar",
+  "allowed": "Permitido",
+  "notAllowed": "No Permitido",
+  "initialEntryFee": "Tarifa de Entrada Inicial",
+  "maximum": "Máximo",
+  "venueReEntryFee": "Tarifa de Reingreso al Lugar",
+  "validReEntryScanFee": "Tarifa de Escaneo de Reingreso Válido",
+  "platformFeePerReEntry": "Tarifa de plataforma por escaneo de reingreso",
+  "maxReEntries": "Reingresos Máximos",
+  "unlimited": "Ilimitado",
+  "saving": "Guardando...",
+  "saveConfiguration": "Guardar Configuración"
+}

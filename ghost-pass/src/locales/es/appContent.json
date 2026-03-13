@@ -1,0 +1,9 @@
+{
+  "fastEntry": "Modo de entrada rápida - navegando a cartera",
+  "sessionExpired": "Sesión expirada - navegando a cartera",
+  "activeSession": "Sesión activa encontrada - navegando a cartera",
+  "errorParsingSession": "Error al analizar datos de sesión",
+  "noSession": "No se encontró sesión - navegando al escáner",
+  "operatorPortal": "Abriendo portal de operador",
+  "operatorLoginSuccess": "Inicio de sesión de operador exitoso"
+}

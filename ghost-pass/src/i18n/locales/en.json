@@ -8,7 +8,7 @@
     "scan": "Scan",
     "tickets": "Tickets",
     "session": "Session",
-    "topup": "TopUp",
+    "topup": "Funding",
     "history": "History",
     "walletAccess": "Wallet & Access",
     "secure": "Secure • Encrypted • Private"
@@ -215,7 +215,7 @@
     "failedToFetchGhostPass": "Failed to fetch ghost pass"
   },
   "trustCenter": {
-    "title": "TopUp",
+    "title": "Funding",
     "subtitle": "Secure funding for your wallet",
     "selectSources": "Select Funding Sources (Multiple Allowed)",
     "enterAmount": "Enter Amount for Each Source",
@@ -623,6 +623,22 @@
     "deleteEntryPoint": "Delete Entry Point",
     "deleteConfirmation": "Are you sure you want to delete this entry point?",
     "cannotUndo": "This cannot be undone."
+  },
+  "adminSetup": {
+    "checkingAdminSetup": "Checking Admin Setup",
+    "verifyingConfiguration": "Verifying admin system configuration...",
+    "setupCheckFailed": "Setup Check Failed",
+    "adminSystemReady": "Admin System Ready",
+    "setupRequired": "Setup Required",
+    "adminUser": "Admin User",
+    "systemComponents": "System Components",
+    "setupInstructions": "Setup Instructions",
+    "step1": "Go to Supabase Dashboard → SQL Editor",
+    "step2": "Copy and paste the contents of",
+    "step3": "Click \"Run\" to execute the SQL",
+    "step4": "Click \"Retry\" below to check again",
+    "retryCheck": "Retry Check",
+    "continueToCommandCenter": "Continue to Command Center"
   },
   "commandCenter": {
     "title": "COMMAND CENTER",

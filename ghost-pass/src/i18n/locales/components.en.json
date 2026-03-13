@@ -1,0 +1,42 @@
+{
+  "gatewayManager": {
+    "createAreaFirst": "Create an Internal Area first",
+    "createAreaFirstDescription": "Tables and seats must be linked to an internal area. Please create at least one internal area before adding tables.",
+    "goToInternalAreas": "GO TO INTERNAL AREAS",
+    "noTableSeats": "No tables or seats configured",
+    "noTableSeatsDescription": "Add your first table or seat to start managing specific locations",
+    "linkedArea": "Linked Area",
+    "selectArea": "Select area...",
+    "name": "Name",
+    "number": "Number",
+    "liveMetrics": "Live Metrics",
+    "ghostPassAccepted": "GhostPass Accepted",
+    "status": "Status",
+    "actions": "Actions",
+    "noInternalAreas": "No internal areas configured",
+    "noInternalAreasDescription": "Add your first internal area to start managing venue sections"
+  },
+  "ghostPassAdminPanel": {
+    "livePreview": "Live Preview",
+    "previewAmount": "on $100 scan",
+    "autoBalance": "Auto-Balance"
+  },
+  "layout": {
+    "operatorAccess": "Operator Access",
+    "switchLanguage": "Switch Language"
+  },
+  "portalAccessModal": {
+    "selectPortal": "Select Portal",
+    "operatorPortal": "Operator Portal",
+    "operatorDescription": "Venue & Event Management",
+    "staffPortal": "Staff Portal",
+    "staffDescription": "Point of Sale & Operations",
+    "cancel": "Cancel"
+  },
+  "pushNotifications": {
+    "title": "Push Notifications",
+    "enableNotifications": "Enable Notifications",
+    "notificationsEnabled": "Notifications Enabled",
+    "notificationsDisabled": "Notifications Disabled"
+  }
+}

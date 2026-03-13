@@ -1,0 +1,22 @@
+{
+  "setupCheck": {
+    "checking": "Checking Admin Setup",
+    "verifying": "Verifying admin system configuration...",
+    "failed": "Setup Check Failed",
+    "systemComponents": "System Components:",
+    "setupInstructions": "Setup Instructions:"
+  },
+  "authRequired": "Authentication Required",
+  "auditLogs": {
+    "pending": "Pending Payout Requests",
+    "vendor": "Vendor",
+    "amount": "Amount",
+    "requested": "Requested",
+    "actions": "Actions",
+    "timestamp": "Timestamp",
+    "admin": "Admin",
+    "action": "Action",
+    "resource": "Resource",
+    "noLogs": "No audit logs available"
+  }
+}

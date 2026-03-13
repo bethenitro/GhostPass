@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { 
   ArrowLeft, CheckCircle, XCircle, AlertTriangle, Send,
   Eye, Ear, Hand, Compass, Wind, Droplet, Activity,
@@ -55,6 +56,7 @@ const PRIORITY_COLORS = {
 };
 
 const SenateEvaluation: React.FC<SenateEvaluationProps> = ({ onBack }) => {
+  const { t } = useTranslation();
   const [view, setView] = useState<'pending' | 'review' | 'history'>('pending');
   const [pendingEvaluations, setPendingEvaluations] = useState<Evaluation[]>([]);
   const [selectedEvaluation, setSelectedEvaluation] = useState<Evaluation | null>(null);
@@ -157,7 +159,7 @@ const SenateEvaluation: React.FC<SenateEvaluationProps> = ({ onBack }) => {
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="w-8 h-8 border-2 border-purple-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-slate-400">Loading Senate Evaluation...</p>
+          <p className="text-slate-400">{t('senateEvaluation.loadingSenateEvaluation')}</p>
         </div>
       </div>
     );
@@ -197,7 +199,7 @@ const SenateEvaluation: React.FC<SenateEvaluationProps> = ({ onBack }) => {
                 <Scale className="text-purple-400" size={28} />
                 <span>Senate Evaluation</span>
               </h1>
-              <p className="label-tactical">Governance decisions on validated SCUs</p>
+              <p className="label-tactical">{t('senateEvaluation.governanceDecisions')}</p>
             </div>
           </div>
 
@@ -221,7 +223,7 @@ const SenateEvaluation: React.FC<SenateEvaluationProps> = ({ onBack }) => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <span className={view === 'history' ? 'text-purple-400' : 'text-slate-400'}>History</span>
+              <span className={view === 'history' ? 'text-purple-400' : 'text-slate-400'}>{t('senateEvaluation.history')}</span>
             </motion.button>
           </div>
         </div>
@@ -233,7 +235,7 @@ const SenateEvaluation: React.FC<SenateEvaluationProps> = ({ onBack }) => {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="label-tactical">Pending Review</p>
+                    <p className="label-tactical">{t('senateEvaluation.pendingReview')}</p>
                     <p className="text-2xl font-bold text-purple-400">{stats.pending_count}</p>
                   </div>
                   <Clock className="text-purple-400" size={24} />
@@ -245,7 +247,7 @@ const SenateEvaluation: React.FC<SenateEvaluationProps> = ({ onBack }) => {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="label-tactical">Approved</p>
+                    <p className="label-tactical">{t('senateEvaluation.approved')}</p>
                     <p className="text-2xl font-bold text-emerald-400">{stats.by_decision?.approved || 0}</p>
                   </div>
                   <CheckCircle className="text-emerald-400" size={24} />
@@ -257,7 +259,7 @@ const SenateEvaluation: React.FC<SenateEvaluationProps> = ({ onBack }) => {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="label-tactical">Rejected</p>
+                    <p className="label-tactical">{t('senateEvaluation.rejected')}</p>
                     <p className="text-2xl font-bold text-red-400">{stats.by_decision?.rejected || 0}</p>
                   </div>
                   <XCircle className="text-red-400" size={24} />
@@ -269,7 +271,7 @@ const SenateEvaluation: React.FC<SenateEvaluationProps> = ({ onBack }) => {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="label-tactical">Escalated</p>
+                    <p className="label-tactical">{t('senateEvaluation.escalated')}</p>
                     <p className="text-2xl font-bold text-yellow-400">{stats.by_decision?.escalated || 0}</p>
                   </div>
                   <AlertTriangle className="text-yellow-400" size={24} />
@@ -285,15 +287,15 @@ const SenateEvaluation: React.FC<SenateEvaluationProps> = ({ onBack }) => {
             <CardHeader>
               <CardTitle className="heading-primary flex items-center space-x-2">
                 <Shield className="text-purple-400" size={20} />
-                <span>Pending Evaluation</span>
+                <span>{t('senateEvaluation.pendingEvaluation')}</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
               {pendingEvaluations.length === 0 ? (
                 <div className="text-center py-12">
                   <CheckCircle className="text-slate-400 mx-auto mb-4" size={48} />
-                  <p className="text-slate-400">No pending evaluations</p>
-                  <p className="text-sm text-slate-500 mt-2">All SCUs have been reviewed</p>
+                  <p className="text-slate-400">{t('senateEvaluation.noPendingEvaluations')}</p>
+                  <p className="text-sm text-slate-500 mt-2">{t('senateEvaluation.allSCUsReviewed')}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -317,14 +319,14 @@ const SenateEvaluation: React.FC<SenateEvaluationProps> = ({ onBack }) => {
             <CardHeader>
               <CardTitle className="heading-primary flex items-center space-x-2">
                 <FileText className="text-purple-400" size={20} />
-                <span>Evaluation History</span>
+                <span>{t('senateEvaluation.evaluationHistory')}</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
               {history.length === 0 ? (
                 <div className="text-center py-12">
                   <FileText className="text-slate-400 mx-auto mb-4" size={48} />
-                  <p className="text-slate-400">No decisions yet</p>
+                  <p className="text-slate-400">{t('senateEvaluation.noDecisionsYet')}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -483,6 +485,7 @@ const EvaluationWorkspace: React.FC<EvaluationWorkspaceProps> = ({
   onSubmit,
   onBack
 }) => {
+  const { t } = useTranslation();
   const sensoryTypes = evaluation.context.sensory_types || [];
 
   return (
@@ -499,8 +502,8 @@ const EvaluationWorkspace: React.FC<EvaluationWorkspaceProps> = ({
             <ArrowLeft className="text-purple-400" size={20} />
           </motion.button>
           <div>
-            <h1 className="heading-primary text-2xl">Evaluation Workspace</h1>
-            <p className="label-tactical">Review SCU and make governance decision</p>
+            <h1 className="heading-primary text-2xl">{t('senateEvaluation.evaluationWorkspace')}</h1>
+            <p className="label-tactical">{t('senateEvaluation.reviewSCUAndDecide')}</p>
           </div>
         </div>
 
@@ -510,30 +513,30 @@ const EvaluationWorkspace: React.FC<EvaluationWorkspaceProps> = ({
             {/* SCU Overview */}
             <Card className="glass-card border-purple-500/30">
               <CardHeader>
-                <CardTitle className="heading-primary">SCU Overview</CardTitle>
+                <CardTitle className="heading-primary">{t('senateEvaluation.scuOverview')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="label-tactical">SCU ID</p>
+                    <p className="label-tactical">{t('senateEvaluation.scuId')}</p>
                     <p className="data-mono text-sm">{evaluation.signal_id}</p>
                   </div>
                   <div>
-                    <p className="label-tactical">Priority</p>
+                    <p className="label-tactical">{t('senateEvaluation.priority')}</p>
                     <p className="data-mono">{evaluation.priority.toUpperCase()}</p>
                   </div>
                   <div>
-                    <p className="label-tactical">Source</p>
+                    <p className="label-tactical">{t('senateEvaluation.source')}</p>
                     <p className="data-mono">{evaluation.context.source_id}</p>
                   </div>
                   <div>
-                    <p className="label-tactical">Received</p>
+                    <p className="label-tactical">{t('senateEvaluation.received')}</p>
                     <p className="data-mono text-xs">{new Date(evaluation.received_at).toLocaleString()}</p>
                   </div>
                 </div>
 
                 <div>
-                  <p className="label-tactical mb-2">Sensory Types</p>
+                  <p className="label-tactical mb-2">{t('senateEvaluation.sensoryTypes')}</p>
                   <div className="flex flex-wrap gap-2">
                     {sensoryTypes.map((type: string) => {
                       const Icon = SENSORY_ICONS[type as keyof typeof SENSORY_ICONS] || Activity;
@@ -553,7 +556,7 @@ const EvaluationWorkspace: React.FC<EvaluationWorkspaceProps> = ({
             {evaluation.applicable_policies && evaluation.applicable_policies.length > 0 && (
               <Card className="glass-card">
                 <CardHeader>
-                  <CardTitle className="heading-primary">Applicable Policies</CardTitle>
+                  <CardTitle className="heading-primary">{t('senateEvaluation.applicablePolicies')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {evaluation.applicable_policies.map((policy: any) => (
@@ -578,7 +581,7 @@ const EvaluationWorkspace: React.FC<EvaluationWorkspaceProps> = ({
             {/* SCU Data */}
             <Card className="glass-card">
               <CardHeader>
-                <CardTitle className="heading-primary">SCU Data</CardTitle>
+                <CardTitle className="heading-primary">{t('senateEvaluation.scuData')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <pre className="p-4 bg-slate-950/50 rounded text-xs overflow-x-auto">
@@ -593,12 +596,12 @@ const EvaluationWorkspace: React.FC<EvaluationWorkspaceProps> = ({
             {/* Trust Score */}
             <Card className="glass-card border-purple-500/30">
               <CardHeader>
-                <CardTitle className="heading-primary">Trust Score</CardTitle>
+                <CardTitle className="heading-primary">{t('senateEvaluation.trustScore')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-center mb-4">
                   <div className="text-4xl font-bold text-purple-400">{trustScore}%</div>
-                  <p className="text-sm text-slate-400 mt-1">Confidence Level</p>
+                  <p className="text-sm text-slate-400 mt-1">{t('senateEvaluation.confidenceLevel')}</p>
                 </div>
                 <input
                   type="range"
@@ -617,15 +620,15 @@ const EvaluationWorkspace: React.FC<EvaluationWorkspaceProps> = ({
             {/* Decision Options */}
             <Card className="glass-card border-purple-500/30">
               <CardHeader>
-                <CardTitle className="heading-primary">Make Decision</CardTitle>
+                <CardTitle className="heading-primary">{t('senateEvaluation.makeDecision')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   {[
-                    { value: 'approved', label: 'Approve', icon: CheckCircle, color: 'emerald' },
-                    { value: 'rejected', label: 'Reject', icon: XCircle, color: 'red' },
-                    { value: 'escalated', label: 'Escalate to Judge', icon: AlertTriangle, color: 'yellow' },
-                    { value: 'request_more_data', label: 'Request More Data', icon: Send, color: 'blue' }
+                    { value: 'approved', label: t('senateEvaluation.approve'), icon: CheckCircle, color: 'emerald' },
+                    { value: 'rejected', label: t('senateEvaluation.reject'), icon: XCircle, color: 'red' },
+                    { value: 'escalated', label: t('senateEvaluation.escalateToJudge'), icon: AlertTriangle, color: 'yellow' },
+                    { value: 'request_more_data', label: t('senateEvaluation.requestMoreData'), icon: Send, color: 'blue' }
                   ].map((option) => {
                     const Icon = option.icon;
                     return (
@@ -652,7 +655,7 @@ const EvaluationWorkspace: React.FC<EvaluationWorkspaceProps> = ({
                 </div>
 
                 <div>
-                  <label className="label-tactical block mb-2">Reason (Required)</label>
+                  <label className="label-tactical block mb-2">{t('senateEvaluation.reasonRequired')}</label>
                   <textarea
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}

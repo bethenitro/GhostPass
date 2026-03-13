@@ -126,6 +126,7 @@ const GhostPassWalletManager: React.FC<GhostPassWalletManagerProps> = ({
       // Store for future verification
       localStorage.setItem('device_fingerprint', deviceFingerprint);
       localStorage.setItem('biometric_hash', biometricHash);
+      localStorage.setItem('wallet_binding_id', result.wallet_binding_id);
       
       setDeviceBinding({
         wallet_binding_id: result.wallet_binding_id,
@@ -273,7 +274,7 @@ const GhostPassWalletManager: React.FC<GhostPassWalletManagerProps> = ({
               )}
             >
               <ShoppingCart className="w-4 h-4" />
-              TopUp
+              Funding
             </button>
           </motion.div>
 

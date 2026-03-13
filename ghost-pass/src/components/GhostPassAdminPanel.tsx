@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { Settings, DollarSign, Users, BarChart3, Shield, AlertTriangle, CheckCircle } from 'lucide-react';
 import { walletApi } from '../lib/api';
 import { cn } from '@/lib/utils';
@@ -9,6 +10,7 @@ interface GhostPassAdminPanelProps {
 }
 
 const GhostPassAdminPanel: React.FC<GhostPassAdminPanelProps> = ({ onClose }) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -124,7 +126,7 @@ const GhostPassAdminPanel: React.FC<GhostPassAdminPanelProps> = ({ onClose }) =>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Entry Fee */}
         <div className="bg-slate-800/50 rounded-lg p-4">
-          <label className="block text-sm font-medium text-white mb-2">Entry Fee</label>
+          <label className="block text-sm font-medium text-white mb-2">{t('ghostPassAdminPanel.entryFee')}</label>
           <div className="flex items-center space-x-3">
             <span className="text-slate-400">$</span>
             <input
@@ -144,12 +146,12 @@ const GhostPassAdminPanel: React.FC<GhostPassAdminPanelProps> = ({ onClose }) =>
               Update
             </button>
           </div>
-          <p className="text-xs text-slate-400 mt-1">Fee charged at entry points</p>
+          <p className="text-xs text-slate-400 mt-1">{t('ghostPassAdminPanel.feeChargedAtEntry')}</p>
         </div>
 
         {/* Bar Fee */}
         <div className="bg-slate-800/50 rounded-lg p-4">
-          <label className="block text-sm font-medium text-white mb-2">Bar Fee</label>
+          <label className="block text-sm font-medium text-white mb-2">{t('ghostPassAdminPanel.barFee')}</label>
           <div className="flex items-center space-x-3">
             <span className="text-slate-400">$</span>
             <input
@@ -169,12 +171,12 @@ const GhostPassAdminPanel: React.FC<GhostPassAdminPanelProps> = ({ onClose }) =>
               Update
             </button>
           </div>
-          <p className="text-xs text-slate-400 mt-1">Fee charged at bar areas</p>
+          <p className="text-xs text-slate-400 mt-1">{t('ghostPassAdminPanel.feeChargedAtBar')}</p>
         </div>
 
         {/* Merch Fee */}
         <div className="bg-slate-800/50 rounded-lg p-4">
-          <label className="block text-sm font-medium text-white mb-2">Merchandise Fee</label>
+          <label className="block text-sm font-medium text-white mb-2">{t('ghostPassAdminPanel.merchandiseFee')}</label>
           <div className="flex items-center space-x-3">
             <span className="text-slate-400">$</span>
             <input
@@ -194,12 +196,12 @@ const GhostPassAdminPanel: React.FC<GhostPassAdminPanelProps> = ({ onClose }) =>
               Update
             </button>
           </div>
-          <p className="text-xs text-slate-400 mt-1">Fee charged for merchandise</p>
+          <p className="text-xs text-slate-400 mt-1">{t('ghostPassAdminPanel.feeChargedForMerchandise')}</p>
         </div>
 
         {/* General Fee */}
         <div className="bg-slate-800/50 rounded-lg p-4">
-          <label className="block text-sm font-medium text-white mb-2">General Fee</label>
+          <label className="block text-sm font-medium text-white mb-2">{t('ghostPassAdminPanel.generalFee')}</label>
           <div className="flex items-center space-x-3">
             <span className="text-slate-400">$</span>
             <input
@@ -219,14 +221,14 @@ const GhostPassAdminPanel: React.FC<GhostPassAdminPanelProps> = ({ onClose }) =>
               Update
             </button>
           </div>
-          <p className="text-xs text-slate-400 mt-1">Default fee for other interactions</p>
+          <p className="text-xs text-slate-400 mt-1">{t('ghostPassAdminPanel.defaultFeeForOther')}</p>
         </div>
       </div>
 
       <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4">
         <div className="flex items-center space-x-2 mb-2">
           <AlertTriangle className="w-4 h-4 text-yellow-400" />
-          <span className="text-yellow-400 font-medium">Platform Fee Policy</span>
+          <span className="text-yellow-400 font-medium">{t('ghostPassAdminPanel.platformFeePolicy')}</span>
         </div>
         <ul className="text-sm text-yellow-200 space-y-1">
           <li>• Fees are charged automatically on every successful interaction</li>
@@ -243,7 +245,7 @@ const GhostPassAdminPanel: React.FC<GhostPassAdminPanelProps> = ({ onClose }) =>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* VALID Platform */}
         <div className="bg-slate-800/50 rounded-lg p-4">
-          <label className="block text-sm font-medium text-white mb-2">VALID Platform</label>
+          <label className="block text-sm font-medium text-white mb-2">{t('ghostPassAdminPanel.validPlatform')}</label>
           <div className="flex items-center space-x-3">
             <input
               type="number"

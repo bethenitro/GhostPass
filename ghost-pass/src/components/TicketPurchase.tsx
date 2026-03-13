@@ -47,6 +47,7 @@ const TicketPurchase: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
   const [selectedTicketType, setSelectedTicketType] = useState<TicketType | null>(null);
+  const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
   const [purchasedTicket, setPurchasedTicket] = useState<PurchasedTicket | null>(null);
@@ -113,13 +114,14 @@ const TicketPurchase: React.FC = () => {
   const handleEventSelect = (event: Event) => {
     setSelectedEvent(event);
     setSelectedTicketType(null);
+    setQuantity(1);
     setPurchasedTicket(null);
     setError('');
     fetchTicketTypes(event.id);
   };
 
   const handlePurchase = async () => {
-    if (!selectedEvent || !selectedTicketType) return;
+    if (!selectedEvent || !selectedTicketType || quantity < 1) return;
 
     setPurchasing(true);
     setError('');
@@ -138,6 +140,7 @@ const TicketPurchase: React.FC = () => {
         body: JSON.stringify({
           event_id: selectedEvent.id,
           ticket_type_id: selectedTicketType.id,
+          quantity: quantity,
           wallet_binding_id: walletBindingId,
           device_fingerprint: deviceFingerprint,
         }),
@@ -170,9 +173,16 @@ const TicketPurchase: React.FC = () => {
     }
   };
 
-  const calculateTotal = (ticketType: TicketType, serviceFeePercent: number) => {
+  const calculateTotal = (ticketType: TicketType, serviceFeePercent: number, qty: number = 1) => {
     const serviceFeeCents = Math.round(ticketType.price_cents * (serviceFeePercent / 100));
-    return ticketType.price_cents + serviceFeeCents;
+    return (ticketType.price_cents + serviceFeeCents) * qty;
+  };
+
+  const getMaxQuantity = (ticketType: TicketType) => {
+    const isUnlimited = !ticketType.max_quantity || ticketType.max_quantity === 0;
+    if (isUnlimited) return 99; // Set a reasonable max for unlimited tickets
+    const available = ticketType.max_quantity - (ticketType.sold_count || 0);
+    return Math.min(available, 99);
   };
 
   if (loading) {
@@ -232,6 +242,7 @@ const TicketPurchase: React.FC = () => {
             setPurchasedTicket(null);
             setSelectedEvent(null);
             setSelectedTicketType(null);
+            setQuantity(1);
           }}
           className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
         >
@@ -249,7 +260,7 @@ const TicketPurchase: React.FC = () => {
         <p className="text-slate-400">{t('tickets.purchaseTickets')}</p>
         <div className="mt-4 inline-flex items-center space-x-2 px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg">
           <DollarSign className="w-4 h-4 text-cyan-400" />
-          <span className="text-white font-medium">${(balance / 100).toFixed(2)}</span>
+          <span className="text-white font-medium">{(balance / 100).toFixed(2)}</span>
           <span className="text-slate-400 text-sm">{t('tickets.available')}</span>
         </div>
       </div>
@@ -375,7 +386,10 @@ const TicketPurchase: React.FC = () => {
       {selectedEvent && selectedTicketType && (
         <div className="space-y-4">
           <button
-            onClick={() => setSelectedTicketType(null)}
+            onClick={() => {
+              setSelectedTicketType(null);
+              setQuantity(1);
+            }}
             className="text-cyan-400 hover:text-cyan-300 text-sm"
           >
             {t('tickets.backToTicketTypes')}
@@ -393,30 +407,53 @@ const TicketPurchase: React.FC = () => {
                 <span className="text-slate-400">{t('tickets.ticketType')}</span>
                 <span className="text-white">{selectedTicketType.name}</span>
               </div>
+              
+              {/* Quantity Selector */}
+              <div className="flex justify-between items-center py-2">
+                <span className="text-slate-400">{t('tickets.quantity')}</span>
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    disabled={quantity <= 1}
+                    className="w-8 h-8 flex items-center justify-center bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-600 text-white rounded-lg transition-colors"
+                  >
+                    -
+                  </button>
+                  <span className="text-white font-bold text-lg w-12 text-center">{quantity}</span>
+                  <button
+                    onClick={() => setQuantity(Math.min(getMaxQuantity(selectedTicketType), quantity + 1))}
+                    disabled={quantity >= getMaxQuantity(selectedTicketType)}
+                    className="w-8 h-8 flex items-center justify-center bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-600 text-white rounded-lg transition-colors"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
               <div className="flex justify-between">
-                <span className="text-slate-400">{t('tickets.ticketPrice')}</span>
-                <span className="text-white">${(selectedTicketType.price_cents / 100).toFixed(2)}</span>
+                <span className="text-slate-400">{t('tickets.ticketPrice')} (x{quantity})</span>
+                <span className="text-white">${((selectedTicketType.price_cents * quantity) / 100).toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">{t('tickets.serviceFee')} ({selectedEvent.service_fee_percent}%)</span>
                 <span className="text-white">
-                  ${(Math.round(selectedTicketType.price_cents * (selectedEvent.service_fee_percent / 100)) / 100).toFixed(2)}
+                  ${(Math.round(selectedTicketType.price_cents * quantity * (selectedEvent.service_fee_percent / 100)) / 100).toFixed(2)}
                 </span>
               </div>
               <div className="flex justify-between pt-2 border-t border-slate-700">
                 <span className="text-white font-semibold">{t('tickets.total')}</span>
                 <span className="text-cyan-400 font-bold text-lg">
-                  ${(calculateTotal(selectedTicketType, selectedEvent.service_fee_percent) / 100).toFixed(2)}
+                  ${(calculateTotal(selectedTicketType, selectedEvent.service_fee_percent, quantity) / 100).toFixed(2)}
                 </span>
               </div>
             </div>
 
             <button
               onClick={handlePurchase}
-              disabled={purchasing || balance < calculateTotal(selectedTicketType, selectedEvent.service_fee_percent)}
+              disabled={purchasing || balance < calculateTotal(selectedTicketType, selectedEvent.service_fee_percent, quantity)}
               className={cn(
                 "w-full py-3 rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2",
-                purchasing || balance < calculateTotal(selectedTicketType, selectedEvent.service_fee_percent)
+                purchasing || balance < calculateTotal(selectedTicketType, selectedEvent.service_fee_percent, quantity)
                   ? "bg-slate-700 text-slate-400 cursor-not-allowed"
                   : "bg-cyan-600 hover:bg-cyan-700 text-white"
               )}
@@ -426,16 +463,16 @@ const TicketPurchase: React.FC = () => {
                   <Loader2 className="w-4 h-4 animate-spin" />
                   <span>{t('tickets.processing')}</span>
                 </>
-              ) : balance < calculateTotal(selectedTicketType, selectedEvent.service_fee_percent) ? (
+              ) : balance < calculateTotal(selectedTicketType, selectedEvent.service_fee_percent, quantity) ? (
                 <span>{t('tickets.insufficientBalance')}</span>
               ) : (
-                <span>{t('tickets.purchaseTicket')}</span>
+                <span>{quantity > 1 ? t('tickets.purchaseMultipleTickets') : t('tickets.purchaseTicket')}</span>
               )}
             </button>
 
-            {balance < calculateTotal(selectedTicketType, selectedEvent.service_fee_percent) && (
+            {balance < calculateTotal(selectedTicketType, selectedEvent.service_fee_percent, quantity) && (
               <p className="text-red-400 text-sm text-center">
-                {t('tickets.youNeed', { amount: ((calculateTotal(selectedTicketType, selectedEvent.service_fee_percent) - balance) / 100).toFixed(2) })}
+                {t('tickets.youNeed').replace('$', `$${((calculateTotal(selectedTicketType, selectedEvent.service_fee_percent, quantity) - balance) / 100).toFixed(2)}`)}
               </p>
             )}
           </div>

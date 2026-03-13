@@ -1,0 +1,12 @@
+{
+  "ghostPassWallet": "Ghost Pass Wallet",
+  "traditionalWallet": "Traditional Wallet",
+  "deviceBound": "Device-Bound",
+  "zeroCustody": "Zero Custody",
+  "cryptographicProofs": "Cryptographic Proofs",
+  "availableBalance": "Available Balance",
+  "bindingId": "Binding ID",
+  "title": "Wallet",
+  "subtitle": "Your secure digital wallet",
+  "currentBalance": "Current Balance"
+}

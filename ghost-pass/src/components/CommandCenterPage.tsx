@@ -549,7 +549,7 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
 
                 <div className="bg-slate-800/50 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm text-slate-300">Live Preview (on $100 scan):</p>
+                    <p className="text-sm text-slate-300">{t('commandCenterPage.livePreview')}</p>
                     <button
                       onClick={() => {
                         const remaining = 100 - (feeConfig.valid_pct + feeConfig.vendor_pct + feeConfig.pool_pct);
@@ -557,7 +557,7 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                       }}
                       className="text-xs px-2 py-1 bg-red-500/20 border border-red-500/50 text-red-300 rounded hover:bg-red-500/30 transition-colors"
                     >
-                      Auto-Balance
+                      {t('commandCenterPage.autoBalance')}
                     </button>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
@@ -816,7 +816,7 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
 
                 {dashboard.pending_payouts.length > 0 && (
                   <div className="border-t border-slate-700 pt-6">
-                    <h3 className="text-slate-300 font-medium mb-4">Pending Payout Requests</h3>
+                    <h3 className="text-slate-300 font-medium mb-4">{t('commandCenterPage.pendingPayoutRequests')}</h3>
 
                     <div className="space-y-3 md:hidden">
                       {dashboard.pending_payouts.map((payout) => (
@@ -856,10 +856,10 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b border-slate-700">
-                            <th className="text-left py-2 text-slate-300">Vendor</th>
-                            <th className="text-left py-2 text-slate-300">Amount</th>
-                            <th className="text-left py-2 text-slate-300">Requested</th>
-                            <th className="text-left py-2 text-slate-300">Actions</th>
+                            <th className="text-left py-2 text-slate-300">{t('commandCenterPage.vendor')}</th>
+                            <th className="text-left py-2 text-slate-300">{t('commandCenterPage.amount')}</th>
+                            <th className="text-left py-2 text-slate-300">{t('commandCenterPage.requested')}</th>
+                            <th className="text-left py-2 text-slate-300">{t('commandCenterPage.actions')}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1015,10 +1015,10 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b border-slate-700">
-                            <th className="text-left py-2 text-slate-300">Timestamp</th>
-                            <th className="text-left py-2 text-slate-300">Admin</th>
-                            <th className="text-left py-2 text-slate-300">Action</th>
-                            <th className="text-left py-2 text-slate-300">Resource</th>
+                            <th className="text-left py-2 text-slate-300">{t('commandCenterPage.timestamp')}</th>
+                            <th className="text-left py-2 text-slate-300">{t('commandCenterPage.admin')}</th>
+                            <th className="text-left py-2 text-slate-300">{t('commandCenterPage.action')}</th>
+                            <th className="text-left py-2 text-slate-300">{t('commandCenterPage.resource')}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1037,7 +1037,7 @@ const CommandCenterPage: React.FC<CommandCenterPageProps> = ({ onBack, onNavigat
                     </div>
                   </>
                 ) : (
-                  <p className="text-slate-400 py-4">No audit logs available</p>
+                  <p className="text-slate-400 py-4">{t('commandCenterPage.noAuditLogs')}</p>
                 )}
               </div>
             </CollapsibleSection>

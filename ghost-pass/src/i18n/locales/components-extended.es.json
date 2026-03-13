@@ -1,0 +1,20 @@
+{
+  "ghostPassAdminPanel": {
+    "platformFeePolicy": "Política de Tarifas de Plataforma",
+    "validPlatform": "Plataforma VALID",
+    "vendor": "Vendedor",
+    "pool": "Pool",
+    "promoter": "Promotor",
+    "livePreview": "Vista Previa en Vivo",
+    "on100Scan": "en escaneo de $100",
+    "autoBalance": "Auto-Balancear",
+    "total": "Total",
+    "mustEqual100": "⚠ Debe ser igual a 100%",
+    "valid": "✓ Válido",
+    "applyChanges": "APLICAR CAMBIOS",
+    "updating": "ACTUALIZANDO...",
+    "vendorPayoutProcessing": "Procesamiento de Pagos a Vendedores",
+    "processAllPayouts": "Procesar Todos los Pagos Pendientes",
+    "payoutInformation": "Información de Pago"
+  }
+}

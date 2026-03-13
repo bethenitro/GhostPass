@@ -1,0 +1,22 @@
+{
+  "setupCheck": {
+    "checking": "Verificando Configuración de Admin",
+    "verifying": "Verificando configuración del sistema de administración...",
+    "failed": "Verificación de Configuración Fallida",
+    "systemComponents": "Componentes del Sistema:",
+    "setupInstructions": "Instrucciones de Configuración:"
+  },
+  "authRequired": "Autenticación Requerida",
+  "auditLogs": {
+    "pending": "Solicitudes de Pago Pendientes",
+    "vendor": "Vendedor",
+    "amount": "Monto",
+    "requested": "Solicitado",
+    "actions": "Acciones",
+    "timestamp": "Marca de Tiempo",
+    "admin": "Admin",
+    "action": "Acción",
+    "resource": "Recurso",
+    "noLogs": "No hay registros de auditoría disponibles"
+  }
+}

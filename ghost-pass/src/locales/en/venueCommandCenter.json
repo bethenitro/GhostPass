@@ -1,0 +1,7 @@
+{
+  "title": "Venue Command Center",
+  "eventScopedControls": "Event-scoped controls",
+  "eventLabel": "Event: {eventId}",
+  "beValid": "Be Valid",
+  "logout": "Logout"
+}

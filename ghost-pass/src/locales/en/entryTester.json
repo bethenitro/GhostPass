@@ -1,0 +1,13 @@
+{
+  "hours": "hours",
+  "title": "Entry Tester",
+  "subtitle": "Test venue entry and re-entry flow with fee tracking",
+  "entryNumber": "Entry Number",
+  "entryType": "Entry Type",
+  "balanceBefore": "Balance Before",
+  "balanceAfter": "Balance After",
+  "feeBreakdown": "Fee Breakdown:",
+  "initialEntryFee": "Initial Entry Fee:",
+  "venueReEntryFee": "Venue Re-Entry Fee:",
+  "totalCharged": "Total Charged:"
+}

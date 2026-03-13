@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { adminApi } from '@/lib/api';
 
 interface AdminSetupCheckProps {
@@ -15,6 +16,7 @@ interface HealthStatus {
 }
 
 const AdminSetupCheck: React.FC<AdminSetupCheckProps> = ({ onSetupComplete }) => {
+  const { t } = useTranslation();
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,9 +53,9 @@ const AdminSetupCheck: React.FC<AdminSetupCheckProps> = ({ onSetupComplete }) =>
         <div className="glass-panel p-6 md:p-8 w-full max-w-md border-red-500/30">
           <div className="flex items-center space-x-3 mb-4">
             <RefreshCw className="text-red-400 animate-spin flex-shrink-0" size={20} />
-            <h2 className="text-lg md:text-xl font-bold text-red-400">Checking Admin Setup</h2>
+            <h2 className="text-lg md:text-xl font-bold text-red-400">{t('adminSetup.checkingAdminSetup')}</h2>
           </div>
-          <p className="text-slate-300 text-sm">Verifying admin system configuration...</p>
+          <p className="text-slate-300 text-sm">{t('adminSetup.verifyingConfiguration')}</p>
         </div>
       </div>
     );
@@ -65,14 +67,14 @@ const AdminSetupCheck: React.FC<AdminSetupCheckProps> = ({ onSetupComplete }) =>
         <div className="glass-panel p-6 md:p-8 w-full max-w-md border-red-500/30">
           <div className="flex items-center space-x-3 mb-4">
             <XCircle className="text-red-400 flex-shrink-0" size={20} />
-            <h2 className="text-lg md:text-xl font-bold text-red-400">Setup Check Failed</h2>
+            <h2 className="text-lg md:text-xl font-bold text-red-400">{t('adminSetup.setupCheckFailed')}</h2>
           </div>
           <p className="text-slate-300 mb-4 text-sm">{error}</p>
           <button
             onClick={checkHealth}
             className="w-full px-4 py-2 bg-red-500/20 border border-red-500 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
           >
-            Retry
+            {t('common.retry')}
           </button>
         </div>
       </div>
@@ -93,22 +95,22 @@ const AdminSetupCheck: React.FC<AdminSetupCheckProps> = ({ onSetupComplete }) =>
             <AlertTriangle className="text-red-400 flex-shrink-0" size={20} />
           )}
           <h2 className="text-lg md:text-xl font-bold text-red-400">
-            {isHealthy ? 'Admin System Ready' : 'Setup Required'}
+            {isHealthy ? t('adminSetup.adminSystemReady') : t('adminSetup.setupRequired')}
           </h2>
         </div>
 
         <div className="space-y-4">
           <div>
             <p className="text-slate-300 mb-2 text-sm">
-              <strong>Admin User:</strong> {health.admin_user} ({health.admin_role})
+              <strong>{t('adminSetup.adminUser')}:</strong> {health.admin_user} ({health.admin_role})
             </p>
             <p className="text-slate-300 mb-4 text-sm">
-              <strong>Status:</strong> {health.message}
+              <strong>{t('common.status')}:</strong> {health.message}
             </p>
           </div>
 
           <div>
-            <h3 className="text-base md:text-lg font-semibold text-red-400 mb-3">System Components:</h3>
+            <h3 className="text-base md:text-lg font-semibold text-red-400 mb-3">{t('adminSetup.systemComponents')}:</h3>
             <div className="space-y-2">
               {Object.entries(health.tables).map(([table, status]) => (
                 <div key={table} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
@@ -123,12 +125,12 @@ const AdminSetupCheck: React.FC<AdminSetupCheckProps> = ({ onSetupComplete }) =>
 
           {!isHealthy && (
             <div className="bg-yellow-500/10 border border-yellow-500/50 rounded-lg p-4">
-              <h4 className="text-yellow-400 font-semibold mb-2 text-sm">Setup Instructions:</h4>
+              <h4 className="text-yellow-400 font-semibold mb-2 text-sm">{t('adminSetup.setupInstructions')}:</h4>
               <ol className="text-xs md:text-sm text-yellow-300 space-y-1 list-decimal list-inside">
-                <li>Go to Supabase Dashboard → SQL Editor</li>
-                <li>Copy and paste the contents of <code className="bg-yellow-500/20 px-1 rounded">backend/admin_schema.sql</code></li>
-                <li>Click "Run" to execute the SQL</li>
-                <li>Click "Retry" below to check again</li>
+                <li>{t('adminSetup.step1')}</li>
+                <li>{t('adminSetup.step2')} <code className="bg-yellow-500/20 px-1 rounded">backend/admin_schema.sql</code></li>
+                <li>{t('adminSetup.step3')}</li>
+                <li>{t('adminSetup.step4')}</li>
               </ol>
             </div>
           )}
@@ -138,14 +140,14 @@ const AdminSetupCheck: React.FC<AdminSetupCheckProps> = ({ onSetupComplete }) =>
               onClick={checkHealth}
               className="flex-1 px-4 py-2 bg-red-500/20 border border-red-500 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors text-sm"
             >
-              Retry Check
+              {t('adminSetup.retryCheck')}
             </button>
             {isHealthy && (
               <button
                 onClick={onSetupComplete}
                 className="flex-1 px-4 py-2 bg-emerald-500/20 border border-emerald-500 text-emerald-400 rounded-lg hover:bg-emerald-500/30 transition-colors text-sm"
               >
-                Continue to Command Center
+                {t('adminSetup.continueToCommandCenter')}
               </button>
             )}
           </div>

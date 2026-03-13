@@ -107,33 +107,40 @@ export const DurationWheelSelector: React.FC<DurationWheelSelectorProps> = ({
     onSelect(clampedDays, price);
   };
 
-  // Desktop wheel scroll
+  // Desktop wheel scroll with smoother increments
   const handleWheel = (e: React.WheelEvent) => {
     if (disabled) return;
     e.preventDefault();
     
+    // Smaller delta for smoother scrolling
     const delta = e.deltaY > 0 ? 1 : -1;
     handleDaysChange(selectedDays + delta);
   };
 
-  // Mobile touch handling
+  // Mobile touch handling with momentum
   const handleTouchStart = (e: React.TouchEvent) => {
     if (disabled) return;
     touchStartY.current = e.touches[0].clientY;
     touchStartTime.current = Date.now();
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
+  const handleTouchMove = (e: React.TouchEvent) => {
     if (disabled) return;
     
-    const touchEndY = e.changedTouches[0].clientY;
-    const deltaY = touchStartY.current - touchEndY;
-
-    // Swipe threshold
-    if (Math.abs(deltaY) > 30) {
-      const change = deltaY > 0 ? 1 : -1;
+    const touchCurrentY = e.touches[0].clientY;
+    const deltaY = touchStartY.current - touchCurrentY;
+    
+    // Continuous scrolling while dragging
+    if (Math.abs(deltaY) > 10) {
+      const change = Math.sign(deltaY);
       handleDaysChange(selectedDays + change);
+      touchStartY.current = touchCurrentY; // Reset for continuous movement
     }
+  };
+
+  const handleTouchEnd = (_e: React.TouchEvent) => {
+    if (disabled) return;
+    // Touch end is now handled by touchMove for smoother experience
   };
 
   // Scrollbar drag handling
@@ -218,6 +225,7 @@ export const DurationWheelSelector: React.FC<DurationWheelSelectorProps> = ({
           )}
           onWheel={handleWheel}
           onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
           {/* Holographic Effect Overlay */}
@@ -235,11 +243,11 @@ export const DurationWheelSelector: React.FC<DurationWheelSelectorProps> = ({
           {/* Options Display */}
           <AnimatePresence mode="wait">
             <motion.div
-              key={closestPresetIndex}
+              key={selectedDays}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
               className="absolute inset-0 flex flex-col items-center justify-center"
             >
               {/* Previous Item (Above) */}
@@ -258,9 +266,14 @@ export const DurationWheelSelector: React.FC<DurationWheelSelectorProps> = ({
               {/* Selected Item (Center) - Shows only days */}
               <motion.div
                 key={selectedDays}
-                initial={{ scale: 0.8, opacity: 0 }}
+                initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                transition={{ 
+                  type: "spring", 
+                  stiffness: 400, 
+                  damping: 30,
+                  mass: 0.5
+                }}
                 className="relative z-10"
               >
                 <div className="text-center px-3">
@@ -320,6 +333,11 @@ export const DurationWheelSelector: React.FC<DurationWheelSelectorProps> = ({
               }}
               animate={{
                 scale: isDragging ? 1.05 : 1
+              }}
+              transition={{
+                type: "spring",
+                stiffness: 500,
+                damping: 35
               }}
             />
           </div>
@@ -387,7 +405,7 @@ export const DurationWheelSelector: React.FC<DurationWheelSelectorProps> = ({
                 <div className="flex items-center gap-2">
                   <Sparkles className="text-emerald-400" size={14} />
                   <span className="text-emerald-400 text-xs font-semibold">
-                    You save {savings}% compared to daily rate
+                    {t('ghostPass.savingsMessage').replace('{savings}', savings)}
                   </span>
                 </div>
               </motion.div>

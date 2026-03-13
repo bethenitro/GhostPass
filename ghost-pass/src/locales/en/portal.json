@@ -1,0 +1,8 @@
+{
+  "title": "Portal Access",
+  "subtitle": "Select your access level",
+  "operatorLogin": "Operator Login",
+  "operatorSubtitle": "Venue and Event Administrators",
+  "staffLogin": "Staff Login",
+  "staffSubtitle": "Door, POS, and Event Staff"
+}

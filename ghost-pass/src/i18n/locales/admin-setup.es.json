@@ -1,0 +1,24 @@
+{
+  "adminSetup": {
+    "checkingAdminSetup": "Verificando Configuración de Administrador",
+    "verifyingConfiguration": "Verificando configuración del sistema de administrador...",
+    "setupCheckFailed": "Falló la Verificación de Configuración",
+    "adminSystemReady": "Sistema de Administrador Listo",
+    "setupRequired": "Configuración Requerida",
+    "adminUser": "Usuario Administrador",
+    "systemComponents": "Componentes del Sistema",
+    "setupInstructions": "Instrucciones de Configuración",
+    "step1": "Ir al Panel de Supabase → Editor SQL",
+    "step2": "Copiar y pegar el contenido de",
+    "step3": "Hacer clic en \"Ejecutar\" para ejecutar el SQL",
+    "step4": "Hacer clic en \"Reintentar\" abajo para verificar nuevamente",
+    "retryCheck": "Reintentar Verificación",
+    "continueToCommandCenter": "Continuar al Centro de Comando"
+  },
+  "commandCenterRouter": {
+    "authenticationRequired": "Autenticación Requerida",
+    "authenticationRequiredMessage": "Necesitas iniciar sesión para acceder al Centro de Comando. Por favor inicia sesión con tu cuenta de administrador o administrador de venue.",
+    "goToLogin": "Ir a Iniciar Sesión",
+    "goBack": "Volver"
+  }
+}

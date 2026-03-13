@@ -1,0 +1,28 @@
+{
+  "gatewayManager": {
+    "createAreaFirst": "Crear un Área Interna primero",
+    "createAreaFirstDescription": "Las mesas y asientos deben estar vinculados a un área interna. Por favor crea al menos un área interna antes de agregar mesas.",
+    "goToInternalAreas": "IR A ÁREAS INTERNAS",
+    "noTableSeats": "No hay mesas o asientos configurados",
+    "noTableSeatsDescription": "Agrega tu primera mesa o asiento para comenzar a gestionar ubicaciones específicas",
+    "linkedArea": "Área Vinculada",
+    "selectArea": "Seleccionar área..."
+  },
+  "ghostPassAdminPanel": {
+    "livePreview": "Vista Previa en Vivo",
+    "previewAmount": "en escaneo de $100",
+    "autoBalance": "Auto-Balancear"
+  },
+  "layout": {
+    "operatorAccess": "Acceso de Operador",
+    "switchLanguage": "Cambiar Idioma"
+  },
+  "portalAccessModal": {
+    "selectPortal": "Seleccionar Portal",
+    "operatorPortal": "Portal de Operador",
+    "operatorDescription": "Gestión de Venue y Eventos",
+    "staffPortal": "Portal de Personal",
+    "staffDescription": "Punto de Venta y Operaciones",
+    "cancel": "Cancelar"
+  }
+}

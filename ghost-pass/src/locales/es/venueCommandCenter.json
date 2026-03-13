@@ -1,0 +1,7 @@
+{
+  "title": "Centro de Comando del Lugar",
+  "eventScopedControls": "Controles del evento",
+  "eventLabel": "Evento: {eventId}",
+  "beValid": "Ser Válido",
+  "logout": "Cerrar Sesión"
+}

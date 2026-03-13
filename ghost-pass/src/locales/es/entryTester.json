@@ -1,0 +1,13 @@
+{
+  "hours": "horas",
+  "title": "Probador de Entrada",
+  "subtitle": "Prueba el flujo de entrada y reingreso al lugar con seguimiento de tarifas",
+  "entryNumber": "Número de Entrada",
+  "entryType": "Tipo de Entrada",
+  "balanceBefore": "Saldo Antes",
+  "balanceAfter": "Saldo Después",
+  "feeBreakdown": "Desglose de Tarifas:",
+  "initialEntryFee": "Tarifa de Entrada Inicial:",
+  "venueReEntryFee": "Tarifa de Reingreso al Lugar:",
+  "totalCharged": "Total Cobrado:"
+}

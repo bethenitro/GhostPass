@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import CommandCenterPage from './CommandCenterPage';
 import { SuperAdminCommandCenter } from './admin/SuperAdminCommandCenter';
 import { VenueAdminCommandCenter } from './admin/VenueAdminCommandCenter';
@@ -13,6 +14,7 @@ interface CommandCenterRouterProps {
 }
 
 const CommandCenterRouter: React.FC<CommandCenterRouterProps> = (props) => {
+  const { t } = useTranslation();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState(false);
@@ -64,9 +66,9 @@ const CommandCenterRouter: React.FC<CommandCenterRouterProps> = (props) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-white mb-2">Authentication Required</h2>
+          <h2 className="text-xl font-bold text-white mb-2">{t('commandCenterRouter.authenticationRequired')}</h2>
           <p className="text-slate-400 mb-6">
-            You need to be logged in to access the Command Center. Please sign in with your admin or venue admin account.
+            {t('commandCenterRouter.authenticationRequiredMessage')}
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
             <button
@@ -83,13 +85,13 @@ const CommandCenterRouter: React.FC<CommandCenterRouterProps> = (props) => {
               }}
               className="flex-1 px-6 py-3 bg-purple-500/20 border border-purple-500 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors font-medium min-h-[44px]"
             >
-              Go to Login
+              {t('commandCenterRouter.goToLogin')}
             </button>
             <button
               onClick={props.onBack}
               className="flex-1 px-6 py-3 bg-slate-700 border border-slate-600 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors font-medium min-h-[44px]"
             >
-              Go Back
+              {t('commandCenterRouter.goBack')}
             </button>
           </div>
         </div>

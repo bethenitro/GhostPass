@@ -1,0 +1,182 @@
+{
+  "ghostPassAdminPanel": {
+    "platformFeePolicy": "Platform Fee Policy",
+    "validPlatform": "VALID Platform",
+    "vendor": "Vendor",
+    "pool": "Pool",
+    "promoter": "Promoter",
+    "livePreview": "Live Preview",
+    "on100Scan": "on $100 scan",
+    "autoBalance": "Auto-Balance",
+    "total": "Total",
+    "mustEqual100": "⚠ Must equal 100%",
+    "valid": "✓ Valid",
+    "applyChanges": "APPLY CHANGES",
+    "updating": "UPDATING...",
+    "vendorPayoutProcessing": "Vendor Payout Processing",
+    "processAllPayouts": "Process All Pending Payouts",
+    "payoutInformation": "Payout Information",
+    "entryFee": "Entry Fee",
+    "barFee": "Bar Fee",
+    "merchandiseFee": "Merchandise Fee",
+    "generalFee": "General Fee",
+    "feeChargedAtEntry": "Fee charged at entry points",
+    "feeChargedAtBar": "Fee charged at bar areas",
+    "feeChargedForMerchandise": "Fee charged for merchandise",
+    "defaultFeeForOther": "Default fee for other interactions",
+    "vendorRevenueShare": "Vendor revenue share",
+    "poolRevenueShare": "Pool revenue share",
+    "promoterRevenueShare": "Promoter revenue share"
+  },
+  "senateEvaluation": {
+    "senateEvaluation": "Senate Evaluation",
+    "pending": "Pending",
+    "history": "History",
+    "pendingReview": "Pending Review",
+    "noSCUsPending": "No SCUs pending review",
+    "allClear": "All clear",
+    "scuId": "SCU ID",
+    "source": "Source",
+    "received": "Received",
+    "actions": "Actions",
+    "approve": "Approve",
+    "reject": "Reject",
+    "approved": "Approved",
+    "rejected": "Rejected"
+,
+    "evaluatedBy": "Evaluated By",
+    "evaluatedAt": "Evaluated At",
+    "evaluationHistory": "Evaluation History",
+    "noDecisionsYet": "No decisions yet",
+    "escalateToJudge": "Escalate to Judge",
+    "requestMoreData": "Request More Data",
+    "decision": "Decision",
+    "reason": "Reason",
+    "reasonRequired": "Reason (Required)",
+    "trustScore": "Trust Score",
+    "confidenceLevel": "Confidence Level",
+    "submitDecision": "Submit Decision",
+    "submitting": "Submitting...",
+    "reviewSCU": "Review SCU",
+    "scuDetails": "SCU Details",
+    "scuData": "SCU Data",
+    "signalData": "Signal Data",
+    "context": "Context",
+    "applicablePolicies": "Applicable Policies",
+    "loadingSenateEvaluation": "Loading Senate Evaluation...",
+    "governanceDecisions": "Governance decisions on validated SCUs",
+    "escalated": "Escalated",
+    "noPendingEvaluations": "No pending evaluations",
+    "allSCUsReviewed": "All SCUs have been reviewed",
+    "pendingEvaluation": "Pending Evaluation",
+    "evaluationWorkspace": "Evaluation Workspace",
+    "reviewSCUAndDecide": "Review SCU and make governance decision",
+    "scuOverview": "SCU Overview",
+    "priority": "Priority",
+    "sensoryTypes": "Sensory Types",
+    "makeDecision": "Make Decision"
+  },
+  "sensoryCargoMonitor": {
+    "sensorReceptorPanel": "Sensory Receptor Panel",
+    "fixedSensoryTypes": "6 fixed Sensory Types",
+    "authorityRequired": "Authority Required",
+    "locked": "Locked",
+    "liveSensoryFeed": "Live Sensory Feed",
+    "filteredBy": "Filtered by",
+    "governanceAuditStatus": "Governance & Audit Status",
+    "ghostPassSummary": "Ghost Pass Summary",
+    "senateQueueStatus": "Senate Queue Status"
+  },
+  "ghostPassEntryManager": {
+    "entryManagement": "Entry Management",
+    "currentConfiguration": "Current Configuration",
+    "entryActions": "Entry Actions"
+,
+    "totalEntries": "Total Entries",
+    "initialEntries": "Initial Entries",
+    "reEntries": "Re-Entries",
+    "uniqueWallets": "Unique Wallets",
+    "totalFeesCollected": "Total Fees Collected",
+    "configurationRequired": "Configuration Required",
+    "pleaseConfigureEntry": "Please configure entry settings first"
+  },
+  "ghostPassRevocationManager": {
+    "aboutSCUs": "About SCUs",
+    "scuDescription": "SCUs (Sensory Cargo Units) are individual data events",
+    "noActiveSCUEvents": "No active SCU events",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "pending": "Pending",
+    "escalated": "Escalated"
+  },
+  "ghostPassWalletPersistence": {
+    "walletPersistence": "Wallet Persistence",
+    "deviceBound": "Device Bound",
+    "walletSecure": "Wallet is securely bound to this device",
+    "availableBalance": "Available Balance",
+    "cryptographicProofs": "Cryptographic Proofs",
+    "noProofsFound": "No cryptographic proofs found"
+  },
+  "staffLogin": {
+    "staffPortal": "Staff Portal",
+    "pointOfSale": "Point of Sale & Operations",
+    "enterStaffId": "Enter Staff ID",
+    "enterPin": "Enter PIN"
+  },
+  "vendorPurchase": {
+    "vendorPurchase": "Vendor Purchase",
+    "selectItem": "Select Item",
+    "quantity": "Quantity"
+  },
+  "transactionHistory": {
+    "transactionHistory": "Transaction History",
+    "noTransactions": "No transactions yet"
+  },
+  "testSignalInjector": {
+    "testSignalInjector": "Test Signal Injector",
+    "injectSignal": "Inject Signal",
+    "signalType": "Signal Type"
+  },
+  "pushNotificationSettings": {
+    "pushNotifications": "Push Notifications",
+    "enableNotifications": "Enable Notifications",
+    "notificationsEnabled": "Notifications Enabled",
+    "notificationsDisabled": "Notifications Disabled"
+  },
+  "webAppInitialization": {
+    "initializingApp": "Initializing App",
+    "loadingResources": "Loading Resources",
+    "almostReady": "Almost Ready",
+    "welcome": "Welcome"
+  },
+  "venueCommandCenter": {
+    "venueCommandCenter": "Venue Command Center"
+  },
+  "ghostPassAutoSurface": {
+    "walletSurfacing": "Wallet Surfacing",
+    "yourWalletSurfacing": "Your Ghost Pass wallet is surfacing automatically",
+    "eventWalletSurfacing": "Your {eventName} wallet is now surfacing...",
+    "walletSurfaceFailed": "Wallet Surface Failed",
+    "whatYouReceive": "What you'll receive:",
+    "immediate": "Immediate",
+    "worksInLowLight": "Works in low-light conditions"
+  },
+  "layout": {
+    "operatorAccess": "Operator Access",
+    "switchLanguage": "Switch Language"
+  },
+  "portalAccessModal": {
+    "selectPortal": "Select Portal",
+    "operatorPortal": "Operator Portal",
+    "operatorDescription": "Venue & Event Management",
+    "staffPortal": "Staff Portal",
+    "staffDescription": "Point of Sale & Operations",
+    "staffLogin": "Staff Login",
+    "venueAndEventAdmins": "Venue and Event Administrators",
+    "cancel": "Cancel"
+  },
+  "common": {
+    "cannotUndo": "This cannot be undone.",
+    "alphanumericOnly": "Alphanumeric characters only"
+  }
+}

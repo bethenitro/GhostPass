@@ -1,0 +1,9 @@
+{
+  "fastEntry": "Fast entry mode - navigating to wallet",
+  "sessionExpired": "Session expired - navigating to wallet",
+  "activeSession": "Active session found - navigating to wallet",
+  "errorParsingSession": "Error parsing session data",
+  "noSession": "No session found - navigating to scanner",
+  "operatorPortal": "Opening operator portal",
+  "operatorLoginSuccess": "Operator login successful"
+}

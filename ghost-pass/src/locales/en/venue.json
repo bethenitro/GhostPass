@@ -1,0 +1,23 @@
+{
+  "errorLoadingDashboard": "Error loading dashboard",
+  "retry": "Retry",
+  "eventTotals": "Event Totals",
+  "totalEntries": "Total Entries",
+  "reEntries": "Re-Entries",
+  "totalRevenue": "Total Revenue",
+  "uniqueAttendees": "Unique Attendees",
+  "eventConfiguration": "Event Configuration",
+  "reEntryPermission": "Re-Entry Permission",
+  "allowReEntry": "Allow attendees to re-enter the venue",
+  "allowed": "Allowed",
+  "notAllowed": "Not Allowed",
+  "initialEntryFee": "Initial Entry Fee",
+  "maximum": "Maximum",
+  "venueReEntryFee": "Venue Re-Entry Fee",
+  "validReEntryScanFee": "Valid Re-Entry Scan Fee",
+  "platformFeePerReEntry": "Platform fee per re-entry scan",
+  "maxReEntries": "Max Re-Entries",
+  "unlimited": "Unlimited",
+  "saving": "Saving...",
+  "saveConfiguration": "Save Configuration"
+}

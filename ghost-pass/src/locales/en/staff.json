@@ -1,0 +1,30 @@
+{
+  "login": {
+    "title": "Staff Login",
+    "subtitle": "Sign in to access your station",
+    "emailAddress": "Email Address",
+    "password": "Password",
+    "signIn": "Sign In",
+    "signingIn": "Signing In..."
+  },
+  "portal": {
+    "title": "Staff Portal",
+    "logout": "Logout"
+  },
+  "pos": {
+    "paymentApproved": "Payment Approved",
+    "receiptId": "Receipt ID",
+    "currentOrder": "Current Order",
+    "menu": "Menu",
+    "noMenuItems": "No menu items configured",
+    "askAdmin": "Ask your venue admin to add items to the {role} menu."
+  },
+  "manager": {
+    "loading": "Loading Manager Dashboard...",
+    "errorLoading": "Error Loading Data",
+    "dashboard": "Manager Dashboard",
+    "subtitle": "Real-time overview of venue activity and shift reports.",
+    "recentActivity": "Recent Shift Activity",
+    "live": "Live"
+  }
+}

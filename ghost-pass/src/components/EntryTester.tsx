@@ -10,6 +10,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { DoorOpen, Wallet, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
 
 interface EntryResult {
@@ -37,6 +38,7 @@ interface EntryHistory {
 }
 
 const EntryTester: React.FC = () => {
+  const { t } = useTranslation();
   const [walletBindingId, setWalletBindingId] = useState('');
   const [deviceFingerprint, setDeviceFingerprint] = useState('');
   const [venueId, setVenueId] = useState('test-venue-stress-001');
@@ -131,7 +133,7 @@ const EntryTester: React.FC = () => {
             <DoorOpen className="w-8 h-8 text-cyan-400" />
             Entry & Re-Entry Tester
           </h1>
-          <p className="text-gray-400 mb-6">Test venue entry and re-entry flow with fee tracking</p>
+          <p className="text-gray-400 mb-6">{t('entryTester.subtitle')}</p>
 
           {/* Configuration */}
           <div className="space-y-4 mb-6">
@@ -226,51 +228,51 @@ const EntryTester: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <div className="text-gray-400">Entry Number</div>
+                  <div className="text-gray-400">{t('entryTester.entryNumber')}</div>
                   <div className="text-white font-semibold text-lg">#{result.entry_number}</div>
                 </div>
 
                 <div>
-                  <div className="text-gray-400">Entry Type</div>
+                  <div className="text-gray-400">{t('entryTester.entryType')}</div>
                   <div className="text-white font-semibold text-lg capitalize">
                     {result.entry_type.replace('_', ' ')}
                   </div>
                 </div>
 
                 <div>
-                  <div className="text-gray-400">Balance Before</div>
+                  <div className="text-gray-400">{t('entryTester.balanceBefore')}</div>
                   <div className="text-white font-semibold">{formatCents(result.balance_before_cents)}</div>
                 </div>
 
                 <div>
-                  <div className="text-gray-400">Balance After</div>
+                  <div className="text-gray-400">{t('entryTester.balanceAfter')}</div>
                   <div className="text-white font-semibold">{formatCents(result.balance_after_cents)}</div>
                 </div>
               </div>
 
               <div className="mt-4 pt-4 border-t border-green-700">
-                <div className="text-gray-300 font-semibold mb-2">Fee Breakdown:</div>
+                <div className="text-gray-300 font-semibold mb-2">{t('entryTester.feeBreakdown')}</div>
                 <div className="space-y-1 text-sm">
                   {result.fees.initial_entry_fee_cents > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Initial Entry Fee:</span>
+                      <span className="text-gray-400">{t('entryTester.initialEntryFee')}</span>
                       <span className="text-white">{formatCents(result.fees.initial_entry_fee_cents)}</span>
                     </div>
                   )}
                   {result.fees.venue_reentry_fee_cents > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Venue Re-Entry Fee:</span>
+                      <span className="text-gray-400">{t('entryTester.venueReEntryFee')}</span>
                       <span className="text-white">{formatCents(result.fees.venue_reentry_fee_cents)}</span>
                     </div>
                   )}
                   {result.fees.valid_reentry_scan_fee_cents > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-gray-400">VALID Platform Fee:</span>
+                      <span className="text-gray-400">{t('entryTester.validPlatformFee')}</span>
                       <span className="text-white">{formatCents(result.fees.valid_reentry_scan_fee_cents)}</span>
                     </div>
                   )}
                   <div className="flex justify-between pt-2 border-t border-green-700 font-semibold">
-                    <span className="text-gray-300">Total Charged:</span>
+                    <span className="text-gray-300">{t('entryTester.totalCharged')}</span>
                     <span className="text-green-400">{formatCents(result.fees.total_fees_cents)}</span>
                   </div>
                 </div>

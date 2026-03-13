@@ -1,0 +1,12 @@
+{
+  "ghostPassWallet": "Cartera Ghost Pass",
+  "traditionalWallet": "Cartera Tradicional",
+  "deviceBound": "Vinculada al Dispositivo",
+  "zeroCustody": "Custodia Cero",
+  "cryptographicProofs": "Pruebas Criptográficas",
+  "availableBalance": "Saldo Disponible",
+  "bindingId": "ID de Vinculación",
+  "title": "Cartera",
+  "subtitle": "Tu cartera digital segura",
+  "currentBalance": "Saldo Actual"
+}

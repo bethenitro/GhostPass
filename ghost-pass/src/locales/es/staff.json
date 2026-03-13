@@ -1,0 +1,30 @@
+{
+  "login": {
+    "title": "Inicio de Sesión del Personal",
+    "subtitle": "Inicia sesión para acceder a tu estación",
+    "emailAddress": "Dirección de Correo Electrónico",
+    "password": "Contraseña",
+    "signIn": "Iniciar Sesión",
+    "signingIn": "Iniciando Sesión..."
+  },
+  "portal": {
+    "title": "Portal del Personal",
+    "logout": "Cerrar Sesión"
+  },
+  "pos": {
+    "paymentApproved": "Pago Aprobado",
+    "receiptId": "ID de Recibo",
+    "currentOrder": "Pedido Actual",
+    "menu": "Menú",
+    "noMenuItems": "No hay elementos de menú configurados",
+    "askAdmin": "Pide a tu administrador del lugar que agregue elementos al menú de {role}."
+  },
+  "manager": {
+    "loading": "Cargando Panel del Gerente...",
+    "errorLoading": "Error al Cargar Datos",
+    "dashboard": "Panel del Gerente",
+    "subtitle": "Vista general en tiempo real de la actividad del lugar e informes de turnos.",
+    "recentActivity": "Actividad Reciente del Turno",
+    "live": "En Vivo"
+  }
+}

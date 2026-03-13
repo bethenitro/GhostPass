@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DollarSign, TrendingUp, Wallet, AlertCircle } from 'lucide-react';
 import { gatewayApi } from '@/lib/api';
 import type { FinancialDistribution as FinancialDistributionType } from '@/types';
@@ -11,6 +12,7 @@ interface FinancialDistributionProps {
 export const FinancialDistribution: React.FC<FinancialDistributionProps> = ({
   refreshInterval = 60000
 }) => {
+  const { t } = useTranslation();
   const [distribution, setDistribution] = useState<FinancialDistributionType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
@@ -100,7 +102,7 @@ export const FinancialDistribution: React.FC<FinancialDistributionProps> = ({
             <h3 className="text-lg sm:text-xl font-bold text-red-400">
               QR Revenue Distribution
             </h3>
-            <p className="text-slate-400 text-xs sm:text-sm">Live View - Read Only</p>
+            <p className="text-slate-400 text-xs sm:text-sm">{t('financialDistribution.subtitle')}</p>
           </div>
         </div>
         <div className={cn(
@@ -117,7 +119,7 @@ export const FinancialDistribution: React.FC<FinancialDistributionProps> = ({
         <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
           <div className="flex items-center space-x-2 mb-2">
             <TrendingUp size={16} className="text-emerald-400" />
-            <span className="text-slate-400 text-xs font-medium">Gross Collected</span>
+            <span className="text-slate-400 text-xs font-medium">{t('financialDistribution.grossCollected')}</span>
           </div>
           <div className="text-2xl font-bold text-white">
             {formatCurrency(distribution.gross_collected_cents)}
@@ -131,7 +133,7 @@ export const FinancialDistribution: React.FC<FinancialDistributionProps> = ({
         <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
           <div className="flex items-center space-x-2 mb-2">
             <DollarSign size={16} className="text-blue-400" />
-            <span className="text-slate-400 text-xs font-medium">Scan Fee Total</span>
+            <span className="text-slate-400 text-xs font-medium">{t('financialDistribution.scanFeeTotal')}</span>
           </div>
           <div className="text-2xl font-bold text-white">
             {formatCurrency(distribution.scan_fee_total_cents)}
@@ -145,7 +147,7 @@ export const FinancialDistribution: React.FC<FinancialDistributionProps> = ({
         <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
           <div className="flex items-center space-x-2 mb-2">
             <Wallet size={16} className="text-green-400" />
-            <span className="text-slate-400 text-xs font-medium">Vendor Net</span>
+            <span className="text-slate-400 text-xs font-medium">{t('financialDistribution.vendorNet')}</span>
           </div>
           <div className="text-2xl font-bold text-green-400">
             {formatCurrency(distribution.vendor_net_cents)}
@@ -158,28 +160,28 @@ export const FinancialDistribution: React.FC<FinancialDistributionProps> = ({
 
       {/* Breakdown */}
       <div className="border-t border-slate-700 pt-4">
-        <h4 className="text-sm font-semibold text-slate-300 mb-3">Distribution Breakdown</h4>
+        <h4 className="text-sm font-semibold text-slate-300 mb-3">{t('financialDistribution.distributionBreakdown')}</h4>
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-slate-400">Valid Platform Fee</span>
+            <span className="text-slate-400">{t('financialDistribution.validPlatformFee')}</span>
             <span className="text-white font-medium">
               {formatCurrency(distribution.breakdown.valid_pct_cents)}
             </span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-slate-400">Vendor Share</span>
+            <span className="text-slate-400">{t('financialDistribution.vendorShare')}</span>
             <span className="text-green-400 font-medium">
               {formatCurrency(distribution.breakdown.vendor_pct_cents)}
             </span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-slate-400">Pool Share</span>
+            <span className="text-slate-400">{t('financialDistribution.poolShare')}</span>
             <span className="text-white font-medium">
               {formatCurrency(distribution.breakdown.pool_pct_cents)}
             </span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-slate-400">Promoter Share</span>
+            <span className="text-slate-400">{t('financialDistribution.promoterShare')}</span>
             <span className="text-white font-medium">
               {formatCurrency(distribution.breakdown.promoter_pct_cents)}
             </span>

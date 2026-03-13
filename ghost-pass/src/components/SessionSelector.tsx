@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Zap } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { sessionApi } from '../lib/api';
 import { cn } from '@/lib/utils';
 import type { Session, SessionStatusResponse } from '../types';
@@ -10,29 +11,30 @@ interface SessionSelectorProps {
 }
 
 const SessionSelector: React.FC<SessionSelectorProps> = ({ onSessionCreated }) => {
+  const { t } = useTranslation();
   const [isCreating, setIsCreating] = useState(false);
   const [selectedType, setSelectedType] = useState<'30_seconds' | '3_minutes' | '10_minutes' | null>(null);
 
   const sessionOptions = [
     {
       type: '30_seconds' as const,
-      label: '30 Seconds',
+      label: t('session.30Seconds'),
       duration: 30,
-      description: 'Quick access session',
+      description: t('session.quickAccessSession'),
       icon: '⚡'
     },
     {
       type: '3_minutes' as const,
-      label: '3 Minutes',
+      label: t('session.3Minutes'),
       duration: 180,
-      description: 'Standard session',
+      description: t('session.standardSession'),
       icon: '⏱️'
     },
     {
       type: '10_minutes' as const,
-      label: '10 Minutes',
+      label: t('session.10Minutes'),
       duration: 600,
-      description: 'Extended session',
+      description: t('session.extendedSession'),
       icon: '🕐'
     }
   ];
@@ -61,8 +63,8 @@ const SessionSelector: React.FC<SessionSelectorProps> = ({ onSessionCreated }) =
         animate={{ opacity: 1, y: 0 }}
         className="text-center"
       >
-        <h1 className="text-2xl font-bold text-white mb-2">GHOSTPASS SESSION</h1>
-        <p className="text-cyan-400 font-medium text-sm">Choose your vaporization time</p>
+        <h1 className="text-2xl font-bold text-white mb-2">{t('session.ghostpassSession')}</h1>
+        <p className="text-cyan-400 font-medium text-sm">{t('session.chooseVaporizationTime')}</p>
         <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent mx-auto mt-4"></div>
       </motion.div>
 
@@ -130,12 +132,12 @@ const SessionSelector: React.FC<SessionSelectorProps> = ({ onSessionCreated }) =
           {isCreating ? (
             <>
               <div className="w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
-              <span>CREATING...</span>
+              <span>{t('common.processing')}</span>
             </>
           ) : (
             <>
               <Zap className="w-4 h-4" />
-              <span>START SESSION</span>
+              <span>{t('session.startSession')}</span>
             </>
           )}
         </motion.button>
@@ -151,8 +153,8 @@ const SessionSelector: React.FC<SessionSelectorProps> = ({ onSessionCreated }) =
           <div className="flex items-start space-x-3">
             <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
             <div className="text-sm">
-              <p className="font-semibold text-red-400 mb-1">Vaporization Protocol</p>
-              <p className="text-slate-400">Session vaporizes automatically after selected time. No reuse or extension possible. Choose wisely.</p>
+              <p className="font-semibold text-red-400 mb-1">{t('session.vaporizationProtocol')}</p>
+              <p className="text-slate-400">{t('session.vaporizationWarning')}</p>
             </div>
           </div>
         </div>

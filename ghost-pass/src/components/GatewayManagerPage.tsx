@@ -837,12 +837,12 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                                     <table className="w-full">
                                         <thead>
                                             <tr className="border-b border-red-500/20 bg-slate-800/50">
-                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Name</th>
-                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Number</th>
-                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Live Metrics</th>
-                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">GhostPass Accepted</th>
-                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Status</th>
-                                                <th className="text-right py-3 px-4 text-slate-300 font-semibold text-sm">Actions</th>
+                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">{t('gatewayManager.name')}</th>
+                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">{t('gatewayManager.number')}</th>
+                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">{t('gatewayManager.liveMetrics')}</th>
+                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">{t('gatewayManager.ghostPassAccepted')}</th>
+                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">{t('gatewayManager.status')}</th>
+                                                <th className="text-right py-3 px-4 text-slate-300 font-semibold text-sm">{t('gatewayManager.actions')}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -996,9 +996,9 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                         {!loadingAreas && internalAreas.length === 0 && (
                             <div className="glass-panel border-red-500/20 p-8 sm:p-12 text-center">
                                 <Building2 className="mx-auto text-slate-600 mb-4" size={48} />
-                                <p className="text-slate-400 text-base sm:text-lg mb-2">No internal areas configured</p>
+                                <p className="text-slate-400 text-base sm:text-lg mb-2">{t('gatewayManager.noInternalAreas')}</p>
                                 <p className="text-slate-500 text-xs sm:text-sm mb-6">
-                                    Add your first internal area to start managing venue locations
+                                    {t('gatewayManager.noInternalAreasDescription')}
                                 </p>
                                 <button
                                     onClick={handleOpenAddAreaModal}
@@ -1077,12 +1077,12 @@ const GatewayManagerPage: React.FC<GatewayManagerPageProps> = ({ onBack }) => {
                                     <table className="w-full">
                                         <thead>
                                             <tr className="border-b border-red-500/20 bg-slate-800/50">
-                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Name</th>
-                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Number</th>
-                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Live Metrics</th>
-                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Linked Area</th>
-                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">Status</th>
-                                                <th className="text-right py-3 px-4 text-slate-300 font-semibold text-sm">Actions</th>
+                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">{t('gatewayManager.name')}</th>
+                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">{t('gatewayManager.number')}</th>
+                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">{t('gatewayManager.liveMetrics')}</th>
+                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">{t('gatewayManager.linkedArea')}</th>
+                                                <th className="text-left py-3 px-4 text-slate-300 font-semibold text-sm">{t('gatewayManager.status')}</th>
+                                                <th className="text-right py-3 px-4 text-slate-300 font-semibold text-sm">{t('gatewayManager.actions')}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
