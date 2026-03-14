@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import WalletRecoveryCode from './WalletRecoveryCode';
 import { MenuBasedVendorPurchase } from './MenuBasedVendorPurchase';
 import TrustCenter from './TrustCenter';
+import VenueEventPicker from './VenueEventPicker';
 
 interface GhostPassWalletManagerProps {
   balance: number; // in cents
@@ -40,6 +41,9 @@ const GhostPassWalletManager: React.FC<GhostPassWalletManagerProps> = ({
   const [showRecoveryCode, setShowRecoveryCode] = useState(false);
   const [recoveryData, setRecoveryData] = useState<{ wallet_binding_id: string; recovery_code: string } | null>(null);
   const [showVendorPurchase, setShowVendorPurchase] = useState(false);
+  const [showVenuePicker, setShowVenuePicker] = useState(false);
+  const [selectedVenueId, setSelectedVenueId] = useState<string | undefined>();
+  const [selectedEventId, setSelectedEventId] = useState<string | undefined>();
   const [activeTab, setActiveTab] = useState<'wallet' | 'topup'>('wallet');
 
   useEffect(() => {
@@ -63,10 +67,9 @@ const GhostPassWalletManager: React.FC<GhostPassWalletManagerProps> = ({
     }
   }, []);
 
-  const initializeWallet = async () => {
+  const initializeWallet = () => {
     try {
-      setLoading(true);
-      await checkDeviceBinding();
+      checkDeviceBinding();
     } catch (error) {
       console.error('Failed to initialize wallet:', error);
       setError(t('ghostPass.manager.failedToInitialize'));
@@ -75,37 +78,21 @@ const GhostPassWalletManager: React.FC<GhostPassWalletManagerProps> = ({
     }
   };
 
-  const checkDeviceBinding = async () => {
-    try {
-      // Check if wallet exists in localStorage first
-      const walletBindingId = localStorage.getItem('wallet_binding_id');
-      
-      if (!walletBindingId) {
-        // No wallet created yet
-        setDeviceBinding(null);
-        return;
-      }
-      
-      // Check if device is already bound
-      const deviceFingerprint = localStorage.getItem('device_fingerprint');
-      const biometricHash = localStorage.getItem('biometric_hash');
-      
-      if (deviceFingerprint && biometricHash) {
-        const result = await walletApi.verifyDeviceBinding(deviceFingerprint, biometricHash);
-        if (result.verified) {
-          setDeviceBinding({
-            wallet_binding_id: result.wallet_binding_id,
-            ghost_pass_token: result.ghost_pass_token,
-            device_bound: true,
-            created_at: new Date().toISOString()
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Device binding check failed:', error);
-      // If verification fails, wallet doesn't exist yet
+  const checkDeviceBinding = () => {
+    const walletBindingId = localStorage.getItem('wallet_binding_id');
+
+    if (!walletBindingId) {
       setDeviceBinding(null);
+      return;
     }
+
+    // Restore binding state from localStorage — no API call needed
+    setDeviceBinding({
+      wallet_binding_id: walletBindingId,
+      ghost_pass_token: localStorage.getItem('ghost_pass_token') || '',
+      device_bound: true,
+      created_at: new Date().toISOString()
+    });
   };
 
   const bindDevice = async () => {
@@ -127,6 +114,7 @@ const GhostPassWalletManager: React.FC<GhostPassWalletManagerProps> = ({
       localStorage.setItem('device_fingerprint', deviceFingerprint);
       localStorage.setItem('biometric_hash', biometricHash);
       localStorage.setItem('wallet_binding_id', result.wallet_binding_id);
+      localStorage.setItem('ghost_pass_token', result.ghost_pass_token || '');
       
       setDeviceBinding({
         wallet_binding_id: result.wallet_binding_id,
@@ -262,7 +250,7 @@ const GhostPassWalletManager: React.FC<GhostPassWalletManagerProps> = ({
               )}
             >
               <WalletIcon className="w-4 h-4" />
-              Wallet
+              {t('ghostPass.manager.tabWallet')}
             </button>
             <button
               onClick={() => setActiveTab('topup')}
@@ -274,7 +262,7 @@ const GhostPassWalletManager: React.FC<GhostPassWalletManagerProps> = ({
               )}
             >
               <ShoppingCart className="w-4 h-4" />
-              Funding
+              {t('ghostPass.manager.tabFunding')}
             </button>
           </motion.div>
 
@@ -325,7 +313,7 @@ const GhostPassWalletManager: React.FC<GhostPassWalletManagerProps> = ({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.3 }}
-                    onClick={() => setShowVendorPurchase(true)}
+                    onClick={() => setShowVenuePicker(true)}
                     className="mt-4 flex items-center justify-center gap-2 px-4 py-2 mx-auto bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500 hover:border-cyan-400 rounded-lg text-cyan-400 hover:text-cyan-300 transition-all text-sm font-medium"
                   >
                     <ShoppingCart className="w-4 h-4" />
@@ -343,11 +331,24 @@ const GhostPassWalletManager: React.FC<GhostPassWalletManagerProps> = ({
         </>
       )}
 
+      {/* Venue/Event Picker */}
+      {showVenuePicker && (
+        <VenueEventPicker
+          onClose={() => setShowVenuePicker(false)}
+          onSelect={(venueId, eventId) => {
+            setSelectedVenueId(venueId);
+            setSelectedEventId(eventId);
+            setShowVenuePicker(false);
+            setShowVendorPurchase(true);
+          }}
+        />
+      )}
+
       {/* Vendor Purchase Modal */}
       {showVendorPurchase && (
         <MenuBasedVendorPurchase
-          venueId={undefined}
-          eventId={undefined}
+          venueId={selectedVenueId}
+          eventId={selectedEventId}
           onClose={() => setShowVendorPurchase(false)}
           onSuccess={() => {
             if (onBalanceUpdate) {

@@ -1,0 +1,7 @@
+{
+  "selectVenue": "Seleccionar Lugar",
+  "eventsAt": "Eventos en {{name}}",
+  "noVenues": "No hay lugares disponibles",
+  "generalVenueMenu": "Menú General del Lugar",
+  "loading": "Cargando..."
+}

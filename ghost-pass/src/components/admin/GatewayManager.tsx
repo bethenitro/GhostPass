@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MapPin, Plus, Edit2, Trash2, Loader2, Activity, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { gatewayApi } from '@/lib/api';
@@ -26,6 +27,7 @@ interface EntryPoint {
 }
 
 export const GatewayManager: React.FC<GatewayManagerProps> = ({ venueId, eventId: propEventId }) => {
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const [entryPoints, setEntryPoints] = useState<EntryPoint[]>([]);
   const [events, setEvents] = useState<any[]>([]);
@@ -46,7 +48,6 @@ export const GatewayManager: React.FC<GatewayManagerProps> = ({ venueId, eventId
   const statusOptions: Array<'ENABLED' | 'DISABLED'> = ['ENABLED', 'DISABLED'];
 
   useEffect(() => {
-    // Load events for the venue
     if (venueId) {
       eventApi.list({ venue_id: venueId })
         .then((res: { data: any[] }) => setEvents(res.data || []))
@@ -67,9 +68,8 @@ export const GatewayManager: React.FC<GatewayManagerProps> = ({ venueId, eventId
       const points = await gatewayApi.getEntryPoints(params);
       setEntryPoints(points || []);
     } catch (error: any) {
-      console.error('Failed to load entry points:', error);
       if (error.response?.status !== 401) {
-        showToast(error.response?.data?.error || error.response?.data?.detail || 'Failed to load entry points', 'error');
+        showToast(error.response?.data?.error || t('gateway.failedToLoad'), 'error');
       }
     } finally {
       setLoading(false);
@@ -80,12 +80,11 @@ export const GatewayManager: React.FC<GatewayManagerProps> = ({ venueId, eventId
     e.preventDefault();
 
     if (!formData.name.trim()) {
-      showToast('Entry point name is required', 'error');
+      showToast(t('gateway.nameRequired'), 'error');
       return;
     }
-
     if (!formData.employee_name.trim() || !formData.employee_id.trim()) {
-      showToast('Employee name and ID are required', 'error');
+      showToast(t('gateway.employeeRequired'), 'error');
       return;
     }
 
@@ -93,88 +92,69 @@ export const GatewayManager: React.FC<GatewayManagerProps> = ({ venueId, eventId
     try {
       if (editingPoint) {
         await gatewayApi.updateEntryPoint(editingPoint.id, formData);
-        showToast('Entry point updated successfully', 'success');
+        showToast(t('gateway.updated'), 'success');
       } else {
         await gatewayApi.createEntryPoint({
           ...formData,
           ...(venueId ? { venue_id: venueId } : {}),
           ...(selectedEventId ? { event_id: selectedEventId } : {}),
         });
-        showToast('Entry point created successfully', 'success');
+        showToast(t('gateway.created'), 'success');
       }
       setShowForm(false);
       resetForm();
       loadEntryPoints();
     } catch (error: any) {
-      console.error('Failed to save entry point:', error);
-      showToast(error.response?.data?.error || error.response?.data?.detail || 'Failed to save entry point', 'error');
+      showToast(error.response?.data?.error || t('gateway.failedToSave'), 'error');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = async (pointId: string) => {
-    if (!confirm('Are you sure you want to delete this entry point?')) return;
-
-    // Optimistic update
+    if (!confirm(t('gateway.deleteConfirm'))) return;
     setEntryPoints(prev => prev.filter(p => p.id !== pointId));
-
     try {
       await gatewayApi.deleteEntryPoint(pointId);
-      showToast('Entry point deleted successfully', 'success');
+      showToast(t('gateway.deleted'), 'success');
     } catch (error: any) {
-      showToast(error.response?.data?.error || 'Failed to delete entry point', 'error');
-      // Revert
+      showToast(error.response?.data?.error || t('gateway.failedToDelete'), 'error');
       loadEntryPoints();
     }
   };
 
   const resetForm = () => {
-    setFormData({
-      name: '',
-      status: 'ENABLED',
-      employee_name: '',
-      employee_id: '',
-      visual_identifier: '',
-    });
+    setFormData({ name: '', status: 'ENABLED', employee_name: '', employee_id: '', visual_identifier: '' });
     setEditingPoint(null);
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
-      </div>
-    );
+    return <div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 text-purple-400 animate-spin" /></div>;
   }
 
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <h2 className="text-lg sm:text-xl font-bold text-white">Gateway Entry Points</h2>
+        <h2 className="text-lg sm:text-xl font-bold text-white">{t('gateway.entryPoints')}</h2>
         <button
-          onClick={() => {
-            resetForm();
-            setShowForm(!showForm);
-          }}
+          onClick={() => { resetForm(); setShowForm(!showForm); }}
           className="flex items-center justify-center space-x-2 px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/50 rounded-lg text-purple-400 transition-all min-h-[44px] w-full sm:w-auto"
         >
           <Plus className="w-4 h-4" />
-          <span className="text-sm">{showForm ? 'Cancel' : 'Add Entry Point'}</span>
+          <span className="text-sm">{showForm ? t('gateway.cancel') : t('gateway.addEntryPoint')}</span>
         </button>
       </div>
 
-      {/* Event Filter */}
       {events.length > 0 && (
         <div className="flex items-center gap-3 p-3 bg-slate-700/30 border border-slate-600 rounded-lg">
           <Calendar className="w-4 h-4 text-purple-400 flex-shrink-0" />
-          <label className="text-sm text-slate-300 whitespace-nowrap">Filter by Event:</label>
+          <label className="text-sm text-slate-300 whitespace-nowrap">{t('gateway.filterByEvent')}</label>
           <select
             value={selectedEventId}
             onChange={e => setSelectedEventId(e.target.value)}
             className="flex-1 px-3 py-1.5 bg-slate-900/50 border border-slate-600 rounded-lg text-white text-sm focus:border-purple-500/50 focus:outline-none"
           >
-            <option value="">All Events (Venue-wide)</option>
+            <option value="">{t('gateway.allEvents')}</option>
             {events.map(ev => (
               <option key={ev.event_id || ev.id} value={ev.event_id || ev.id}>
                 {ev.event_name || ev.name}
@@ -187,30 +167,29 @@ export const GatewayManager: React.FC<GatewayManagerProps> = ({ venueId, eventId
       {showForm && (
         <div className="bg-slate-700/30 border border-slate-600 rounded-lg p-3 sm:p-4 md:p-6">
           <h3 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">
-            {editingPoint ? 'Edit Entry Point' : 'Create New Entry Point'}
+            {editingPoint ? t('gateway.editEntryPoint') : t('gateway.createEntryPoint')}
           </h3>
           {selectedEventId && (
             <p className="text-xs text-purple-400 mb-3 bg-purple-500/10 border border-purple-500/20 rounded px-3 py-1.5">
-              📌 This entry point will be scoped to the selected event
+              📌 {t('gateway.eventScoped')}
             </p>
           )}
           <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1">
-                  Name <span className="text-red-400">*</span>
+                  {t('gateway.name')} <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
-                  placeholder="Main Entrance"
+                  placeholder={t('gateway.namePlaceholder')}
                 />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">Status</label>
+                <label className="block text-sm font-medium text-slate-300 mb-1">{t('gateway.status')}</label>
                 <select
                   value={formData.status}
                   onChange={(e) => setFormData({ ...formData, status: e.target.value as 'ENABLED' | 'DISABLED' })}
@@ -218,51 +197,45 @@ export const GatewayManager: React.FC<GatewayManagerProps> = ({ venueId, eventId
                 >
                   {statusOptions.map((status) => (
                     <option key={status} value={status}>
-                      {status}
+                      {status === 'ENABLED' ? t('gateway.statusEnabled') : t('gateway.statusDisabled')}
                     </option>
                   ))}
                 </select>
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1">
-                  Employee Name <span className="text-red-400">*</span>
+                  {t('gateway.employeeName')} <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
                   value={formData.employee_name}
                   onChange={(e) => setFormData({ ...formData, employee_name: e.target.value })}
                   className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
-                  placeholder="John Doe"
+                  placeholder={t('gateway.employeeNamePlaceholder')}
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1">
-                  Employee ID <span className="text-red-400">*</span>
+                  {t('gateway.employeeId')} <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
                   value={formData.employee_id}
                   onChange={(e) => setFormData({ ...formData, employee_id: e.target.value })}
                   className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
-                  placeholder="EMP001"
+                  placeholder={t('gateway.employeeIdPlaceholder')}
                 />
               </div>
             </div>
-
             <button
               type="submit"
               disabled={submitting}
-              className="w-full bg-purple-500/20 border border-purple-500/50 text-purple-400 py-3 px-4 rounded-lg hover:bg-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all flex items-center justify-center gap-2 min-h-[44px] text-sm sm:text-base"
+              className="w-full bg-purple-500/20 border border-purple-500/50 text-purple-400 py-3 px-4 rounded-lg hover:bg-purple-500/30 disabled:opacity-50 font-medium transition-all flex items-center justify-center gap-2 min-h-[44px] text-sm sm:text-base"
             >
               {submitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Saving...</span>
-                </>
+                <><Loader2 className="w-4 h-4 animate-spin" /><span>{t('gateway.saving')}</span></>
               ) : (
-                <span>{editingPoint ? 'Update Entry Point' : 'Create Entry Point'}</span>
+                <span>{editingPoint ? t('gateway.updateEntryPoint') : t('gateway.createEntryPoint')}</span>
               )}
             </button>
           </form>
@@ -272,18 +245,15 @@ export const GatewayManager: React.FC<GatewayManagerProps> = ({ venueId, eventId
       {entryPoints.length === 0 && !showForm ? (
         <div className="text-center py-8 sm:py-12">
           <MapPin className="w-12 h-12 sm:w-16 sm:h-16 text-slate-600 mx-auto mb-3 sm:mb-4" />
-          <p className="text-slate-400 text-sm sm:text-base">No entry points configured</p>
+          <p className="text-slate-400 text-sm sm:text-base">{t('gateway.noEntryPoints')}</p>
           <p className="text-slate-500 text-xs sm:text-sm mt-2">
-            {selectedEventId ? 'No entry points for this event yet' : 'Create your first entry point to start tracking'}
+            {selectedEventId ? t('gateway.noEntryPointsEvent') : t('gateway.noEntryPointsHint')}
           </p>
         </div>
       ) : (
         <div className="grid gap-3 sm:gap-4">
           {entryPoints.map((point) => (
-            <div
-              key={point.id}
-              className="bg-slate-700/30 border border-slate-600 rounded-lg p-3 sm:p-4 hover:border-purple-500/30 transition-colors"
-            >
+            <div key={point.id} className="bg-slate-700/30 border border-slate-600 rounded-lg p-3 sm:p-4 hover:border-purple-500/30 transition-colors">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-2 sm:space-x-3 flex-wrap">
@@ -295,30 +265,30 @@ export const GatewayManager: React.FC<GatewayManagerProps> = ({ venueId, eventId
                         point.status === 'DISABLED' ? 'bg-red-500/20 text-red-400' :
                           'bg-amber-500/20 text-amber-400'
                     )}>
-                      {point.status}
+                      {point.status === 'ENABLED' ? t('gateway.statusEnabled') : t('gateway.statusDisabled')}
                     </span>
                     {point.event_id && (
                       <span className="px-2 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400 flex-shrink-0">
-                        Event-specific
+                        {t('gateway.eventSpecific')}
                       </span>
                     )}
                   </div>
                   <p className="text-slate-400 text-xs sm:text-sm mt-1">{point.type.replace(/_/g, ' ')}</p>
                   {point.employee_name && (
                     <p className="text-slate-500 text-xs mt-1">
-                      Employee: {point.employee_name} ({point.employee_id})
+                      {t('gateway.employee')} {point.employee_name} ({point.employee_id})
                     </p>
                   )}
                   {point.metrics && (
                     <div className="flex items-center space-x-3 sm:space-x-4 mt-2 sm:mt-3 text-xs">
                       <div className="flex items-center space-x-1">
                         <Activity className="w-3 h-3 sm:w-4 sm:h-4 text-cyan-400" />
-                        <span className="text-slate-400">Today:</span>
+                        <span className="text-slate-400">{t('gateway.today')}</span>
                         <span className="text-cyan-400 font-medium">{point.metrics.today_scans}</span>
                       </div>
                       <div className="flex items-center space-x-1">
                         <Activity className="w-3 h-3 sm:w-4 sm:h-4 text-purple-400" />
-                        <span className="text-slate-400">Total:</span>
+                        <span className="text-slate-400">{t('gateway.total')}</span>
                         <span className="text-purple-400 font-medium">{point.metrics.total_scans}</span>
                       </div>
                     </div>
@@ -328,13 +298,7 @@ export const GatewayManager: React.FC<GatewayManagerProps> = ({ venueId, eventId
                   <button
                     onClick={() => {
                       setEditingPoint(point);
-                      setFormData({
-                        name: point.name,
-                        status: point.status,
-                        employee_name: point.employee_name || '',
-                        employee_id: point.employee_id || '',
-                        visual_identifier: '',
-                      });
+                      setFormData({ name: point.name, status: point.status, employee_name: point.employee_name || '', employee_id: point.employee_id || '', visual_identifier: '' });
                       setShowForm(true);
                     }}
                     className="flex-1 sm:flex-none p-2 hover:bg-slate-600/50 rounded-lg transition-all min-h-[44px] flex items-center justify-center"

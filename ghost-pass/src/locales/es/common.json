@@ -14,5 +14,10 @@
   "success": "Éxito",
   "admin": "Admin",
   "status": "Estado",
-  "total": "Total"
+  "total": "Total",
+  "refresh": "Actualizar",
+  "logout": "Cerrar sesión",
+  "optional": "Opcional",
+  "approve": "Aprobar",
+  "reject": "Rechazar"
 }

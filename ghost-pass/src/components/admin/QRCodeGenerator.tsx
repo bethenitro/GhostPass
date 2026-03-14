@@ -129,14 +129,14 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
 
       const authToken = localStorage.getItem('auth_token');
       if (!authToken) {
-        showToast('Please login first', 'error');
+        showToast(t('qr.loginRequired'), 'error');
         setLoading(false);
         return;
       }
 
       // Validate that event is selected (required)
       if (!formData.event_id) {
-        showToast('Please select an event', 'error');
+        showToast(t('qr.selectEventRequired'), 'error');
         setLoading(false);
         return;
       }
@@ -290,7 +290,7 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div>
             <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">
-              {t('qr.event', 'Event')} <span className="text-red-400">*</span>
+              {t('qr.event')} <span className="text-red-400">*</span>
             </label>
             <select
               value={formData.event_id}
@@ -298,7 +298,7 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
               className="w-full px-3 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-blue-500 focus:outline-none min-h-[44px]"
               disabled={loadingEvents}
             >
-              <option value="">{loadingEvents ? 'Loading events...' : 'Select an event (required)'}</option>
+              <option value="">{loadingEvents ? t('qr.loadingEvents') : t('qr.selectEvent')}</option>
               {events.map((event) => (
                 <option key={event.id} value={event.id}>
                   {event.name || event.event_name}
@@ -309,7 +309,7 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
 
           <div>
             <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">
-              {t('qr.venue', 'Venue')} <span className="text-slate-500">(Optional)</span>
+              {t('qr.venue')} <span className="text-slate-500">({t('common.optional', 'Optional')})</span>
             </label>
             <select
               value={formData.venue_id}
@@ -317,7 +317,7 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
               className="w-full px-3 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-blue-500 focus:outline-none min-h-[44px]"
               disabled={loadingVenues}
             >
-              <option value="">{loadingVenues ? 'Loading venues...' : 'All venues'}</option>
+              <option value="">{loadingVenues ? t('qr.loadingVenues') : t('qr.allVenues')}</option>
               {venues.map((venue) => (
                 <option key={venue.id} value={venue.id}>
                   {venue.name}
@@ -362,7 +362,7 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
               className="w-full px-3 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-blue-500 focus:outline-none min-h-[44px]"
               disabled={loadingStations}
             >
-              <option value="">{loadingStations ? 'Loading stations...' : 'Select station or skip for auto-gen'}</option>
+              <option value="">{loadingStations ? t('qr.loadingStations') : t('qr.selectStation')}</option>
               {stations.map((station) => (
                 <option key={station.id} value={station.id}>
                   {station.name} {station.number ? `(#${station.number})` : ''} ({station.type})
@@ -379,8 +379,8 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
               className="w-full px-3 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-blue-500 focus:outline-none min-h-[44px]"
             >
               <option value={1}>{t('qr.tier1', 'Tier 1 - Manual Log')}</option>
-              <option value={2}>Tier 2 - Footprint Real ID</option>
-              <option value={3}>Tier 3 - Footprint Deep Check</option>
+              <option value={2}>{t('qr.tier2')}</option>
+              <option value={3}>{t('qr.tier3')}</option>
             </select>
           </div>
 
@@ -392,7 +392,7 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
               className="w-full px-3 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-blue-500 focus:outline-none min-h-[44px]"
               disabled={loadingRevenueProfiles}
             >
-              <option value="">{loadingRevenueProfiles ? 'Loading...' : 'Select profile (optional)'}</option>
+              <option value="">{loadingRevenueProfiles ? t('qr.loadingProfiles') : t('qr.selectProfile')}</option>
               {revenueProfiles.map((profile) => (
                 <option key={profile.id} value={profile.id}>
                   {profile.profile_name} (Vendor: {profile.vendor_percentage}%)
@@ -409,7 +409,7 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
               className="w-full px-3 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-blue-500 focus:outline-none min-h-[44px]"
               disabled={loadingTaxProfiles}
             >
-              <option value="">{loadingTaxProfiles ? 'Loading...' : 'Select profile (optional)'}</option>
+              <option value="">{loadingTaxProfiles ? t('qr.loadingProfiles') : t('qr.selectProfile')}</option>
               {taxProfiles.map((profile) => (
                 <option key={profile.id} value={profile.id}>
                   {profile.profile_name} ({parseFloat(profile.state_tax_percentage) + parseFloat(profile.local_tax_percentage)}% Total)
@@ -448,7 +448,7 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
             <div className="p-2 bg-emerald-500/10 border border-emerald-500/30 rounded">
               <p className="text-xs sm:text-sm text-emerald-400 flex items-center justify-center gap-2">
                 <CheckCircle className="w-3 h-3" />
-                QR code is scanner-ready
+                {t('qr.scannerReady')}
               </p>
             </div>
           </div>

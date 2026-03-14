@@ -1,0 +1,19 @@
+{
+  "title": "Analytics",
+  "dashboard": "Analytics Dashboard",
+  "revenue": "Total Revenue",
+  "transactions": "Total Transactions",
+  "users": "Total Users",
+  "refresh": "Refresh",
+  "refreshed": "Analytics refreshed",
+  "failedToLoad": "Failed to load analytics",
+  "entryStatistics": "Entry Statistics",
+  "initialEntries": "Initial Entries",
+  "reentries": "Re-entries",
+  "reentryRate": "Re-entry Rate",
+  "performance": "Performance",
+  "avgTransaction": "Avg Transaction",
+  "revenuePerUser": "Revenue per User",
+  "vsLastPeriod": "vs last period",
+  "realtime": "Real-time analytics • Auto-refreshes every 30 seconds • Last updated:"
+}

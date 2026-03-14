@@ -20,7 +20,7 @@ const Layout: React.FC<LayoutProps> = ({
   const { t } = useTranslation();
 
   const tabs = [
-    { id: 'wallet' as const, icon: Wallet, label: 'Wallet' },
+    { id: 'wallet' as const, icon: Wallet, label: t('nav.wallet') },
     { id: 'tickets' as const, icon: Ticket, label: t('nav.tickets') },
     { id: 'session' as const, icon: Zap, label: t('nav.session') },
     { id: 'history' as const, icon: History, label: t('nav.history') },

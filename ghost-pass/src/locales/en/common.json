@@ -14,5 +14,10 @@
   "success": "Success",
   "admin": "Admin",
   "status": "Status",
-  "total": "Total"
+  "total": "Total",
+  "refresh": "Refresh",
+  "logout": "Logout",
+  "optional": "Optional",
+  "approve": "Approve",
+  "reject": "Reject"
 }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Plus, Minus, ScanLine, CheckCircle, Receipt, Loader2, Target, AlertCircle } from 'lucide-react';
 import { Html5Qrcode, Html5QrcodeScannerState } from 'html5-qrcode';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../ui/toast';
 import { cn } from '@/lib/utils';
 
@@ -23,6 +24,7 @@ interface StaffPOSProps {
 }
 
 const StaffPOS: React.FC<StaffPOSProps> = ({ user }) => {
+    const { t } = useTranslation();
     const { showToast } = useToast();
     const [cart, setCart] = useState<CartItem[]>([]);
     const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -63,7 +65,7 @@ const StaffPOS: React.FC<StaffPOSProps> = ({ user }) => {
                 setMenuItems(Array.isArray(data) ? data : []);
             } catch (err) {
                 console.error('Failed to fetch menu:', err);
-                setMenuError('Could not load menu items.');
+                setMenuError(t('staffPortal.menuError'));
             } finally {
                 setMenuLoading(false);
             }
@@ -125,7 +127,7 @@ const StaffPOS: React.FC<StaffPOSProps> = ({ user }) => {
             );
         } catch (err) {
             console.error("Scanner failed to start", err);
-            showToast("Camera access failed. Please check permissions.", "error");
+            showToast(t('staffPortal.cameraFailed'), "error");
             setShowScanner(false);
             setIsCharging(false);
         }
@@ -190,7 +192,7 @@ const StaffPOS: React.FC<StaffPOSProps> = ({ user }) => {
 
         } catch (error) {
             console.error(error);
-            showToast(error instanceof Error ? error.message : "Payment processing failed", "error");
+            showToast(error instanceof Error ? error.message : t('staffPortal.paymentFailed'), "error");
             setIsCharging(false);
         } finally {
             setIsProcessingPayment(false);
@@ -216,7 +218,7 @@ const StaffPOS: React.FC<StaffPOSProps> = ({ user }) => {
             {/* Menu Area */}
             <div className="lg:col-span-2 bg-slate-900/50 border border-slate-700/50 rounded-xl p-4 overflow-y-auto">
                 <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-bold text-white">Menu &middot; {user.role}</h2>
+                <h2 className="text-xl font-bold text-white">{t('staffPortal.menu')} &middot; {user.role}</h2>
                 </div>
 
                 {menuLoading ? (
@@ -227,18 +229,15 @@ const StaffPOS: React.FC<StaffPOSProps> = ({ user }) => {
                     <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
                         <AlertCircle className="w-10 h-10 text-red-400" />
                         <p className="text-slate-400">{menuError}</p>
-                        <button
-                            onClick={() => window.location.reload()}
-                            className="px-4 py-2 text-sm bg-slate-800 hover:bg-slate-700 text-white rounded-lg border border-slate-700"
-                        >
-                            Retry
+                        <button onClick={() => window.location.reload()} className="px-4 py-2 text-sm bg-slate-800 hover:bg-slate-700 text-white rounded-lg border border-slate-700">
+                            {t('staffPortal.retry')}
                         </button>
                     </div>
                 ) : menuItems.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center gap-3">
                         <Receipt className="w-12 h-12 text-slate-600" />
-                        <p className="text-slate-400 text-lg font-medium">No menu items configured</p>
-                        <p className="text-slate-500 text-sm">Ask your venue admin to add items to the {user.role} menu.</p>
+                        <p className="text-slate-400 text-lg font-medium">{t('staffPortal.noMenuItems')}</p>
+                        <p className="text-slate-500 text-sm">{t('staffPortal.noMenuHint', { role: user.role })}</p>
                     </div>
                 ) : (
                     <div className="space-y-6">
@@ -289,25 +288,22 @@ const StaffPOS: React.FC<StaffPOSProps> = ({ user }) => {
                             <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mb-6">
                                 <CheckCircle className="w-10 h-10 text-emerald-400" />
                             </div>
-                            <h2 className="text-2xl font-bold text-white mb-2">Payment Approved</h2>
+                            <h2 className="text-2xl font-bold text-white mb-2">{t('staffPortal.paymentApproved')}</h2>
                             <p className="text-emerald-400 text-3xl font-bold mb-6">
                                 ${(scanResult.amount / 100).toFixed(2)}
                             </p>
                             <div className="bg-slate-800/50 w-full p-4 rounded-lg mb-8 border border-slate-700">
                                 <div className="flex justify-between items-center text-sm mb-2">
-                                    <span className="text-slate-400">Receipt ID</span>
+                                    <span className="text-slate-400">{t('staffPortal.receiptId')}</span>
                                     <span className="text-white font-mono">{scanResult.receipt_id}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-sm">
-                                    <span className="text-slate-400">Cashier</span>
+                                    <span className="text-slate-400">{t('staffPortal.cashier')}</span>
                                     <span className="text-white">{user.name || user.email}</span>
                                 </div>
                             </div>
-                            <button
-                                onClick={resetPos}
-                                className="w-full py-4 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-bold transition-colors"
-                            >
-                                New Order
+                            <button onClick={resetPos} className="w-full py-4 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-bold transition-colors">
+                                {t('staffPortal.newOrder')}
                             </button>
                         </motion.div>
                     )}
@@ -328,12 +324,9 @@ const StaffPOS: React.FC<StaffPOSProps> = ({ user }) => {
                                 </div>
                             </div>
                             <div className="p-4 bg-slate-900 border-t border-slate-800 text-center relative z-20">
-                                <p className="text-cyan-400 font-bold mb-4">Scan Patron GhostPass QR</p>
-                                <button
-                                    onClick={() => { setShowScanner(false); setIsCharging(false); }}
-                                    className="px-6 py-2 bg-slate-800 rounded-lg text-white text-sm"
-                                >
-                                    Cancel Scan
+                                <p className="text-cyan-400 font-bold mb-4">{t('staffPortal.scanPatron')}</p>
+                                <button onClick={() => { setShowScanner(false); setIsCharging(false); }} className="px-6 py-2 bg-slate-800 rounded-lg text-white text-sm">
+                                    {t('staffPortal.cancelScan')}
                                 </button>
                             </div>
                         </motion.div>
@@ -348,7 +341,7 @@ const StaffPOS: React.FC<StaffPOSProps> = ({ user }) => {
                             className="absolute inset-0 z-20 bg-slate-900/90 backdrop-blur-sm flex flex-col items-center justify-center"
                         >
                             <Loader2 className="w-12 h-12 text-cyan-500 animate-spin mb-4" />
-                            <p className="text-white font-medium animate-pulse">Processing Payment...</p>
+                            <p className="text-white font-medium animate-pulse">{t('staffPortal.processingPayment')}</p>
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -356,11 +349,11 @@ const StaffPOS: React.FC<StaffPOSProps> = ({ user }) => {
                 <div className="p-4 border-b border-slate-700 bg-slate-800/50 flex items-center justify-between">
                     <div className="flex items-center space-x-2 text-white">
                         <ShoppingCart className="w-5 h-5" />
-                        <h3 className="font-bold">Current Order</h3>
+                        <h3 className="font-bold">{t('staffPortal.currentOrder')}</h3>
                     </div>
                     {cart.length > 0 && (
                         <button onClick={() => setCart([])} className="text-sm text-red-400 hover:text-red-300">
-                            Clear
+                            {t('staffPortal.clearCart')}
                         </button>
                     )}
                 </div>
@@ -369,7 +362,7 @@ const StaffPOS: React.FC<StaffPOSProps> = ({ user }) => {
                     {cart.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center text-slate-500 space-y-2">
                             <Receipt className="w-12 h-12 opacity-20" />
-                            <p>No items in cart</p>
+                            <p>{t('staffPortal.emptyCart')}</p>
                         </div>
                     ) : (
                         cart.map(item => (
@@ -394,15 +387,15 @@ const StaffPOS: React.FC<StaffPOSProps> = ({ user }) => {
 
                 <div className="p-4 bg-slate-800/80 border-t border-slate-700 space-y-2">
                     <div className="flex justify-between text-slate-400 text-sm">
-                        <span>Subtotal</span>
+                        <span>{t('staffPortal.subtotal')}</span>
                         <span>${(subtotal / 100).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-slate-400 text-sm">
-                        <span>Tax (8%)</span>
+                        <span>{t('staffPortal.tax')}</span>
                         <span>${(tax / 100).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-white text-lg font-bold pt-2 border-t border-slate-700">
-                        <span>Total</span>
+                        <span>{t('staffPortal.total')}</span>
                         <span className="text-emerald-400">${(total / 100).toFixed(2)}</span>
                     </div>
                 </div>
@@ -419,7 +412,7 @@ const StaffPOS: React.FC<StaffPOSProps> = ({ user }) => {
                         )}
                     >
                         <ScanLine className="w-5 h-5" />
-                        <span>Charge ${(total / 100).toFixed(2)}</span>
+                        <span>{t('staffPortal.charge', { amount: (total / 100).toFixed(2) })}</span>
                     </button>
                 </div>
             </div>

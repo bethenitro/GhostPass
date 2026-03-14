@@ -44,15 +44,15 @@ export const VenueAdminCommandCenter: React.FC<VenueAdminCommandCenterProps> = (
   const tabs = [
     { id: 'analytics' as const, label: t('analytics.title'), icon: BarChart3, color: 'cyan' },
     { id: 'events' as const, label: t('events.myEvents'), icon: Calendar, color: 'purple' },
-    { id: 'tickets' as const, label: 'Ticket Types', icon: Ticket, color: 'emerald' },
-    { id: 'gateway' as const, label: 'Gateway', icon: MapPin, color: 'blue' },
-    { id: 'qr' as const, label: 'QR Codes', icon: Settings, color: 'indigo' },
-    { id: 'config' as const, label: 'Entry Config', icon: Settings, color: 'amber' },
+    { id: 'tickets' as const, label: t('ticketTypes.title'), icon: Ticket, color: 'emerald' },
+    { id: 'gateway' as const, label: t('gateway.title'), icon: MapPin, color: 'blue' },
+    { id: 'qr' as const, label: t('qr.title'), icon: Settings, color: 'indigo' },
+    { id: 'config' as const, label: t('entryConfig.title'), icon: Settings, color: 'amber' },
     { id: 'stations' as const, label: t('stations.title'), icon: Store, color: 'blue' },
     { id: 'menu' as const, label: t('menu.title'), icon: LayoutGrid, color: 'pink' },
     { id: 'ledger' as const, label: t('transactionLedger.title'), icon: FileText, color: 'orange' },
-    { id: 'staff' as const, label: t('staff.title'), icon: Users, color: 'indigo' },
-    { id: 'payouts' as const, label: t('payouts.title'), icon: DollarSign, color: 'green' },
+    { id: 'staff' as const, label: t('staffManager.title'), icon: Users, color: 'indigo' },
+    { id: 'payouts' as const, label: t('payoutsManager.title'), icon: DollarSign, color: 'green' },
   ];
 
   return (
@@ -113,7 +113,7 @@ export const VenueAdminCommandCenter: React.FC<VenueAdminCommandCenterProps> = (
             >
               <LogOut className="w-4 h-4" />
               <span className="hidden sm:inline">{t('common.logout')}</span>
-              <span className="sm:hidden">Logout</span>
+              <span className="sm:hidden">{t('common.logout')}</span>
             </button>
           </div>
         </motion.div>

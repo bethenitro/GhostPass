@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Store, LogOut, Target, ShoppingCart, BarChart3 } from 'lucide-react';
+import { Store, LogOut, Target, ShoppingCart, BarChart3, Wallet } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { authApi } from '@/lib/api';
+import { LanguageSwitcher } from '../LanguageSwitcher';
 import GhostPassScanner from '../GhostPassScanner';
 import StaffPOS from './StaffPOS';
 import ManagerDashboard from './ManagerDashboard';
@@ -11,6 +13,7 @@ interface StaffDashboardRouterProps {
 }
 
 export const StaffDashboardRouter: React.FC<StaffDashboardRouterProps> = ({ user }) => {
+    const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<'scan' | 'pos' | 'dashboard'>(
         user.role === 'DOOR' ? 'scan' : ['BAR', 'CONCESSION', 'MERCH'].includes(user.role) ? 'pos' : 'dashboard'
     );
@@ -22,15 +25,14 @@ export const StaffDashboardRouter: React.FC<StaffDashboardRouterProps> = ({ user
 
     const tabs = [];
 
-    // Decide which tabs are available based on role
     if (['DOOR', 'MANAGER', 'VENUE_ADMIN', 'ADMIN'].includes(user.role)) {
-        tabs.push({ id: 'scan' as const, label: 'Scanner', icon: Target, color: 'cyan' });
+        tabs.push({ id: 'scan' as const, label: t('staffPortal.scanner'), icon: Target, color: 'cyan' });
     }
     if (['BAR', 'CONCESSION', 'MERCH', 'MANAGER', 'VENUE_ADMIN', 'ADMIN'].includes(user.role)) {
-        tabs.push({ id: 'pos' as const, label: 'Point of Sale', icon: ShoppingCart, color: 'purple' });
+        tabs.push({ id: 'pos' as const, label: t('staffPortal.pointOfSale'), icon: ShoppingCart, color: 'purple' });
     }
     if (['MANAGER', 'VENUE_ADMIN', 'ADMIN'].includes(user.role)) {
-        tabs.push({ id: 'dashboard' as const, label: 'Dashboard', icon: BarChart3, color: 'emerald' });
+        tabs.push({ id: 'dashboard' as const, label: t('staffPortal.dashboard'), icon: BarChart3, color: 'emerald' });
     }
 
     return (
@@ -43,25 +45,36 @@ export const StaffDashboardRouter: React.FC<StaffDashboardRouterProps> = ({ user
                             <Store className="w-4 h-4 text-cyan-400" />
                         </div>
                         <div>
-                            <h1 className="text-base font-bold text-white">Staff Portal</h1>
+                            <h1 className="text-base font-bold text-white">{t('staffPortal.title')}</h1>
                             <p className="text-[10px] text-cyan-400 uppercase tracking-wider">{user.role}</p>
                         </div>
                     </div>
 
-                    <button
-                        onClick={handleLogout}
-                        className="flex items-center space-x-2 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg border border-red-500/30 transition-colors text-sm font-medium"
-                    >
-                        <LogOut className="w-4 h-4" />
-                        <span className="hidden sm:inline">Logout</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <LanguageSwitcher showLabel={false} className="sm:hidden" />
+                        <LanguageSwitcher showLabel={true} className="hidden sm:flex" />
+                        <button
+                            onClick={() => { window.location.hash = '#/wallet'; }}
+                            className="flex items-center space-x-2 px-3 py-1.5 bg-slate-700/50 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-600 transition-colors text-sm font-medium"
+                        >
+                            <Wallet className="w-4 h-4" />
+                            <span className="hidden sm:inline">{t('staffPortal.backToWallet')}</span>
+                        </button>
+                        <button
+                            onClick={handleLogout}
+                            className="flex items-center space-x-2 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg border border-red-500/30 transition-colors text-sm font-medium"
+                        >
+                            <LogOut className="w-4 h-4" />
+                            <span className="hidden sm:inline">{t('common.logout')}</span>
+                        </button>
+                    </div>
                 </div>
             </header>
 
             {/* Main Content Area */}
             <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-6">
 
-                {/* Navigation Tabs (if multiple available) */}
+                {/* Navigation Tabs */}
                 {tabs.length > 1 && (
                     <div className="flex space-x-2 mb-6 overflow-x-auto pb-2">
                         {tabs.map((tab) => {
@@ -70,11 +83,11 @@ export const StaffDashboardRouter: React.FC<StaffDashboardRouterProps> = ({ user
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
-                                    className={`flex items-center space-x-2 px-4 py-3 rounded-lg font-medium transition-all whitespace-nowrap \${
-                    activeTab === tab.id
-                      ? \`bg-\${tab.color}-500/20 border border-\${tab.color}-500/50 text-\${tab.color}-400\`
-                      : 'bg-slate-800/50 text-slate-400 hover:text-white border border-transparent'
-                  }`}
+                                    className={`flex items-center space-x-2 px-4 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
+                                        activeTab === tab.id
+                                            ? `bg-${tab.color}-500/20 border border-${tab.color}-500/50 text-${tab.color}-400`
+                                            : 'bg-slate-800/50 text-slate-400 hover:text-white border border-transparent'
+                                    }`}
                                 >
                                     <Icon className="w-4 h-4" />
                                     <span>{tab.label}</span>
@@ -93,18 +106,14 @@ export const StaffDashboardRouter: React.FC<StaffDashboardRouterProps> = ({ user
                 >
                     {activeTab === 'scan' && (
                         <div className="max-w-lg mx-auto">
-                            {/* Note: We reuse the GhostPassScanner component for Door staff. 
-                  In production, we would inject the staff's specific active Event ID. */}
                             <GhostPassScanner />
                         </div>
                     )}
-
                     {activeTab === 'pos' && (
                         <div className="max-w-4xl mx-auto">
                             <StaffPOS user={user} />
                         </div>
                     )}
-
                     {activeTab === 'dashboard' && (
                         <div className="max-w-6xl mx-auto">
                             <ManagerDashboard user={user} />

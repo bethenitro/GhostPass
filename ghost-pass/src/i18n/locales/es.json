@@ -1193,7 +1193,22 @@
     "generatedTitle": "Código QR Generado",
     "assetCode": "Código de Activo",
     "download": "Descargar Código QR",
-    "generateAnother": "Generar Otro"
+    "generateAnother": "Generar Otro",
+    "event": "Evento",
+    "venue": "Lugar",
+    "loadingEvents": "Cargando eventos...",
+    "selectEvent": "Selecciona un evento (requerido)",
+    "loadingVenues": "Cargando lugares...",
+    "allVenues": "Todos los lugares",
+    "loadingStations": "Cargando estaciones...",
+    "selectStation": "Selecciona estación o omite para auto-generar",
+    "loadingProfiles": "Cargando...",
+    "selectProfile": "Selecciona perfil (opcional)",
+    "tier2": "Nivel 2 - Footprint Real ID",
+    "tier3": "Nivel 3 - Verificación Profunda Footprint",
+    "scannerReady": "El código QR está listo para escanear",
+    "loginRequired": "Por favor inicia sesión primero",
+    "selectEventRequired": "Por favor selecciona un evento"
   },
   "qrAssets": {
     "title": "Provisión de QR/NFC",

@@ -1,16 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Clock, Zap, ArrowLeftRight, Wallet, ShoppingCart } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
 import { walletApi, ghostPassApi } from '../lib/api';
-import { cn } from '@/lib/utils';
 import RefundModal from './RefundModal';
-import { DurationWheelSelector } from './DurationWheelSelector';
 import GhostPassWalletManager from './GhostPassWalletManager';
 import WalletRecoveryCode from './WalletRecoveryCode';
 import { MenuBasedVendorPurchase } from './MenuBasedVendorPurchase';
 import WalletRecovery from './WalletRecovery';
+import { useToast } from './ui/toast';
 
 interface WalletDashboardProps {
   onPurchase: (duration: number) => void;
@@ -18,18 +14,16 @@ interface WalletDashboardProps {
   purchasingDuration?: number;
 }
 
-const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchasing = false, purchasingDuration: _purchasingDuration }) => {
-  const { t } = useTranslation();
+const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase: _onPurchase, isPurchasing: _isPurchasing = false, purchasingDuration: _purchasingDuration }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showRefundModal, setShowRefundModal] = useState(false);
-  const [selectedDuration, setSelectedDuration] = useState(1);
-  const [selectedPrice, setSelectedPrice] = useState(10);
-  const [activeView, setActiveView] = useState<'traditional' | 'ghostpass'>('ghostpass');
+
   const [showRecoveryCode, setShowRecoveryCode] = useState(false);
   const [recoveryData, setRecoveryData] = useState<{ wallet_binding_id: string; recovery_code: string } | null>(null);
   const [showVendorPurchase, setShowVendorPurchase] = useState(false);
   const [showWalletRecovery, setShowWalletRecovery] = useState(false);
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
 
   const { data: balance } = useQuery({
     queryKey: ['wallet-balance'],
@@ -72,16 +66,54 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
     }
   }, []);
 
-  const handleDurationSelect = (days: number, price: number) => {
-    setSelectedDuration(days);
-    setSelectedPrice(price);
-  };
+  // Detect Stripe payment success return
+  useEffect(() => {
+    const hash = window.location.hash; // e.g. #/wallet?payment=success&session_id=cs_xxx
+    const queryString = hash.includes('?') ? hash.slice(hash.indexOf('?')) : '';
+    const params = new URLSearchParams(queryString);
 
-  const handlePurchase = () => {
-    if (!isPurchasing && (balance?.balance_dollars || 0) >= selectedPrice) {
-      onPurchase(selectedDuration);
+    if (params.get('payment') === 'success') {
+      const sessionId = params.get('session_id');
+      const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
+      // Clean up URL immediately
+      window.history.replaceState(null, '', window.location.pathname + '#/wallet');
+
+      const verifyAndCredit = async () => {
+        try {
+          if (sessionId) {
+            // Verify session server-side and credit wallet if not already done
+            const response = await fetch(`${API_BASE_URL}/stripe/verify-session`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ session_id: sessionId }),
+            });
+            const data = await response.json();
+
+            if (data.status === 'credited' || data.status === 'already_credited') {
+              // Refetch balance then show toast with actual amount
+              await queryClient.refetchQueries({ queryKey: ['wallet-balance'] });
+              const cached = queryClient.getQueryData<{ balance_cents: number; balance_dollars: number }>(['wallet-balance']);
+              const amount = cached?.balance_dollars?.toFixed(2) ?? data.balance_dollars?.toFixed(2) ?? '0.00';
+              showToast(`Deposit Available $${amount} for use`, 'success', 6000);
+              return;
+            }
+          }
+
+          // Fallback: just refresh balance
+          await queryClient.refetchQueries({ queryKey: ['wallet-balance'] });
+          const cached = queryClient.getQueryData<{ balance_cents: number; balance_dollars: number }>(['wallet-balance']);
+          const amount = cached?.balance_dollars?.toFixed(2) ?? '0.00';
+          showToast(`Deposit Available $${amount} for use`, 'success', 6000);
+        } catch (err) {
+          console.error('Failed to verify Stripe session:', err);
+          queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+        }
+      };
+
+      verifyAndCredit();
     }
-  };
+  }, [queryClient, showToast]);
 
   const getTimeRemaining = (expiresAt: string) => {
     const now = currentTime.getTime();
@@ -98,7 +130,7 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
   };
 
   const timeRemaining = ghostPass?.expires_at ? getTimeRemaining(ghostPass.expires_at) : null;
-  const isExpiringSoon = timeRemaining && timeRemaining.total < 3600000;
+  void timeRemaining;
 
   return (
     <div className="space-y-6">
@@ -128,267 +160,15 @@ const WalletDashboard: React.FC<WalletDashboardProps> = ({ onPurchase, isPurchas
         </div>
       )}
 
-      {/* View Toggle */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex justify-center"
-      >
-        <div className="bg-slate-800/50 rounded-lg p-1 flex">
-          <button
-            onClick={() => setActiveView('ghostpass')}
-            className={cn(
-              "px-4 py-2 rounded-md text-sm font-medium transition-colors",
-              activeView === 'ghostpass'
-                ? "bg-cyan-600 text-white"
-                : "text-slate-400 hover:text-white"
-            )}
-          >
-            <Wallet className="w-4 h-4 inline mr-2" />
-            {t('wallet.ghostPassWallet')}
-          </button>
-          <button
-            onClick={() => setActiveView('traditional')}
-            className={cn(
-              "px-4 py-2 rounded-md text-sm font-medium transition-colors",
-              activeView === 'traditional'
-                ? "bg-cyan-600 text-white"
-                : "text-slate-400 hover:text-white"
-            )}
-          >
-            <Zap className="w-4 h-4 inline mr-2" />
-            {t('wallet.traditionalWallet')}
-          </button>
-        </div>
-      </motion.div>
-
       {/* Ghost Pass Wallet View */}
-      {activeView === 'ghostpass' && (
-        <GhostPassWalletManager
-          balance={balance?.balance_cents || 0}
-          onBalanceUpdate={() => {
-            queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
-          }}
-        />
-      )}
+      <GhostPassWalletManager
+        balance={balance?.balance_cents || 0}
+        onBalanceUpdate={() => {
+          queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+        }}
+      />
 
       {/* Event Multi-Day WALLET View */}
-      {activeView === 'traditional' && (
-        <>
-          {/* Check if wallet exists */}
-          {!balance?.wallet_binding_id ? (
-            /* No Wallet - Show Create Button */
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="text-center space-y-6 py-12"
-            >
-              <div className="w-20 h-20 mx-auto bg-cyan-500/20 rounded-full flex items-center justify-center border-2 border-cyan-500/50">
-                <Wallet className="w-10 h-10 text-cyan-400" />
-              </div>
-
-              <div className="space-y-2">
-                <h2 className="text-xl font-bold text-white">{t('wallet.noWalletFound')}</h2>
-                <p className="text-slate-400 max-w-md mx-auto">
-                  {t('wallet.noWalletDescription')}
-                </p>
-              </div>
-
-              <button
-                onClick={async () => {
-                  // Trigger wallet creation by calling balance endpoint
-                  await queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
-                  await queryClient.refetchQueries({ queryKey: ['wallet-balance'] });
-                }}
-                className="px-8 py-4 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-semibold transition-all transform hover:scale-105"
-              >
-                {t('wallet.createWallet')}
-              </button>
-
-              <button
-                onClick={() => setShowWalletRecovery(true)}
-                className="block mx-auto mt-4 px-6 py-2 bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition-all text-sm font-medium"
-              >
-                {t('walletRecovery.recoverWallet')}
-              </button>
-
-              <div className="text-xs text-slate-500 max-w-sm mx-auto mt-6">
-                <p>{t('wallet.walletFeatures.title')}</p>
-                <ul className="mt-2 space-y-1 text-left">
-                  <li>• {t('wallet.walletFeatures.boundToDevice')}</li>
-                  <li>• {t('wallet.walletFeatures.usedForPurchases')}</li>
-                  <li>• {t('wallet.walletFeatures.refundable')}</li>
-                  <li>• {t('wallet.walletFeatures.secure')}</li>
-                </ul>
-              </div>
-            </motion.div>
-          ) : (
-            /* Wallet Exists - Show Full Interface */
-            <>
-              {/* Header */}
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-center"
-              >
-                <h1 className="text-2xl font-bold text-white mb-2">{t('wallet.title')}</h1>
-                <p className="text-cyan-400 text-sm">{t('wallet.subtitle')}</p>
-                <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent mx-auto mt-4"></div>
-              </motion.div>
-
-              {/* Wallet Hero Card */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-xl p-4 sm:p-6 lg:p-8 text-center"
-              >
-                <div className="text-xs uppercase tracking-widest text-slate-400 font-medium mb-4">{t('wallet.currentBalance')}</div>
-                <motion.div
-                  key={balance?.balance_dollars}
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                  className="text-4xl sm:text-5xl lg:text-6xl font-bold text-cyan-400 font-mono"
-                >
-                  ${balance?.balance_dollars?.toFixed(2) || '0.00'}
-                </motion.div>
-
-                {/* Action Buttons */}
-                {balance && balance.balance_cents > 0 && (
-                  <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-                    <motion.button
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.3 }}
-                      onClick={() => setShowVendorPurchase(true)}
-                      className="flex items-center justify-center gap-2 px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500 hover:border-cyan-400 rounded-lg text-cyan-400 hover:text-cyan-300 transition-all text-sm font-medium"
-                    >
-                      <ShoppingCart className="w-4 h-4" />
-                      Make Purchase
-                    </motion.button>
-
-                    <motion.button
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.3 }}
-                      onClick={() => setShowRefundModal(true)}
-                      className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600 hover:border-slate-500 rounded-lg text-slate-300 hover:text-white transition-all text-sm font-medium"
-                    >
-                      <ArrowLeftRight className="w-4 h-4" />
-                      {t('wallet.requestRefund')}
-                    </motion.button>
-                  </div>
-                )}
-              </motion.div>
-
-              {/* Ghost Pass Status */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <div className={cn(
-                  "bg-slate-800/50 backdrop-blur-xl border rounded-xl p-4 sm:p-6",
-                  isExpiringSoon ? "border-red-500/50" : "border-slate-700"
-                )}>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-3">
-                      <Zap className="text-cyan-400" size={20} />
-                      <span className="text-base sm:text-lg font-semibold text-white">{t('ghostPass.title')}</span>
-                    </div>
-                    <div className={cn(
-                      "px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium border",
-                      ghostPass?.status === 'ACTIVE'
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                        : 'bg-red-500/10 text-red-400 border-red-500/20'
-                    )}>
-                      {ghostPass?.status === 'ACTIVE' ? t('ghostPass.active') : t('ghostPass.expired')}
-                    </div>
-                  </div>
-
-                  {ghostPass?.status === 'ACTIVE' && timeRemaining && (
-                    <div className="space-y-3">
-                      <div className="flex items-center space-x-2">
-                        <Clock size={14} className="text-slate-400" />
-                        <span className="text-xs uppercase tracking-widest text-slate-400 font-medium">{t('ghostPass.timeRemaining')}</span>
-                      </div>
-                      <motion.div
-                        key={`${timeRemaining.hours}:${timeRemaining.minutes}:${timeRemaining.seconds}`}
-                        initial={{ scale: 0.95 }}
-                        animate={{ scale: 1 }}
-                        className={cn(
-                          "text-2xl sm:text-3xl font-bold font-mono",
-                          isExpiringSoon ? 'text-red-400' : 'text-cyan-400'
-                        )}
-                      >
-                        {String(timeRemaining.hours).padStart(2, '0')}:
-                        {String(timeRemaining.minutes).padStart(2, '0')}:
-                        {String(timeRemaining.seconds).padStart(2, '0')}
-                      </motion.div>
-                      {ghostPass.venue_name && (
-                        <p className="text-slate-400 text-sm">
-                          {t('ghostPass.activeAt')} <span className="text-cyan-400">{ghostPass.venue_name}</span>
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {ghostPass?.status !== 'ACTIVE' && (
-                    <p className="text-slate-400 text-center">{t('ghostPass.noActivePass')}</p>
-                  )}
-                </div>
-              </motion.div>
-
-              {/* Purchase Options - Wheel Selector */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="space-y-4"
-              >
-                <h2 className="text-xl sm:text-2xl font-semibold text-white text-center">{t('ghostPass.purchase')}</h2>
-
-                <DurationWheelSelector
-                  onSelect={handleDurationSelect}
-                  disabled={isPurchasing}
-                />
-
-                {/* Purchase Button */}
-                <motion.button
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handlePurchase}
-                  disabled={isPurchasing || (balance?.balance_dollars || 0) < selectedPrice}
-                  className={cn(
-                    "w-full py-4 rounded-lg font-semibold transition-all duration-300 text-base",
-                    isPurchasing
-                      ? 'bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 opacity-75 cursor-not-allowed'
-                      : (balance?.balance_dollars || 0) < selectedPrice
-                        ? 'bg-slate-700/50 border border-slate-600 text-slate-500 cursor-not-allowed'
-                        : 'bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/30 hover:shadow-lg hover:shadow-cyan-500/20'
-                  )}
-                >
-                  {isPurchasing ? (
-                    <div className="flex items-center justify-center space-x-2">
-                      <div className="w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
-                      <span>{t('ghostPass.processing')}</span>
-                    </div>
-                  ) : (balance?.balance_dollars || 0) < selectedPrice ? (
-                    t('ghostPass.insufficientBalance')
-                  ) : (
-                    t('ghostPass.purchaseButton', {
-                      duration: selectedDuration,
-                      unit: selectedDuration === 1 ? t('ghostPass.day') : t('ghostPass.days'),
-                      price: selectedPrice
-                    })
-                  )}
-                </motion.button>
-              </motion.div>
-            </>
-          )}
-        </>
-      )}
-
       {/* Refund Modal */}
       <RefundModal
         isOpen={showRefundModal}

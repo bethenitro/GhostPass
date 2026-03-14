@@ -52,6 +52,28 @@ import financialEn from '../locales/en/financial.json';
 import financialEs from '../locales/es/financial.json';
 import adminTranslationsEn from '../locales/en/admin.json';
 import adminTranslationsEs from '../locales/es/admin.json';
+import venuePickerEn from '../locales/en/venuePicker.json';
+import venuePickerEs from '../locales/es/venuePicker.json';
+import analyticsEn from '../locales/en/analytics.json';
+import analyticsEs from '../locales/es/analytics.json';
+import eventsEn from '../locales/en/events.json';
+import eventsEs from '../locales/es/events.json';
+import ticketTypesEn from '../locales/en/ticketTypes.json';
+import ticketTypesEs from '../locales/es/ticketTypes.json';
+import menuManagerEn from '../locales/en/menuManager.json';
+import menuManagerEs from '../locales/es/menuManager.json';
+import gatewayEn from '../locales/en/gateway.json';
+import gatewayEs from '../locales/es/gateway.json';
+import entryConfigEn from '../locales/en/entryConfig.json';
+import entryConfigEs from '../locales/es/entryConfig.json';
+import staffManagerEn from '../locales/en/staffManager.json';
+import staffManagerEs from '../locales/es/staffManager.json';
+import payoutsManagerEn from '../locales/en/payoutsManager.json';
+import payoutsManagerEs from '../locales/es/payoutsManager.json';
+import staffPortalEn from '../locales/en/staffPortal.json';
+import staffPortalEs from '../locales/es/staffPortal.json';
+import stationsEn from '../locales/en/stations.json';
+import stationsEs from '../locales/es/stations.json';
 
 // Merge all translations
 const enResources = { 
@@ -61,9 +83,9 @@ const enResources = {
   ...componentsEn,
   ...componentsExtendedEn, 
   ...menuEn, 
-  ...commonEn, 
   ...navEn,
   ...adminTranslationsEn,
+  common: commonEn,
   wallet: walletEn,
   tickets: ticketsEn,
   ghostPass: ghostpassEn,
@@ -80,7 +102,18 @@ const enResources = {
   staff: staffEn,
   vendor: vendorEn,
   financial: financialEn,
-  admin: adminTranslationsEn
+  admin: adminTranslationsEn,
+  venuePicker: venuePickerEn,
+  analytics: analyticsEn,
+  events: eventsEn,
+  ticketTypes: ticketTypesEn,
+  menuManager: menuManagerEn,
+  gateway: gatewayEn,
+  entryConfig: entryConfigEn,
+  staffManager: staffManagerEn,
+  payoutsManager: payoutsManagerEn,
+  staffPortal: staffPortalEn,
+  stations: stationsEn
 };
 const esResources = { 
   ...es, 
@@ -89,9 +122,9 @@ const esResources = {
   ...componentsEs,
   ...componentsExtendedEs, 
   ...menuEs, 
-  ...commonEs, 
   ...navEs,
   ...adminTranslationsEs,
+  common: commonEs,
   wallet: walletEs,
   tickets: ticketsEs,
   ghostPass: ghostpassEs,
@@ -108,7 +141,18 @@ const esResources = {
   staff: staffEs,
   vendor: vendorEs,
   financial: financialEs,
-  admin: adminTranslationsEs
+  admin: adminTranslationsEs,
+  venuePicker: venuePickerEs,
+  analytics: analyticsEs,
+  events: eventsEs,
+  ticketTypes: ticketTypesEs,
+  menuManager: menuManagerEs,
+  gateway: gatewayEs,
+  entryConfig: entryConfigEs,
+  staffManager: staffManagerEs,
+  payoutsManager: payoutsManagerEs,
+  staffPortal: staffPortalEs,
+  stations: stationsEs
 };
 
 i18n

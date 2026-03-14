@@ -1241,7 +1241,22 @@
     "generatedTitle": "Generated QR Code",
     "assetCode": "Asset Code",
     "download": "Download QR Code",
-    "generateAnother": "Generate Another"
+    "generateAnother": "Generate Another",
+    "event": "Event",
+    "venue": "Venue",
+    "loadingEvents": "Loading events...",
+    "selectEvent": "Select an event (required)",
+    "loadingVenues": "Loading venues...",
+    "allVenues": "All venues",
+    "loadingStations": "Loading stations...",
+    "selectStation": "Select station or skip for auto-gen",
+    "loadingProfiles": "Loading...",
+    "selectProfile": "Select profile (optional)",
+    "tier2": "Tier 2 - Footprint Real ID",
+    "tier3": "Tier 3 - Footprint Deep Check",
+    "scannerReady": "QR code is scanner-ready",
+    "loginRequired": "Please login first",
+    "selectEventRequired": "Please select an event"
   },
   "qrAssets": {
     "title": "QR/NFC Provisioning",

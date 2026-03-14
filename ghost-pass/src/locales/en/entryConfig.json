@@ -1,0 +1,22 @@
+{
+  "title": "Entry Config",
+  "heading": "Entry Configuration",
+  "reentrySettings": "Re-entry Settings",
+  "allowReentry": "Allow Re-entry",
+  "maxReentries": "Max Re-entries (0 = unlimited)",
+  "timeLimit": "Time Limit (hours, 0 = no limit)",
+  "feeConfiguration": "Fee Configuration",
+  "initialEntryFee": "Initial Entry Fee",
+  "venueReentryFee": "Venue Re-entry Fee",
+  "validReentryScanFee": "VALID Re-entry Scan Fee",
+  "feeBreakdownPreview": "Fee Breakdown Preview",
+  "initialEntry": "Initial Entry:",
+  "reentryVenue": "Re-entry (Venue):",
+  "reentryValidFee": "Re-entry (VALID Fee):",
+  "totalCharges": "Total Charges:",
+  "saveConfiguration": "Save Configuration",
+  "saving": "Saving...",
+  "saved": "Entry configuration updated successfully",
+  "failedToLoad": "Failed to load entry configuration",
+  "failedToSave": "Failed to update entry configuration"
+}

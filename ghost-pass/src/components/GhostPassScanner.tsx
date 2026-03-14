@@ -14,7 +14,6 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { 
-  Wallet, 
   AlertTriangle, 
   CheckCircle, 
   X, 
@@ -1074,28 +1073,7 @@ const GhostPassScanner: React.FC = () => {
           </AnimatePresence>
         </motion.div>
 
-        {/* Quick Actions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="flex justify-center mx-4 mb-6 sm:mb-8"
-        >
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              // Navigate to wallet page
-              window.location.hash = '#/wallet';
-            }}
-            className="flex items-center justify-center space-x-2 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700 text-slate-300 py-3 sm:py-4 px-4 sm:px-6 rounded-xl transition-all duration-300 backdrop-blur-sm"
-          >
-            <Wallet className="w-4 h-4" />
-            <span className="text-sm font-medium">
-              {localStorage.getItem('ghost_pass_wallet_session') ? t('scanner.openWallet') : t('scanner.viewWallet')}
-            </span>
-          </motion.button>
-        </motion.div>
+
       </div>
 
       {/* Auto Surface Component */}

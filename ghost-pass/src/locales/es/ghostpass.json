@@ -63,6 +63,8 @@
     "boundToDevice": "Vinculada a tu dispositivo",
     "protectedWithProofs": "Protegida con pruebas criptográficas",
     "recoverable": "Recuperable con códigos de respaldo",
-    "zeroCustody": "Custodia cero - tú controlas tus fondos"
+    "zeroCustody": "Custodia cero - tú controlas tus fondos",
+    "tabWallet": "Cartera",
+    "tabFunding": "Financiamiento"
   }
 }

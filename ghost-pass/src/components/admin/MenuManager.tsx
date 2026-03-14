@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { menuApi, revenueProfileApi } from '../../lib/api-client';
 import { Plus, Loader2, Trash2, Beer, UtensilsCrossed, ShoppingBag, Edit2 } from 'lucide-react';
 import { useToast } from '../ui/toast';
 
-const BAR_ITEMS = ['Beer', 'Wine', 'Vodka', 'Whiskey', 'Bourbon', 'Tequila', 'Rum', 'Gin', 'Cocktails', 'Top Shelf', 'Shot', 'Non-alcoholic', 'Special Entry (create your own)'];
-const CONCESSION_ITEMS = ['Burger', 'Hot Dog', 'Pretzel', 'Pizza', 'Chicken', 'Empanada', 'Burrito', 'Extra'];
-const DRINKS_ITEMS = ['Fountain', 'Water', 'Can/Bottle', 'Coffee'];
-const MERCH_ITEMS = ['T-Shirt', 'Long Sleeve T', 'Hat', 'Sweatshirt', 'Back Packs', 'Hip Packs', 'Special (Create your own)'];
-
 export const MenuManager: React.FC<{ venueId: string; eventId?: string }> = ({ venueId, eventId }) => {
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const [items, setItems] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<any[]>([]);
@@ -54,17 +51,17 @@ export const MenuManager: React.FC<{ venueId: string; eventId?: string }> = ({ v
     try {
       if (editingItem) {
         await menuApi.update(editingItem.id, { ...formData, venue_id: venueId, event_id: eventId });
-        showToast('Menu item updated successfully', 'success');
+        showToast(t('menuManager.itemUpdated'), 'success');
       } else {
         await menuApi.create({ ...formData, venue_id: venueId, event_id: eventId });
-        showToast('Menu item created successfully', 'success');
+        showToast(t('menuManager.itemCreated'), 'success');
       }
       setShowForm(false);
       setEditingItem(null);
       resetForm();
       loadData();
     } catch (error: any) {
-      showToast(error.response?.data?.error || 'Failed to save menu item', 'error');
+      showToast(error.response?.data?.error || t('menuManager.failedToSave'), 'error');
     } finally {
       setLoading(false);
     }
@@ -88,14 +85,14 @@ export const MenuManager: React.FC<{ venueId: string; eventId?: string }> = ({ v
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this item?')) return;
+    if (!confirm(t('menuManager.deleteConfirm'))) return;
 
     try {
       await menuApi.delete(id);
-      showToast('Item deleted successfully', 'success');
+      showToast(t('menuManager.itemDeleted'), 'success');
       loadData();
     } catch (error) {
-      showToast('Failed to delete item', 'error');
+      showToast(t('menuManager.failedToDelete'), 'error');
     }
   };
 
@@ -140,11 +137,23 @@ export const MenuManager: React.FC<{ venueId: string; eventId?: string }> = ({ v
     }
   };
 
+  const getStationLabel = (type: string) => {
+    switch (type) {
+      case 'BAR': return t('menuManager.barMenu');
+      case 'CONCESSION': return t('menuManager.concessionMenu');
+      case 'MERCH': return t('menuManager.merchMenu');
+      default: return type;
+    }
+  };
+
   const getQuickAddItems = () => {
+    const barItems = t('menuManager.barItems', { returnObjects: true }) as string[];
+    const concessionItems = t('menuManager.concessionItems', { returnObjects: true }) as string[];
+    const merchItems = t('menuManager.merchItems', { returnObjects: true }) as string[];
     switch (selectedStation) {
-      case 'BAR': return BAR_ITEMS;
-      case 'CONCESSION': return [...CONCESSION_ITEMS, ...DRINKS_ITEMS, 'Special Entry (create your own)'];
-      case 'MERCH': return MERCH_ITEMS;
+      case 'BAR': return [...barItems, t('menuManager.specialEntry')];
+      case 'CONCESSION': return [...concessionItems, t('menuManager.specialEntry')];
+      case 'MERCH': return [...merchItems, t('menuManager.special')];
       default: return [];
     }
   };
@@ -152,7 +161,7 @@ export const MenuManager: React.FC<{ venueId: string; eventId?: string }> = ({ v
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <h2 className="text-lg sm:text-xl font-bold text-white">Menu Management</h2>
+        <h2 className="text-lg sm:text-xl font-bold text-white">{t('menuManager.title')}</h2>
         <button
           onClick={() => {
             if (showForm) {
@@ -164,11 +173,11 @@ export const MenuManager: React.FC<{ venueId: string; eventId?: string }> = ({ v
           className="w-full sm:w-auto px-4 py-3 bg-cyan-500/20 border border-cyan-500 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-colors flex items-center justify-center space-x-2 min-h-[44px]"
         >
           {showForm ? (
-            <span>Cancel</span>
+            <span>{t('menuManager.cancel')}</span>
           ) : (
             <>
               <Plus className="w-4 h-4" />
-              <span>Add Item</span>
+              <span>{t('menuManager.addItem')}</span>
             </>
           )}
         </button>
@@ -189,14 +198,14 @@ export const MenuManager: React.FC<{ venueId: string; eventId?: string }> = ({ v
             }`}
           >
             {getStationIcon(type)}
-            <span className="text-sm sm:text-base">{type} MENU</span>
+            <span className="text-sm sm:text-base">{getStationLabel(type)}</span>
           </button>
         ))}
       </div>
 
-      {/* Quick Add Buttons - Always visible */}
+      {/* Quick Add Buttons */}
       <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-slate-300 mb-3">Quick Add Items</h3>
+        <h3 className="text-sm font-semibold text-slate-300 mb-3">{t('menuManager.quickAddItems')}</h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
           {getQuickAddItems().map((item) => (
             <button
@@ -213,12 +222,12 @@ export const MenuManager: React.FC<{ venueId: string; eventId?: string }> = ({ v
       {showForm && (
         <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700 rounded-lg p-4 sm:p-6">
           <h3 className="text-base sm:text-lg font-semibold text-white mb-4">
-            {editingItem ? 'Edit Item' : 'Add Item'} - {selectedStation}
+            {editingItem ? t('menuManager.editItem') : t('menuManager.addItemFor')} - {getStationLabel(selectedStation)}
           </h3>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">Item Name *</label>
+                <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">{t('menuManager.itemName')}</label>
                 <input
                   type="text"
                   value={formData.item_name}
@@ -228,19 +237,19 @@ export const MenuManager: React.FC<{ venueId: string; eventId?: string }> = ({ v
                 />
               </div>
               <div>
-                <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">Category</label>
+                <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">{t('menuManager.category')}</label>
                 <input
                   type="text"
                   value={formData.item_category}
                   onChange={(e) => setFormData({ ...formData, item_category: e.target.value })}
-                  placeholder="e.g., Beer, Spirits, Snacks"
+                  placeholder={t('menuManager.categoryPlaceholder')}
                   className="w-full px-3 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-cyan-500 focus:outline-none min-h-[44px]"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">Price ($) *</label>
+              <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">{t('menuManager.price')}</label>
               <input
                 type="number"
                 value={formData.price_cents / 100}
@@ -260,7 +269,7 @@ export const MenuManager: React.FC<{ venueId: string; eventId?: string }> = ({ v
                   onChange={(e) => setFormData({ ...formData, is_taxable: e.target.checked })}
                   className="w-5 h-5 rounded border-slate-600 text-cyan-500 focus:ring-cyan-500"
                 />
-                <span className="text-sm sm:text-base text-slate-200">Taxable (applies base tax)</span>
+                <span className="text-sm sm:text-base text-slate-200">{t('menuManager.taxable')}</span>
               </label>
               <label className="flex items-center space-x-3 p-3 bg-slate-950/30 border border-slate-700 rounded-lg cursor-pointer hover:bg-slate-950/50 min-h-[44px]">
                 <input
@@ -269,7 +278,7 @@ export const MenuManager: React.FC<{ venueId: string; eventId?: string }> = ({ v
                   onChange={(e) => setFormData({ ...formData, is_alcohol: e.target.checked })}
                   className="w-5 h-5 rounded border-slate-600 text-red-500 focus:ring-red-500"
                 />
-                <span className="text-sm sm:text-base text-slate-200">Alcohol (applies alcohol tax)</span>
+                <span className="text-sm sm:text-base text-slate-200">{t('menuManager.alcohol')}</span>
               </label>
               <label className="flex items-center space-x-3 p-3 bg-slate-950/30 border border-slate-700 rounded-lg cursor-pointer hover:bg-slate-950/50 min-h-[44px]">
                 <input
@@ -278,18 +287,18 @@ export const MenuManager: React.FC<{ venueId: string; eventId?: string }> = ({ v
                   onChange={(e) => setFormData({ ...formData, is_food: e.target.checked })}
                   className="w-5 h-5 rounded border-slate-600 text-emerald-500 focus:ring-emerald-500"
                 />
-                <span className="text-sm sm:text-base text-slate-200">Food (applies food tax)</span>
+                <span className="text-sm sm:text-base text-slate-200">{t('menuManager.food')}</span>
               </label>
             </div>
 
             <div>
-              <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">Revenue Profile</label>
+              <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">{t('menuManager.revenueProfile')}</label>
               <select
                 value={formData.revenue_profile_id}
                 onChange={(e) => setFormData({ ...formData, revenue_profile_id: e.target.value })}
                 className="w-full px-3 py-3 bg-slate-950/50 border border-slate-700 rounded-lg text-white text-base focus:border-cyan-500 focus:outline-none min-h-[44px]"
               >
-                <option value="">Select Profile</option>
+                <option value="">{t('menuManager.selectProfile')}</option>
                 {profiles.map((profile) => (
                   <option key={profile.id} value={profile.id}>
                     {profile.profile_name}
@@ -306,7 +315,7 @@ export const MenuManager: React.FC<{ venueId: string; eventId?: string }> = ({ v
                   disabled={loading}
                   className="w-full sm:w-1/2 bg-slate-800/50 border border-slate-600 text-slate-300 py-3 px-4 rounded-lg hover:bg-slate-700/50 disabled:opacity-50 flex items-center justify-center space-x-2 min-h-[44px]"
                 >
-                  <span>Cancel</span>
+                  <span>{t('menuManager.cancel')}</span>
                 </button>
               )}
               <button
@@ -317,12 +326,12 @@ export const MenuManager: React.FC<{ venueId: string; eventId?: string }> = ({ v
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Processing...</span>
+                    <span>{t('menuManager.processing')}</span>
                   </>
                 ) : (
                   <>
                     <Plus className="w-4 h-4" />
-                    <span>{editingItem ? 'Update Item' : 'Add Item'}</span>
+                    <span>{editingItem ? t('menuManager.updateItem') : t('menuManager.addItem')}</span>
                   </>
                 )}
               </button>
@@ -338,7 +347,7 @@ export const MenuManager: React.FC<{ venueId: string; eventId?: string }> = ({ v
               {getStationIcon(selectedStation)}
             </div>
             <p className="text-slate-400 text-sm sm:text-base">
-              No items in {selectedStation} menu. Add your first item above.
+              {t('menuManager.noItems', { station: selectedStation })}
             </p>
           </div>
         ) : (
@@ -358,17 +367,17 @@ export const MenuManager: React.FC<{ venueId: string; eventId?: string }> = ({ v
                   <div className="flex flex-wrap gap-2">
                     {item.is_taxable && (
                       <span className="bg-blue-500/10 text-blue-400 border border-blue-500/30 px-2 py-1 rounded text-xs">
-                        Taxable
+                        {t('menuManager.taxable')}
                       </span>
                     )}
                     {item.is_alcohol && (
                       <span className="bg-red-500/10 text-red-400 border border-red-500/30 px-2 py-1 rounded text-xs">
-                        Alcohol
+                        {t('menuManager.alcohol')}
                       </span>
                     )}
                     {item.is_food && (
                       <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-1 rounded text-xs">
-                        Food
+                        {t('menuManager.food')}
                       </span>
                     )}
                   </div>

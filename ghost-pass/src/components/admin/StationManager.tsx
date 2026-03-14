@@ -53,17 +53,17 @@ export const StationManager: React.FC<{ venueId: string; eventId?: string }> = (
     try {
       if (editingStation) {
         await stationApi.update(editingStation.id, formData);
-        showToast('Station updated successfully', 'success');
+        showToast(t('stations.updated'), 'success');
       } else {
         await stationApi.create(formData);
-        showToast('Station created successfully', 'success');
+        showToast(t('stations.created'), 'success');
       }
       setShowForm(false);
       setEditingStation(null);
       resetForm();
       loadData();
     } catch (error: any) {
-      showToast(error.response?.data?.error || 'Failed to save station', 'error');
+      showToast(error.response?.data?.error || t('stations.failedToSave'), 'error');
     } finally {
       setLoading(false);
     }
@@ -87,14 +87,14 @@ export const StationManager: React.FC<{ venueId: string; eventId?: string }> = (
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this station?')) return;
+    if (!confirm(t('stations.deleteConfirm'))) return;
 
     try {
       await stationApi.delete(id);
-      showToast('Station deleted successfully', 'success');
+      showToast(t('stations.deleted'), 'success');
       loadData();
     } catch (error: any) {
-      showToast(error.response?.data?.error || 'Failed to delete station', 'error');
+      showToast(error.response?.data?.error || t('stations.failedToDelete'), 'error');
     }
   };
 
@@ -147,7 +147,7 @@ export const StationManager: React.FC<{ venueId: string; eventId?: string }> = (
       {showForm && (
         <div className="bg-slate-800/50 backdrop-blur-xl p-6 rounded-xl border border-slate-700 mb-6">
           <h3 className="text-lg font-semibold mb-4">
-            {editingStation ? 'Edit Station' : 'Create New Station'}
+            {editingStation ? t('stations.editStation') : t('stations.createStation')}
           </h3>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -216,7 +216,7 @@ export const StationManager: React.FC<{ venueId: string; eventId?: string }> = (
                 onChange={(e) => setFormData({ ...formData, revenue_profile_id: e.target.value })}
                 className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-xl text-white focus:border-cyan-500/50 focus:outline-none"
               >
-                <option value="">{t('events.selectProfile')}</option>
+                <option value="">{t('stations.selectProfile')}</option>
                 {revenueProfiles.map((profile) => (
                   <option key={profile.id} value={profile.id}>
                     {profile.profile_name}
@@ -232,7 +232,7 @@ export const StationManager: React.FC<{ venueId: string; eventId?: string }> = (
                 onChange={(e) => setFormData({ ...formData, tax_profile_id: e.target.value })}
                 className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-xl text-white focus:border-cyan-500/50 focus:outline-none"
               >
-                <option value="">{t('events.selectProfile')}</option>
+                <option value="">{t('stations.selectProfile')}</option>
                 {taxProfiles.map((profile) => (
                   <option key={profile.id} value={profile.id}>
                     {profile.profile_name}
@@ -249,8 +249,8 @@ export const StationManager: React.FC<{ venueId: string; eventId?: string }> = (
                 className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-xl text-white focus:border-cyan-500/50 focus:outline-none"
               >
                 <option value={1}>{t('stations.tier1')}</option>
-                <option value={2}>Tier 2 - Footprint Real ID</option>
-                <option value={3}>Tier 3 - Footprint Deep Check</option>
+                <option value={2}>{t('stations.tier2')}</option>
+                <option value={3}>{t('stations.tier3')}</option>
               </select>
             </div>
 
@@ -259,7 +259,7 @@ export const StationManager: React.FC<{ venueId: string; eventId?: string }> = (
               disabled={loading}
               className="w-full bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 py-2 px-4 rounded hover:bg-cyan-500/30 disabled:opacity-50 min-h-[44px]"
             >
-              {loading ? t('common.processing') : editingStation ? 'Update Station' : t('stations.addStation')}
+              {loading ? t('common.processing') : editingStation ? t('stations.updateStation') : t('stations.addStation')}
             </button>
           </form>
         </div>
@@ -277,7 +277,7 @@ export const StationManager: React.FC<{ venueId: string; eventId?: string }> = (
                 </span>
                 {station.employee_name && (
                   <p className="mt-2 text-sm">
-                    <span className="text-slate-400">Employee:</span> {station.employee_name} ({station.employee_id})
+                    <span className="text-slate-400">{t('stations.employee')}</span> {station.employee_name} ({station.employee_id})
                   </p>
                 )}
               </div>

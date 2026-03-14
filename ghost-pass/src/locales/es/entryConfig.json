@@ -1,0 +1,22 @@
+{
+  "title": "Config. de Entrada",
+  "heading": "Configuración de Entrada",
+  "reentrySettings": "Configuración de Reingreso",
+  "allowReentry": "Permitir Reingreso",
+  "maxReentries": "Reingresos Máximos (0 = ilimitado)",
+  "timeLimit": "Límite de Tiempo (horas, 0 = sin límite)",
+  "feeConfiguration": "Configuración de Tarifas",
+  "initialEntryFee": "Tarifa de Entrada Inicial",
+  "venueReentryFee": "Tarifa de Reingreso al Lugar",
+  "validReentryScanFee": "Tarifa de Escaneo de Reingreso VALID",
+  "feeBreakdownPreview": "Vista Previa del Desglose de Tarifas",
+  "initialEntry": "Entrada Inicial:",
+  "reentryVenue": "Reingreso (Lugar):",
+  "reentryValidFee": "Reingreso (Tarifa VALID):",
+  "totalCharges": "Cargos Totales:",
+  "saveConfiguration": "Guardar Configuración",
+  "saving": "Guardando...",
+  "saved": "Configuración de entrada actualizada exitosamente",
+  "failedToLoad": "Error al cargar la configuración de entrada",
+  "failedToSave": "Error al actualizar la configuración de entrada"
+}

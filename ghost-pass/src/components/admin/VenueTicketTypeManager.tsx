@@ -90,7 +90,7 @@ export const VenueTicketTypeManager: React.FC<VenueTicketTypeManagerProps> = ({ 
             }
         } catch (error: any) {
             console.error('Failed to load ticket types data:', error);
-            showToast('Failed to load data', 'error');
+            showToast(t('ticketTypes.failedToLoad'), 'error');
         } finally {
             setLoading(false);
         }
@@ -98,13 +98,13 @@ export const VenueTicketTypeManager: React.FC<VenueTicketTypeManagerProps> = ({ 
 
     const validateForm = (): boolean => {
         const newErrors: Record<string, string> = {};
-        if (!formData.name.trim()) newErrors.name = 'Ticket Name is required';
-        if (!formData.event_id) newErrors.event_id = 'Please select an event';
-        if (formData.price_cents < 0) newErrors.price_cents = 'Price cannot be negative';
-        if (formData.max_quantity < 0) newErrors.max_quantity = 'Quantity cannot be negative';
+        if (!formData.name.trim()) newErrors.name = t('ticketTypes.nameRequired');
+        if (!formData.event_id) newErrors.event_id = t('ticketTypes.eventRequired');
+        if (formData.price_cents < 0) newErrors.price_cents = t('ticketTypes.priceNegative');
+        if (formData.max_quantity < 0) newErrors.max_quantity = t('ticketTypes.quantityNegative');
 
         if (formData.sale_start_date && formData.sale_end_date && new Date(formData.sale_start_date) >= new Date(formData.sale_end_date)) {
-            newErrors.sale_end_date = 'End date must be after start date';
+            newErrors.sale_end_date = t('ticketTypes.endDateAfterStart');
         }
 
         setErrors(newErrors);
@@ -114,7 +114,7 @@ export const VenueTicketTypeManager: React.FC<VenueTicketTypeManagerProps> = ({ 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!validateForm()) {
-            showToast('Please fix form errors', 'error');
+            showToast(t('ticketTypes.fixErrors'), 'error');
             return;
         }
 
@@ -140,16 +140,16 @@ export const VenueTicketTypeManager: React.FC<VenueTicketTypeManagerProps> = ({ 
                     .update(payload)
                     .eq('id', editingType.id);
                 if (error) throw error;
-                showToast('Ticket type updated', 'success');
+                showToast(t('ticketTypes.updated'), 'success');
             } else {
                 const { error } = await supabase
                     .from('ticket_types')
                     .insert([{
-                        id: formData.id || crypto.randomUUID(), // Ensure an ID is passed if needed, or let supabase handle if UUID. The schema shows data_type: text
+                        id: formData.id || crypto.randomUUID(),
                         ...payload
                     }]);
                 if (error) throw error;
-                showToast('Ticket type created', 'success');
+                showToast(t('ticketTypes.created'), 'success');
             }
 
             setShowForm(false);
@@ -157,32 +157,32 @@ export const VenueTicketTypeManager: React.FC<VenueTicketTypeManagerProps> = ({ 
             loadData();
         } catch (error: any) {
             console.error('Failed to save ticket type:', error);
-            showToast(error.message || 'Failed to save ticket type', 'error');
+            showToast(error.message || t('ticketTypes.failedToSave'), 'error');
         } finally {
             setSubmitting(false);
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this ticket type? Refunds might be necessary if purchases exist.')) return;
+        if (!confirm(t('ticketTypes.deleteConfirm'))) return;
         try {
             const { error } = await supabase
                 .from('ticket_types')
                 .delete()
                 .eq('id', id);
             if (error) throw error;
-            showToast('Ticket type deleted', 'success');
+            showToast(t('ticketTypes.deleted'), 'success');
             loadData();
         } catch (error: any) {
             console.error('Failed to delete:', error);
-            showToast('Failed to delete ticket type', 'error');
+            showToast(t('ticketTypes.failedToDelete'), 'error');
         }
     };
 
     const resetForm = () => {
         setFormData({
             id: '',
-            event_id: formData.event_id, // Preserve event selection
+            event_id: formData.event_id,
             name: '',
             description: '',
             price_cents: 0,
@@ -217,7 +217,7 @@ export const VenueTicketTypeManager: React.FC<VenueTicketTypeManagerProps> = ({ 
             <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                     <Ticket className="w-6 h-6 text-indigo-400" />
-                    <h2 className="text-xl font-bold text-white">Ticket Types</h2>
+                    <h2 className="text-xl font-bold text-white">{t('ticketTypes.title')}</h2>
                 </div>
                 <button
                     onClick={() => {
@@ -227,21 +227,21 @@ export const VenueTicketTypeManager: React.FC<VenueTicketTypeManagerProps> = ({ 
                     className="flex items-center space-x-2 px-4 py-2 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/50 rounded-lg text-indigo-400 transition-all min-h-[44px]"
                 >
                     <Plus className="w-4 h-4" />
-                    <span className="text-sm">{showForm ? t('common.cancel') : 'Create Ticket Type'}</span>
+                    <span className="text-sm">{showForm ? t('common.cancel') : t('ticketTypes.createTicketType')}</span>
                 </button>
             </div>
 
             {showForm && (
                 <div className="bg-slate-700/30 border border-slate-600 rounded-lg p-4 md:p-6">
                     <h3 className="text-lg font-semibold text-white mb-4">
-                        {editingType ? 'Edit Ticket Type' : 'Create New Ticket Type'}
+                        {editingType ? t('ticketTypes.editTicketType') : t('ticketTypes.createNewTicketType')}
                     </h3>
                     <form onSubmit={handleSubmit} className="space-y-4">
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-1">
-                                    Parent Event <span className="text-red-400">*</span>
+                                    {t('ticketTypes.parentEvent')} <span className="text-red-400">*</span>
                                 </label>
                                 <select
                                     value={formData.event_id}
@@ -251,7 +251,7 @@ export const VenueTicketTypeManager: React.FC<VenueTicketTypeManagerProps> = ({ 
                                         errors.event_id ? 'border-red-500/50' : 'border-slate-600 focus:border-indigo-500/50'
                                     )}
                                 >
-                                    <option value="">Select an Event</option>
+                                    <option value="">{t('ticketTypes.selectEvent')}</option>
                                     {events.map((evt) => (
                                         <option key={evt.event_id || evt.id} value={evt.event_id || evt.id}>
                                             {evt.event_name || evt.name}
@@ -264,14 +264,14 @@ export const VenueTicketTypeManager: React.FC<VenueTicketTypeManagerProps> = ({ 
                             {!editingType && (
                                 <div>
                                     <label className="block text-sm font-medium text-slate-300 mb-1">
-                                        Ticket ID (Optional)
+                                        {t('ticketTypes.ticketId')}
                                     </label>
                                     <input
                                         type="text"
                                         value={formData.id}
                                         onChange={(e) => setFormData({ ...formData, id: e.target.value })}
                                         className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-indigo-500/50 transition-colors"
-                                        placeholder="E.g., VIP-001 (auto-generated if empty)"
+                                        placeholder={t('ticketTypes.ticketIdPlaceholder')}
                                     />
                                 </div>
                             )}
@@ -280,7 +280,7 @@ export const VenueTicketTypeManager: React.FC<VenueTicketTypeManagerProps> = ({ 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-1">
-                                    Ticket Name <span className="text-red-400">*</span>
+                                    {t('ticketTypes.ticketName')} <span className="text-red-400">*</span>
                                 </label>
                                 <input
                                     type="text"
@@ -290,13 +290,13 @@ export const VenueTicketTypeManager: React.FC<VenueTicketTypeManagerProps> = ({ 
                                         "w-full px-3 py-2 bg-slate-900/50 border rounded-lg text-white focus:outline-none transition-colors",
                                         errors.name ? 'border-red-500/50' : 'border-slate-600 focus:border-indigo-500/50'
                                     )}
-                                    placeholder="General Admission"
+                                    placeholder={t('ticketTypes.ticketNamePlaceholder')}
                                 />
                                 {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1">Price ($)</label>
+                                <label className="block text-sm font-medium text-slate-300 mb-1">{t('ticketTypes.price')}</label>
                                 <input
                                     type="number"
                                     value={formData.price_cents / 100 || ''}
@@ -313,39 +313,39 @@ export const VenueTicketTypeManager: React.FC<VenueTicketTypeManagerProps> = ({ 
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1">Description</label>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">{t('ticketTypes.description')}</label>
                             <textarea
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                 className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-indigo-500/50 focus:outline-none"
                                 rows={2}
-                                placeholder="Includes 2 free drink tokens..."
+                                placeholder={t('ticketTypes.descriptionPlaceholder')}
                             />
                         </div>
 
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1">Quantity Limit</label>
+                                <label className="block text-sm font-medium text-slate-300 mb-1">{t('ticketTypes.quantityLimit')}</label>
                                 <input
                                     type="number"
                                     value={formData.max_quantity || ''}
                                     onChange={(e) => setFormData({ ...formData, max_quantity: parseInt(e.target.value) || 0 })}
                                     className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-indigo-500/50 transition-colors"
                                     min="0"
-                                    placeholder="0 for unlimited"
+                                    placeholder={t('ticketTypes.quantityPlaceholder')}
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1">ID Validation Tier</label>
+                                <label className="block text-sm font-medium text-slate-300 mb-1">{t('ticketTypes.idValidationTier')}</label>
                                 <select
                                     value={formData.id_verification_tier}
                                     onChange={(e) => setFormData({ ...formData, id_verification_tier: parseInt(e.target.value) || 1 })}
                                     className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-indigo-500/50 transition-colors"
                                 >
-                                    <option value={1}>Tier 1 (None/Visual)</option>
-                                    <option value={2}>Tier 2 (Basic Scan)</option>
-                                    <option value={3}>Tier 3 (Deep Verification)</option>
+                                    <option value={1}>{t('ticketTypes.tier1')}</option>
+                                    <option value={2}>{t('ticketTypes.tier2')}</option>
+                                    <option value={3}>{t('ticketTypes.tier3')}</option>
                                 </select>
                             </div>
 
@@ -357,20 +357,20 @@ export const VenueTicketTypeManager: React.FC<VenueTicketTypeManagerProps> = ({ 
                                         onChange={(e) => setFormData({ ...formData, allows_reentry: e.target.checked })}
                                         className="rounded border-slate-600 bg-slate-900/50 text-indigo-500 focus:ring-indigo-500/50"
                                     />
-                                    <span className="text-sm">Allows Re-entry</span>
+                                    <span className="text-sm">{t('ticketTypes.allowsReentry')}</span>
                                 </label>
                             </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-800/50 p-3 rounded-lg border border-slate-700">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1">Revenue Profile</label>
+                                <label className="block text-sm font-medium text-slate-300 mb-1">{t('ticketTypes.revenueProfile')}</label>
                                 <select
                                     value={formData.revenue_profile_id}
                                     onChange={(e) => setFormData({ ...formData, revenue_profile_id: e.target.value })}
                                     className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-indigo-500/50 focus:outline-none text-sm"
                                 >
-                                    <option value="">Default (No specific split)</option>
+                                    <option value="">{t('ticketTypes.defaultNoSplit')}</option>
                                     {revenueProfiles.map((p) => (
                                         <option key={p.id} value={p.id}>{p.profile_name}</option>
                                     ))}
@@ -378,13 +378,13 @@ export const VenueTicketTypeManager: React.FC<VenueTicketTypeManagerProps> = ({ 
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1">Tax Profile</label>
+                                <label className="block text-sm font-medium text-slate-300 mb-1">{t('ticketTypes.taxProfile')}</label>
                                 <select
                                     value={formData.tax_profile_id}
                                     onChange={(e) => setFormData({ ...formData, tax_profile_id: e.target.value })}
                                     className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-indigo-500/50 focus:outline-none text-sm"
                                 >
-                                    <option value="">Default (No tax override)</option>
+                                    <option value="">{t('ticketTypes.defaultNoTax')}</option>
                                     {taxProfiles.map((p) => (
                                         <option key={p.id} value={p.id}>{p.profile_name}</option>
                                     ))}
@@ -394,7 +394,7 @@ export const VenueTicketTypeManager: React.FC<VenueTicketTypeManagerProps> = ({ 
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1">Sale Start Date</label>
+                                <label className="block text-sm font-medium text-slate-300 mb-1">{t('ticketTypes.saleStartDate')}</label>
                                 <input
                                     type="datetime-local"
                                     value={formData.sale_start_date}
@@ -404,7 +404,7 @@ export const VenueTicketTypeManager: React.FC<VenueTicketTypeManagerProps> = ({ 
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1">Sale End Date</label>
+                                <label className="block text-sm font-medium text-slate-300 mb-1">{t('ticketTypes.saleEndDate')}</label>
                                 <input
                                     type="datetime-local"
                                     value={formData.sale_end_date}
@@ -426,9 +426,9 @@ export const VenueTicketTypeManager: React.FC<VenueTicketTypeManagerProps> = ({ 
                             {submitting ? (
                                 <>
                                     <Loader2 className="w-4 h-4 animate-spin" />
-                                    Processing...
+                                    {t('ticketTypes.processing')}
                                 </>
-                            ) : editingType ? 'Update Ticket Type' : 'Create Ticket Type'}
+                            ) : editingType ? t('ticketTypes.updateTicketType') : t('ticketTypes.createTicketType')}
                         </button>
                     </form>
                 </div>
@@ -437,8 +437,8 @@ export const VenueTicketTypeManager: React.FC<VenueTicketTypeManagerProps> = ({ 
             {ticketTypes.length === 0 && !showForm ? (
                 <div className="text-center py-12">
                     <Ticket className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-                    <p className="text-slate-400">No ticket types defined</p>
-                    <p className="text-slate-500 text-sm mt-2">Create the first ticket type to allow purchases</p>
+                    <p className="text-slate-400">{t('ticketTypes.noTicketTypes')}</p>
+                    <p className="text-slate-500 text-sm mt-2">{t('ticketTypes.createFirst')}</p>
                 </div>
             ) : (
                 <div className="grid gap-4 md:grid-cols-2">
@@ -448,26 +448,26 @@ export const VenueTicketTypeManager: React.FC<VenueTicketTypeManagerProps> = ({ 
                                 <div className="flex-1">
                                     <h3 className="text-white font-medium text-lg">{ticket.name}</h3>
                                     <div className="text-slate-400 text-sm mt-1 mb-2 line-clamp-2">
-                                        {ticket.description || "No description"}
+                                        {ticket.description || t('ticketTypes.noDescription')}
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-y-1 text-xs mb-3">
                                         <span className="text-slate-300">Price: <span className="text-green-400 font-medium">${(ticket.price_cents / 100).toFixed(2)}</span></span>
-                                        <span className="text-slate-300">Auth Tier: <span className="text-white">{ticket.id_verification_tier}</span></span>
-                                        <span className="text-slate-300">Limit: <span className="text-white">{ticket.max_quantity === 0 ? 'Unlimited' : ticket.max_quantity}</span></span>
-                                        <span className="text-slate-300">Sold: <span className="text-white">{ticket.sold_count || 0}</span></span>
+                                        <span className="text-slate-300">{t('ticketTypes.authTier')} <span className="text-white">{ticket.id_verification_tier}</span></span>
+                                        <span className="text-slate-300">{t('ticketTypes.limit')} <span className="text-white">{ticket.max_quantity === 0 ? t('ticketTypes.unlimited') : ticket.max_quantity}</span></span>
+                                        <span className="text-slate-300">{t('ticketTypes.sold')} <span className="text-white">{ticket.sold_count || 0}</span></span>
                                         <span className="text-slate-300 col-span-2 mt-1 flex items-center gap-1">
-                                            Re-entry:
+                                            {t('ticketTypes.reentry')}
                                             {ticket.allows_reentry ? (
-                                                <span className="px-1.5 py-0.5 bg-green-500/20 text-green-400 rounded">Allowed</span>
+                                                <span className="px-1.5 py-0.5 bg-green-500/20 text-green-400 rounded">{t('ticketTypes.allowed')}</span>
                                             ) : (
-                                                <span className="px-1.5 py-0.5 bg-red-500/20 text-red-400 rounded">Denied</span>
+                                                <span className="px-1.5 py-0.5 bg-red-500/20 text-red-400 rounded">{t('ticketTypes.denied')}</span>
                                             )}
                                         </span>
                                     </div>
 
                                     <div className="text-xs text-slate-500 mt-2">
-                                        Event: {events.find(e => (e.event_id || e.id) === ticket.event_id)?.event_name || ticket.event_id}
+                                        {t('ticketTypes.event')} {events.find(e => (e.event_id || e.id) === ticket.event_id)?.event_name || ticket.event_id}
                                     </div>
                                 </div>
 

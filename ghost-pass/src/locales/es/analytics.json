@@ -1,0 +1,19 @@
+{
+  "title": "Analíticas",
+  "dashboard": "Panel de Analíticas",
+  "revenue": "Ingresos Totales",
+  "transactions": "Transacciones Totales",
+  "users": "Usuarios Totales",
+  "refresh": "Actualizar",
+  "refreshed": "Analíticas actualizadas",
+  "failedToLoad": "Error al cargar analíticas",
+  "entryStatistics": "Estadísticas de Entrada",
+  "initialEntries": "Entradas Iniciales",
+  "reentries": "Reingresos",
+  "reentryRate": "Tasa de Reingreso",
+  "performance": "Rendimiento",
+  "avgTransaction": "Transacción Promedio",
+  "revenuePerUser": "Ingresos por Usuario",
+  "vsLastPeriod": "vs período anterior",
+  "realtime": "Analíticas en tiempo real • Se actualiza cada 30 segundos • Última actualización:"
+}

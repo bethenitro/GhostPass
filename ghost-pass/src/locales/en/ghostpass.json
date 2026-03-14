@@ -63,6 +63,8 @@
     "boundToDevice": "Bound to your device",
     "protectedWithProofs": "Protected with cryptographic proofs",
     "recoverable": "Recoverable with backup codes",
-    "zeroCustody": "Zero custody - you control your funds"
+    "zeroCustody": "Zero custody - you control your funds",
+    "tabWallet": "Wallet",
+    "tabFunding": "Funding"
   }
 }

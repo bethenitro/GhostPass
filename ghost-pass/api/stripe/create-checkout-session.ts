@@ -188,7 +188,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           quantity: 1,
         },
       ],
-      success_url: `${success_url}?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${success_url}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url,
       // Metadata for tracking and webhook processing
       metadata: {

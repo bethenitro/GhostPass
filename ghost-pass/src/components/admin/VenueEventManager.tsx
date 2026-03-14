@@ -157,7 +157,7 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
       if (editingEvent) {
         // Update existing event
         await eventApi.update(editingEvent.event_id, submitData);
-        showToast('Event updated successfully', 'success');
+        showToast(t('events.eventUpdated'), 'success');
       } else {
         // Create new event
         await eventApi.create(submitData);
@@ -171,9 +171,9 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
 
       // Handle duplicate event ID error
       if (error.response?.status === 409 || error.response?.data?.detail?.includes('duplicate')) {
-        showToast('Event ID already exists. Please use a different event ID.', 'error');
+        showToast(t('events.duplicateId'), 'error');
       } else {
-        showToast(error.response?.data?.error || `Failed to ${editingEvent ? 'update' : 'create'} event`, 'error');
+        showToast(error.response?.data?.error || t('events.failedToSave'), 'error');
       }
     } finally {
       setSubmitting(false);
@@ -181,15 +181,15 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
   };
 
   const handleDelete = async (eventId: string) => {
-    if (!confirm('Are you sure you want to delete this event?')) return;
+    if (!confirm(t('events.deleteConfirm'))) return;
 
     try {
       await eventApi.delete(eventId);
-      showToast('Event deleted successfully', 'success');
+      showToast(t('events.eventDeleted'), 'success');
       loadData();
     } catch (error: any) {
       console.error('Failed to delete event:', error);
-      showToast(error.response?.data?.error || 'Failed to delete event', 'error');
+      showToast(error.response?.data?.error || t('events.failedToDelete'), 'error');
     }
   };
 
@@ -263,7 +263,7 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
         >
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-white">
-              {editingEvent ? 'Edit Event' : 'Create New Event'}
+              {editingEvent ? t('events.editEvent') : t('events.createNewEvent')}
             </h3>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -423,7 +423,7 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
             {/* Revenue Split Configuration */}
             <div className="bg-slate-800/50 border border-slate-600 rounded-lg p-4">
               <div className="flex items-center justify-between mb-3">
-                <h4 className="text-sm font-semibold text-slate-300">Revenue Split (%)</h4>
+                <h4 className="text-sm font-semibold text-slate-300">{t('events.revenueSplit')}</h4>
                 <label className="flex items-center space-x-2 text-xs text-slate-400">
                   <input
                     type="checkbox"
@@ -436,7 +436,7 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                     }}
                     className="rounded border-slate-600 bg-slate-900/50 text-purple-500 focus:ring-purple-500/50"
                   />
-                  <span>Use Profile</span>
+                  <span>{t('events.useProfile')}</span>
                 </label>
               </div>
 
@@ -447,7 +447,7 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                     onChange={(e) => handleRevenueProfileChange(e.target.value)}
                     className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:border-purple-500/50 focus:outline-none"
                   >
-                    <option value="">Select Revenue Profile</option>
+                    <option value="">{t('events.selectRevenueProfile')}</option>
                     {revenueProfiles.map((profile) => (
                       <option key={profile.id} value={profile.id}>
                         {profile.profile_name} - VALID: {profile.valid_percentage}%, Vendor: {profile.vendor_percentage}%, Pool: {profile.pool_percentage}%
@@ -525,7 +525,7 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                 </div>
               </div>
               <div className="mt-2 p-2 bg-slate-900/50 rounded text-xs">
-                <span className="text-slate-400">Total: </span>
+                <span className="text-slate-400">{t('events.total')} </span>
                 <span className={`font-semibold ${(formData.valid_percentage + formData.vendor_percentage + formData.pool_percentage + formData.promoter_percentage + formData.executive_percentage) === 100
                   ? 'text-emerald-400'
                   : 'text-red-400'
@@ -533,17 +533,17 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                   {(formData.valid_percentage + formData.vendor_percentage + formData.pool_percentage + formData.promoter_percentage + formData.executive_percentage).toFixed(2)}%
                 </span>
                 {(formData.valid_percentage + formData.vendor_percentage + formData.pool_percentage + formData.promoter_percentage + formData.executive_percentage) !== 100 && (
-                  <span className="ml-2 text-red-400">(must equal 100%)</span>
+                  <span className="ml-2 text-red-400">{t('events.mustEqual100')}</span>
                 )}
               </div>
             </div>
 
             {/* Tax Configuration */}
             <div className="bg-slate-800/50 border border-slate-600 rounded-lg p-4">
-              <h4 className="text-sm font-semibold text-slate-300 mb-3">Tax Configuration (%)</h4>
+              <h4 className="text-sm font-semibold text-slate-300 mb-3">{t('events.taxConfiguration')}</h4>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">State Tax</label>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">{t('events.stateTax')}</label>
                   <input
                     type="number"
                     value={formData.state_tax_percentage || ''}
@@ -555,7 +555,7 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Local Tax</label>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">{t('events.localTax')}</label>
                   <input
                     type="number"
                     value={formData.local_tax_percentage || ''}
@@ -567,7 +567,7 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Alcohol Tax</label>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">{t('events.alcoholTax')}</label>
                   <input
                     type="number"
                     value={formData.alcohol_tax_percentage || ''}
@@ -579,7 +579,7 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Food Tax</label>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">{t('events.foodTax')}</label>
                   <input
                     type="number"
                     value={formData.food_tax_percentage || ''}
@@ -592,11 +592,11 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                 </div>
               </div>
               <div className="mt-2 p-2 bg-slate-900/50 rounded text-xs text-slate-400">
-                Total Base Tax (State + Local): <span className="text-white font-semibold">
+                {t('events.totalBaseTax')} <span className="text-white font-semibold">
                   {(formData.state_tax_percentage + formData.local_tax_percentage).toFixed(2)}%
                 </span>
                 <br />
-                Total All Taxes: <span className="text-white font-semibold">
+                {t('events.totalAllTaxes')} <span className="text-white font-semibold">
                   {(formData.state_tax_percentage + formData.local_tax_percentage + formData.alcohol_tax_percentage + formData.food_tax_percentage).toFixed(2)}%
                 </span>
               </div>
@@ -613,7 +613,7 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                   {t('common.processing')}
                 </>
               ) : (
-                editingEvent ? 'Update Event' : t('events.createEvent')
+                editingEvent ? t('events.updateEvent') : t('events.createEvent')
               )}
             </button>
           </form>
@@ -643,10 +643,10 @@ export const VenueEventManager: React.FC<VenueEventManagerProps> = ({ venueId })
                     <span className="text-slate-500">
                       {new Date(event.start_date).toLocaleDateString()} - {new Date(event.end_date).toLocaleDateString()}
                     </span>
-                    <span className="text-green-400">Entry: ${(event.entry_fee_cents / 100).toFixed(2)}</span>
-                    <span className="text-cyan-400">Re-entry: ${(event.re_entry_fee_cents / 100).toFixed(2)}</span>
+                    <span className="text-green-400">{t('events.entry')} ${(event.entry_fee_cents / 100).toFixed(2)}</span>
+                    <span className="text-cyan-400">{t('events.reentry')} ${(event.re_entry_fee_cents / 100).toFixed(2)}</span>
                     {event.ticket_price_cents > 0 && (
-                      <span className="text-purple-400">Ticket: ${(event.ticket_price_cents / 100).toFixed(2)}</span>
+                      <span className="text-purple-400">{t('events.ticket')} ${(event.ticket_price_cents / 100).toFixed(2)}</span>
                     )}
                   </div>
                 </div>
