@@ -13,12 +13,9 @@
  */
 
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+import { adminSupabase as supabase } from '../_lib/supabase.js';
 import { handleCors } from '../_lib/cors.js';
 import crypto from 'crypto';
-
-const supabaseUrl = process.env.VITE_SUPABASE_URL!;
-const supabaseServiceKey = process.env.VITE_SUPABASE_ANON_KEY!;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Handle CORS
@@ -36,6 +33,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ticket_type_id,
       wallet_binding_id,
       device_fingerprint,
+      quantity = 1,
     } = req.body;
 
     // Validation
@@ -45,7 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const qty = Math.max(1, parseInt(quantity, 10) || 1);
 
     // Get event and ticket type information
     const { data: event, error: eventError } = await supabase
@@ -70,9 +68,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(404).json({ error: 'Ticket type not found' });
     }
 
-    // Check if ticket type is still available
-    if (ticketType.sold_count >= ticketType.max_quantity) {
-      return res.status(400).json({ error: 'Ticket type sold out' });
+    // Check if ticket type is still available (only when a limit is set)
+    if (ticketType.max_quantity != null && ticketType.max_quantity > 0 && ticketType.sold_count + qty > ticketType.max_quantity) {
+      return res.status(400).json({ error: 'Not enough tickets available' });
     }
 
     // Get user's wallet
@@ -89,8 +87,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Calculate total cost (ticket price + VALID service fee)
     const ticketPriceCents = ticketType.price_cents;
     const serviceFeePercent = event.service_fee_percent || 5; // Default 5%
-    const serviceFeeCents = Math.round(ticketPriceCents * (serviceFeePercent / 100));
-    const totalCostCents = ticketPriceCents + serviceFeeCents;
+    const serviceFeeCents = Math.round(ticketPriceCents * qty * (serviceFeePercent / 100));
+    const totalCostCents = (ticketPriceCents * qty) + serviceFeeCents;
 
     // Check if wallet has sufficient balance
     if (wallet.balance_cents < totalCostCents) {
@@ -102,11 +100,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // Generate ticket ID
-    const ticketId = `ticket_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`;
-    const ticketCode = crypto.randomBytes(16).toString('hex').toUpperCase();
-
-    // Start transaction
     const newBalance = wallet.balance_cents - totalCostCents;
 
     // Update wallet balance
@@ -122,10 +115,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'Failed to update wallet balance' });
     }
 
-    // Create ticket record
-    const { data: ticket, error: ticketError } = await supabase
-      .from('event_tickets')
-      .insert({
+    // Create ticket records (one per quantity)
+    const now = new Date().toISOString();
+    const ticketRows = Array.from({ length: qty }, (_, i) => {
+      const ticketId = `ticket_${Date.now()}_${i}_${crypto.randomBytes(6).toString('hex')}`;
+      const ticketCode = crypto.randomBytes(16).toString('hex').toUpperCase();
+      return {
         id: ticketId,
         ticket_code: ticketCode,
         event_id,
@@ -133,10 +128,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         wallet_binding_id,
         device_fingerprint,
         ticket_price_cents: ticketPriceCents,
-        service_fee_cents: serviceFeeCents,
-        total_paid_cents: totalCostCents,
+        service_fee_cents: Math.round(serviceFeeCents / qty),
+        total_paid_cents: ticketPriceCents + Math.round(serviceFeeCents / qty),
         status: 'active',
-        purchased_at: new Date().toISOString(),
+        purchased_at: now,
         valid_from: event.start_date,
         valid_until: event.end_date,
         entry_granted: false,
@@ -146,55 +141,64 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           ticket_type_name: ticketType.name,
           venue_id: event.venue_id,
         },
-      })
-      .select()
-      .single();
+      };
+    });
 
-    if (ticketError) {
+    const { data: tickets, error: ticketError } = await supabase
+      .from('event_tickets')
+      .insert(ticketRows)
+      .select();
+
+    if (ticketError || !tickets) {
       // Rollback wallet balance
       await supabase
         .from('wallets')
         .update({ balance_cents: wallet.balance_cents })
         .eq('wallet_binding_id', wallet_binding_id);
       
-      return res.status(500).json({ error: 'Failed to create ticket' });
+      return res.status(500).json({ error: 'Failed to create tickets' });
     }
 
-    // Record transaction
-    const transactionId = `txn_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`;
-    
-    await supabase.from('transactions').insert({
-      id: transactionId,
-      wallet_binding_id,
-      type: 'TICKET_PURCHASE',
+    // Record a single transaction for the whole purchase
+    const { error: txnError } = await supabase.from('transactions').insert({
+      wallet_id: wallet.id,
+      type: 'SPEND',
       amount_cents: -totalCostCents,
-      description: `Ticket: ${ticketType.name} for ${event.name}`,
-      status: 'completed',
-      payment_method: 'wallet',
+      balance_before_cents: wallet.balance_cents,
+      balance_after_cents: newBalance,
+      vendor_name: `${qty}x ${ticketType.name} — ${event.name}`,
+      timestamp: new Date().toISOString(),
       metadata: {
         event_id,
-        ticket_id: ticketId,
+        ticket_ids: tickets.map((t: any) => t.id),
         ticket_type_id,
+        quantity: qty,
         ticket_price_cents: ticketPriceCents,
         service_fee_cents: serviceFeeCents,
-        device_fingerprint,
+        type: 'TICKET_PURCHASE',
       },
-      created_at: new Date().toISOString(),
     });
+
+    if (txnError) {
+      console.error('Failed to record transaction:', txnError);
+    }
 
     // Update ticket type sold count
     await supabase
       .from('ticket_types')
       .update({
-        sold_count: ticketType.sold_count + 1,
+        sold_count: (ticketType.sold_count || 0) + qty,
       })
       .eq('id', ticket_type_id);
+
+    const firstTicket = tickets[0];
 
     // Generate receipt
     const receipt = {
       receipt_id: `receipt_${Date.now()}`,
-      ticket_id: ticketId,
-      ticket_code: ticketCode,
+      ticket_ids: tickets.map((t: any) => t.id),
+      ticket_code: firstTicket.ticket_code,
+      quantity: qty,
       event: {
         id: event.id,
         name: event.name,
@@ -217,26 +221,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         previous_balance_cents: wallet.balance_cents,
         new_balance_cents: newBalance,
       },
-      purchased_at: ticket.purchased_at,
-      valid_from: ticket.valid_from,
-      valid_until: ticket.valid_until,
+      purchased_at: firstTicket.purchased_at,
+      valid_from: firstTicket.valid_from,
+      valid_until: firstTicket.valid_until,
     };
 
     return res.status(200).json({
       success: true,
       ticket: {
-        id: ticket.id,
-        ticket_code: ticket.ticket_code,
-        event_id: ticket.event_id,
-        ticket_type_id: ticket.ticket_type_id,
-        status: ticket.status,
-        purchased_at: ticket.purchased_at,
-        valid_from: ticket.valid_from,
-        valid_until: ticket.valid_until,
+        id: firstTicket.id,
+        ticket_code: firstTicket.ticket_code,
+        event_id: firstTicket.event_id,
+        ticket_type_id: firstTicket.ticket_type_id,
+        status: firstTicket.status,
+        purchased_at: firstTicket.purchased_at,
+        valid_from: firstTicket.valid_from,
+        valid_until: firstTicket.valid_until,
       },
+      tickets: tickets.map((t: any) => ({
+        id: t.id,
+        ticket_code: t.ticket_code,
+        status: t.status,
+      })),
       receipt,
-      transaction_id: transactionId,
-      message: 'Ticket purchased successfully',
+      message: qty > 1 ? `${qty} tickets purchased successfully` : 'Ticket purchased successfully',
     });
 
   } catch (error) {

@@ -10,9 +10,10 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   }
 
   try {
-    await requireAuth(req, res);
+    const user = await requireAuth(req, res);
+    if (!user) return; // requireAuth already sent the error response
 
-    res.status(200).json({
+    return res.status(200).json({
       session: {
         session_id: 'current_session',
         status: 'ACTIVE',
@@ -20,7 +21,8 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       }
     });
   } catch (error) {
+    if (res.headersSent) return;
     console.error('Session status error:', error);
-    res.status(500).json({ detail: 'Failed to get session status' });
+    return res.status(500).json({ detail: 'Failed to get session status' });
   }
 };

@@ -13,6 +13,8 @@ const TransactionHistory: React.FC = () => {
   const { data: transactionsData, isLoading } = useQuery({
     queryKey: ['transactions'],
     queryFn: walletApi.getTransactions,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: false,
   });
 
   // Ensure transactions is always an array
@@ -45,8 +47,8 @@ const TransactionHistory: React.FC = () => {
       // Create properly formatted CSV content
       const csvHeader = t('history.csvHeader') + '\n';
       const csvRows = transactions.map((t: Transaction) => {
-        const date = escapeCSV(formatDate(t.timestamp));
-        const time = escapeCSV(formatTime(t.timestamp));
+        const date = escapeCSV(formatDate(getTransactionDate(t)));
+        const time = escapeCSV(formatTime(getTransactionDate(t)));
         const type = escapeCSV(t.type);
         const description = escapeCSV(getTransactionLabel(t));
         const amount = escapeCSV((t.amount_cents / 100).toFixed(2));
@@ -74,12 +76,16 @@ const TransactionHistory: React.FC = () => {
     }
   };
 
+  const getTransactionDate = (t: Transaction) => 
+    t.timestamp || t.created_at || (t as any).inserted_at || '';
+
   const getTransactionIcon = (type: string) => {
     switch (type) {
       case 'FUND':
         return ArrowDownLeft;
       case 'SPEND':
       case 'FEE':
+      case 'TICKET_PURCHASE':
         return ArrowUpRight;
       case 'REFUND':
         return ArrowLeftRight;
@@ -94,6 +100,7 @@ const TransactionHistory: React.FC = () => {
         return 'text-neon-green';
       case 'SPEND':
       case 'FEE':
+      case 'TICKET_PURCHASE':
         return 'text-neon-red';
       case 'REFUND':
         return 'text-blue-400';
@@ -103,7 +110,6 @@ const TransactionHistory: React.FC = () => {
   };
 
   const getTransactionLabel = (transaction: Transaction) => {
-    // Use vendor_name if available, otherwise fall back to old logic
     if (transaction.vendor_name) {
       return transaction.vendor_name;
     }
@@ -111,6 +117,8 @@ const TransactionHistory: React.FC = () => {
     switch (transaction.type) {
       case 'FUND':
         return `${t('history.walletFunding')}${transaction.gateway_id ? ` (${transaction.gateway_id})` : ''}`;
+      case 'TICKET_PURCHASE':
+        return transaction.metadata?.description || t('tickets.title') || 'Ticket Purchase';
       case 'SPEND':
         return transaction.metadata?.pass_id ? t('history.ghostPassPurchase') : t('history.purchase');
       case 'FEE':
@@ -210,14 +218,14 @@ const TransactionHistory: React.FC = () => {
                         {getTransactionLabel(transaction)}
                       </p>
                       <div className="flex items-center space-x-2 text-xs sm:text-sm text-white/60">
-                        <span>{formatDate(transaction.timestamp)} • {formatTime(transaction.timestamp)}</span>
+                        <span>{formatDate(getTransactionDate(transaction))} • {formatTime(getTransactionDate(transaction))}</span>
                         {transaction.interaction_method && (
                           <>
                             <span>•</span>
                             <span className="text-cyan-400">{transaction.interaction_method}</span>
                           </>
                         )}
-                        {transaction.platform_fee_cents && transaction.platform_fee_cents > 0 && (
+                        {transaction.platform_fee_cents != null && transaction.platform_fee_cents > 0 && (
                           <>
                             <span>•</span>
                             <span className="text-orange-400">Fee: ${(transaction.platform_fee_cents / 100).toFixed(2)}</span>
@@ -301,7 +309,7 @@ const TransactionHistory: React.FC = () => {
                     <div className="min-w-0">
                       <p className="text-white/60 text-xs">{t('history.dateTime')}</p>
                       <p className="text-white text-sm">
-                        {formatDate(selectedTransaction.timestamp)} {formatTime(selectedTransaction.timestamp)}
+                        {formatDate(getTransactionDate(selectedTransaction))} {formatTime(getTransactionDate(selectedTransaction))}
                       </p>
                     </div>
                   </div>

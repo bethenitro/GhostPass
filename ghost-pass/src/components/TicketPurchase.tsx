@@ -7,9 +7,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Ticket, Calendar, MapPin, DollarSign, CheckCircle, AlertCircle, Loader2, QrCode } from 'lucide-react';
+import { Ticket, Calendar, MapPin, DollarSign, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import QRCodeLib from 'react-qr-code';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
+
+const QRCode = (QRCodeLib as any).default || QRCodeLib;
 
 interface Event {
   id: string;
@@ -225,11 +228,16 @@ const TicketPurchase: React.FC = () => {
           </div>
 
           <div className="pt-4 border-t border-slate-700">
-            <div className="bg-white p-4 rounded-lg">
-              <div className="text-center">
-                <QrCode className="w-16 h-16 mx-auto mb-2 text-slate-900" />
-                <p className="text-xs text-slate-600 font-mono">{purchasedTicket.ticket_code}</p>
-              </div>
+            <div className="bg-white p-4 rounded-lg flex flex-col items-center">
+              <QRCode
+                value={purchasedTicket.ticket_code}
+                size={180}
+                fgColor="#0f172a"
+                bgColor="#ffffff"
+                level="M"
+                style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
+              />
+              <p className="text-xs text-slate-600 font-mono mt-2">{purchasedTicket.ticket_code}</p>
             </div>
             <p className="text-xs text-slate-400 text-center mt-2">
               {t('tickets.showQRCode')}

@@ -37,13 +37,15 @@ export interface SessionStatusResponse {
 export interface Transaction {
   id: string;
   wallet_id: string;
-  type: 'FUND' | 'SPEND' | 'FEE' | 'REFUND';
+  wallet_binding_id?: string;
+  type: 'FUND' | 'SPEND' | 'FEE' | 'REFUND' | 'TICKET_PURCHASE';
   amount_cents: number;
   gateway_id?: string;
   gateway_name?: string;
   gateway_type?: 'ENTRY_POINT' | 'INTERNAL_AREA' | 'TABLE_SEAT';
   venue_id?: string;
-  timestamp: string;
+  timestamp: string;       // legacy field
+  created_at?: string;     // actual DB field
   metadata?: Record<string, any>;
   balance_before_cents?: number;
   balance_after_cents?: number;

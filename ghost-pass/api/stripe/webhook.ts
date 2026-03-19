@@ -116,6 +116,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 
   await supabase.from('transactions').insert({
     wallet_id: wallet.id,
+    wallet_binding_id: wallet_binding_id,
     type: 'FUND',
     amount_cents: amountTotal,
     balance_before_cents: wallet.balance_cents || 0,
@@ -211,6 +212,7 @@ async function handleTicketPurchaseCompleted(session: Stripe.Checkout.Session) {
   // Record transaction with correct schema
   await supabase.from('transactions').insert({
     wallet_id: wallet.id,
+    wallet_binding_id: targetWalletBindingId,
     type: 'SPEND',
     amount_cents: totalCentsPaid,
     balance_before_cents: wallet.balance_cents || 0,
