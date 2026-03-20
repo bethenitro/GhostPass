@@ -1,0 +1,14 @@
+{
+  "title": "Perfiles de Ingresos",
+  "createProfile": "Crear Perfil",
+  "profileName": "Nombre del perfil",
+  "description": "Descripción",
+  "validPercentage": "Plataforma VALID",
+  "vendorPercentage": "Vendedor",
+  "poolPercentage": "Fondo común",
+  "promoterPercentage": "Promotor",
+  "executivePercentage": "Ejecutivo",
+  "totalMustBe100": "Los porcentajes deben sumar 100%",
+  "adminConfig": "Config. del administrador",
+  "useAdminConfig": "Usar config. del administrador"
+}

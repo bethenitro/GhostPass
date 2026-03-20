@@ -45,7 +45,22 @@ export const EventCreator: React.FC = () => {
         revenueProfileApi.list()
       ]);
       setVenues(venuesRes.data);
-      setRevenueProfiles(revenueProfilesRes.data || []);
+      const profiles = revenueProfilesRes.data || [];
+      setRevenueProfiles(profiles);
+      // Auto-select first profile
+      if (profiles.length > 0) {
+        setUseRevenueProfile(true);
+        setSelectedRevenueProfileId(profiles[0].id);
+        const p = profiles[0];
+        setFormData(prev => ({
+          ...prev,
+          valid_percentage: p.valid_percentage,
+          vendor_percentage: p.vendor_percentage,
+          pool_percentage: p.pool_percentage,
+          promoter_percentage: p.promoter_percentage,
+          executive_percentage: p.executive_percentage || 0,
+        }));
+      }
     } catch (error) {
       console.error('Failed to load data:', error);
     }

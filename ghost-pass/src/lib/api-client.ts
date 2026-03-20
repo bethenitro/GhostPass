@@ -39,6 +39,17 @@ export const revenueProfileApi = {
   update: (id: string, data: any) => apiClient.put('/admin/revenue-profiles', { id, ...data }),
 };
 
+// Vendor Payout Setup APIs
+export const vendorPayoutApi = {
+  getSetup: (vendorId: string) => apiClient.get(`/vendor/payout-setup?vendor_id=${vendorId}`),
+  saveSetup: (data: any) => apiClient.post('/vendor/payout-setup', data),
+};
+
+// Fee Distribution API
+export const feeDistributionApi = {
+  get: () => apiClient.get('/admin/fee-distribution'),
+};
+
 // Tax Profile APIs
 export const taxProfileApi = {
   list: (venueId?: string) => apiClient.get('/admin/tax-profiles', { params: { venue_id: venueId } }),

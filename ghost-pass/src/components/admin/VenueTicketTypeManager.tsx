@@ -74,6 +74,11 @@ export const VenueTicketTypeManager: React.FC<VenueTicketTypeManagerProps> = ({ 
             setRevenueProfiles(revRes.data || []);
             setTaxProfiles(taxRes.data || []);
 
+            // Pre-select first revenue profile if none selected
+            if ((revRes.data || []).length > 0 && !formData.revenue_profile_id) {
+                setFormData(prev => ({ ...prev, revenue_profile_id: revRes.data[0].id }));
+            }
+
             const eventIds = (eventsRes.data || []).map((e: any) => e.event_id || e.id);
 
             if (eventIds.length > 0) {
@@ -375,6 +380,26 @@ export const VenueTicketTypeManager: React.FC<VenueTicketTypeManagerProps> = ({ 
                                         <option key={p.id} value={p.id}>{p.profile_name}</option>
                                     ))}
                                 </select>
+                                {formData.revenue_profile_id && (() => {
+                                    const p = revenueProfiles.find(r => r.id === formData.revenue_profile_id);
+                                    if (!p) return null;
+                                    return (
+                                        <div className="mt-2 grid grid-cols-3 sm:grid-cols-5 gap-1 text-xs">
+                                            {[
+                                                { label: 'VALID', value: p.valid_percentage },
+                                                { label: 'Vendor', value: p.vendor_percentage },
+                                                { label: 'Pool', value: p.pool_percentage },
+                                                { label: 'Promoter', value: p.promoter_percentage },
+                                                { label: 'Exec', value: p.executive_percentage },
+                                            ].map(item => (
+                                                <div key={item.label} className="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 text-center">
+                                                    <div className="text-slate-400">{item.label}</div>
+                                                    <div className="text-indigo-400 font-semibold">{item.value}%</div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    );
+                                })()}
                             </div>
 
                             <div>

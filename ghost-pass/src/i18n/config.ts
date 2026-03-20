@@ -74,6 +74,8 @@ import staffPortalEn from '../locales/en/staffPortal.json';
 import staffPortalEs from '../locales/es/staffPortal.json';
 import stationsEn from '../locales/en/stations.json';
 import stationsEs from '../locales/es/stations.json';
+import revenueProfilesEn from '../locales/en/revenueProfiles.json';
+import revenueProfilesEs from '../locales/es/revenueProfiles.json';
 
 // Merge all translations
 const enResources = { 
@@ -113,7 +115,8 @@ const enResources = {
   staffManager: staffManagerEn,
   payoutsManager: payoutsManagerEn,
   staffPortal: staffPortalEn,
-  stations: stationsEn
+  stations: stationsEn,
+  revenueProfiles: revenueProfilesEn
 };
 const esResources = { 
   ...es, 
@@ -152,7 +155,8 @@ const esResources = {
   staffManager: staffManagerEs,
   payoutsManager: payoutsManagerEs,
   staffPortal: staffPortalEs,
-  stations: stationsEs
+  stations: stationsEs,
+  revenueProfiles: revenueProfilesEs
 };
 
 i18n

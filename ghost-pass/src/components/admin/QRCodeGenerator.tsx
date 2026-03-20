@@ -58,7 +58,14 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
         const revRes = await fetch('/api/admin/revenue-profiles', {
           headers: { 'Authorization': `Bearer ${authToken}` }
         });
-        if (revRes.ok) setRevenueProfiles(await revRes.json() || []);
+        if (revRes.ok) {
+          const profiles = await revRes.json() || [];
+          setRevenueProfiles(profiles);
+          // Pre-select first profile
+          if (profiles.length > 0) {
+            setFormData(prev => ({ ...prev, revenue_profile_id: profiles[0].id }));
+          }
+        }
 
         // Load Tax Profiles (initial load without venue filter)
         const taxRes = await fetch('/api/admin/tax-profiles', {
@@ -395,10 +402,30 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ venueId, event
               <option value="">{loadingRevenueProfiles ? t('qr.loadingProfiles') : t('qr.selectProfile')}</option>
               {revenueProfiles.map((profile) => (
                 <option key={profile.id} value={profile.id}>
-                  {profile.profile_name} (Vendor: {profile.vendor_percentage}%)
+                  {profile.profile_name}
                 </option>
               ))}
             </select>
+            {formData.revenue_profile_id && (() => {
+              const p = revenueProfiles.find(r => r.id === formData.revenue_profile_id);
+              if (!p) return null;
+              return (
+                <div className="mt-2 grid grid-cols-5 gap-1 text-xs">
+                  {[
+                    { label: 'VALID', value: p.valid_percentage },
+                    { label: 'Vendor', value: p.vendor_percentage },
+                    { label: 'Pool', value: p.pool_percentage },
+                    { label: 'Promoter', value: p.promoter_percentage },
+                    { label: 'Exec', value: p.executive_percentage },
+                  ].map(item => (
+                    <div key={item.label} className="bg-slate-900/60 border border-slate-700 rounded px-1 py-1 text-center">
+                      <div className="text-slate-400">{item.label}</div>
+                      <div className="text-blue-400 font-semibold">{item.value}%</div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
 
           <div>

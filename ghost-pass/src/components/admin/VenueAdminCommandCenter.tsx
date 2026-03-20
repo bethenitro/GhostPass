@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
   Calendar, Store, LayoutGrid, FileText,
-  BarChart3, Users, DollarSign, Settings, LogOut, MapPin, ArrowLeft, ExternalLink, Ticket
+  BarChart3, Users, DollarSign, Settings, LogOut, MapPin, ArrowLeft, Ticket
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { authApi } from '@/lib/api';
@@ -91,22 +91,6 @@ export const VenueAdminCommandCenter: React.FC<VenueAdminCommandCenterProps> = (
           <div className="flex gap-2 ml-auto">
             <LanguageSwitcher showLabel={false} className="sm:hidden" />
             <LanguageSwitcher showLabel={true} className="hidden sm:flex" />
-            <button
-              onClick={async () => {
-                try {
-                  const deviceFingerprint = localStorage.getItem('device_fingerprint') || '';
-                  const ssoData = await authApi.generateSSOToken(deviceFingerprint);
-                  window.open(ssoData.bevalid_url, '_blank');
-                } catch (error) {
-                  console.error('Error generating SSO token:', error);
-                  alert('Failed to open beVALID. Please try again.');
-                }
-              }}
-              className="flex items-center space-x-2 px-4 py-2 bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-all duration-300 min-h-[44px] text-sm"
-            >
-              <ExternalLink className="w-4 h-4" />
-              <span className="hidden sm:inline">beVALID</span>
-            </button>
             <button
               onClick={handleLogout}
               className="flex items-center space-x-2 px-4 py-2 bg-red-500/20 border border-red-500/50 text-red-400 rounded-lg hover:bg-red-500/30 transition-all duration-300 min-h-[44px] text-sm"

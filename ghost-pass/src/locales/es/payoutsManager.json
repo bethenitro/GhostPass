@@ -1,5 +1,30 @@
 {
-  "title": "Pagos a Vendedores",
+  "title": "Configuración de Pago al Vendedor",
   "pending": "Pagos Pendientes",
-  "history": "Historial de Pagos"
+  "history": "Historial de Pagos",
+  "configured": "Método de pago configurado. Puedes actualizarlo a continuación.",
+  "pickMethod": "Selecciona Método de Pago",
+  "paypalEmail": "Correo de PayPal",
+  "venmoHandle": "Usuario de Venmo",
+  "zelleEmail": "Correo de Zelle",
+  "zellePhone": "Teléfono de Zelle",
+  "email": "Correo electrónico",
+  "phone": "Teléfono",
+  "nameOnAccount": "Nombre en la cuenta",
+  "bankName": "Nombre del banco",
+  "accountNumber": "Número de cuenta",
+  "routingNumber": "Número de ruta",
+  "orgName": "Nombre de la organización del vendedor",
+  "confirmSetup": "Confirmar configuración de pago",
+  "saving": "Guardando...",
+  "saved": "Configuración de pago guardada",
+  "selectMethod": "Por favor selecciona un método de pago",
+  "saveFailed": "Error al guardar la configuración de pago",
+  "methods": {
+    "paypal": "PayPal",
+    "bank_transfer": "Transferencia bancaria",
+    "zelle": "Zelle",
+    "venmo": "Venmo",
+    "email_phone": "Correo / Teléfono"
+  }
 }

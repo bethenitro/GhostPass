@@ -1,0 +1,14 @@
+{
+  "title": "Revenue Profiles",
+  "createProfile": "Create Profile",
+  "profileName": "Profile Name",
+  "description": "Description",
+  "validPercentage": "VALID Platform",
+  "vendorPercentage": "Vendor",
+  "poolPercentage": "Pool",
+  "promoterPercentage": "Promoter",
+  "executivePercentage": "Executive",
+  "totalMustBe100": "Percentages must total 100%",
+  "adminConfig": "Admin config",
+  "useAdminConfig": "Use Admin Config"
+}

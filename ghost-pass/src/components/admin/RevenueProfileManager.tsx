@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { revenueProfileApi } from '../../lib/api-client';
+import { revenueProfileApi, feeDistributionApi } from '../../lib/api-client';
 
 export const RevenueProfileManager: React.FC = () => {
   const { t } = useTranslation();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [adminDefaults, setAdminDefaults] = useState<any>(null);
 
   const [formData, setFormData] = useState({
     profile_name: '',
@@ -20,7 +21,31 @@ export const RevenueProfileManager: React.FC = () => {
 
   useEffect(() => {
     loadProfiles();
+    loadAdminDefaults();
   }, []);
+
+  const loadAdminDefaults = async () => {
+    try {
+      const res = await feeDistributionApi.get();
+      const raw = res.data?.raw_percentages;
+      if (raw) {
+        setAdminDefaults(raw);
+      }
+    } catch (error) {
+      console.error('Failed to load admin fee distribution:', error);
+    }
+  };
+
+  const applyAdminDefaults = () => {
+    if (!adminDefaults) return;
+    setFormData(prev => ({
+      ...prev,
+      valid_percentage: adminDefaults.valid_platform_percentage ?? prev.valid_percentage,
+      vendor_percentage: adminDefaults.vendor_percentage ?? prev.vendor_percentage,
+      pool_percentage: adminDefaults.pool_percentage ?? prev.pool_percentage,
+      promoter_percentage: adminDefaults.promoter_percentage ?? prev.promoter_percentage,
+    }));
+  };
 
   const loadProfiles = async () => {
     try {
@@ -76,7 +101,10 @@ export const RevenueProfileManager: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <h2 className="text-lg sm:text-2xl font-bold text-white">{t('revenueProfiles.title')}</h2>
         <button
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => {
+            if (!showForm) applyAdminDefaults();
+            setShowForm(!showForm);
+          }}
           className="w-full sm:w-auto bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 px-4 py-2 rounded-lg hover:bg-cyan-500/30 transition-all min-h-[44px] text-sm sm:text-base"
         >
           {showForm ? t('common.cancel') : t('revenueProfiles.createProfile')}
@@ -86,6 +114,20 @@ export const RevenueProfileManager: React.FC = () => {
       {showForm && (
         <div className="bg-slate-800/50 backdrop-blur-xl p-3 sm:p-4 md:p-6 rounded-xl border border-slate-700">
           <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+            {adminDefaults && (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-lg">
+                <div className="text-xs text-cyan-300">
+                  {t('revenueProfiles.adminConfig')}: VALID {adminDefaults.valid_platform_percentage}% · Vendor {adminDefaults.vendor_percentage}% · Pool {adminDefaults.pool_percentage}% · Promoter {adminDefaults.promoter_percentage}%
+                </div>
+                <button
+                  type="button"
+                  onClick={applyAdminDefaults}
+                  className="text-xs px-3 py-1 bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 rounded hover:bg-cyan-500/30 whitespace-nowrap"
+                >
+                  {t('revenueProfiles.useAdminConfig')}
+                </button>
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1">{t('revenueProfiles.profileName')}</label>
               <input

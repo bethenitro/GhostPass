@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, DollarSign, Users, TrendingUp, FileText, ToggleLeft, ToggleRight, Save, QrCode, Package, Eye, Download, Trash2, Edit } from 'lucide-react';
+import { ArrowLeft, DollarSign, Users, TrendingUp, FileText, ToggleLeft, ToggleRight, Save, QrCode, Package, Eye, Download, Trash2, Edit, ChevronDown, ChevronUp, CheckCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { venueApi, authApi, gatewayApi } from '@/lib/api';
+import { vendorPayoutApi } from '@/lib/api-client';
 import type { VenueDashboard, VenueEntryConfig } from '@/types';
 import QRCodeLib from 'qrcode';
 
@@ -18,6 +19,25 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
 
+  // Payout setup state
+  const [showPayoutSetup, setShowPayoutSetup] = useState(false);
+  const [payoutMethod, setPayoutMethod] = useState<'paypal' | 'bank' | 'zelle' | 'venmo' | 'email' | ''>('');
+  const [payoutDetails, setPayoutDetails] = useState({
+    email: '',
+    phone: '',
+    paypal_email: '',
+    zelle_email: '',
+    zelle_phone: '',
+    venmo_handle: '',
+    bank_name: '',
+    account_name: '',
+    account_number: '',
+    routing_number: '',
+    organization_name: '',
+  });
+  const [payoutSaving, setPayoutSaving] = useState(false);
+  const [payoutSaved, setPayoutSaved] = useState(false);
+
   // Configuration state
   const [config, setConfig] = useState<VenueEntryConfig>({
     venue_id: venueId || '',
@@ -33,6 +53,25 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
   useEffect(() => {
     loadDashboard();
   }, [venueId, eventId]);
+
+  const handleSavePayoutSetup = async () => {
+    if (!payoutMethod) return;
+    setPayoutSaving(true);
+    try {
+      await vendorPayoutApi.saveSetup({
+        method: payoutMethod,
+        details: payoutDetails,
+        venue_id: venueId,
+      });
+      setPayoutSaved(true);
+      setShowPayoutSetup(false);
+      setTimeout(() => setPayoutSaved(false), 4000);
+    } catch (err) {
+      console.error('Failed to save payout setup:', err);
+    } finally {
+      setPayoutSaving(false);
+    }
+  };
 
   const loadDashboard = async () => {
     try {
@@ -386,8 +425,142 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
 
         {/* Vendor Payouts */}
         <div className="bg-slate-900/50 backdrop-blur-sm border border-purple-500/20 rounded-lg p-4 sm:p-6">
-          <h2 className="text-lg sm:text-xl font-bold text-purple-400 mb-4">{t('venue.vendorPayouts')}</h2>
-          
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg sm:text-xl font-bold text-purple-400">{t('venue.vendorPayouts')}</h2>
+            <button
+              onClick={() => setShowPayoutSetup(v => !v)}
+              className="flex items-center gap-1 text-sm px-3 py-1.5 bg-purple-500/20 border border-purple-500/40 text-purple-300 rounded-lg hover:bg-purple-500/30 transition-colors"
+            >
+              {showPayoutSetup ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              Set Up Payout
+            </button>
+          </div>
+
+          {payoutSaved && (
+            <div className="flex items-center gap-2 mb-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-400 text-sm">
+              <CheckCircle size={16} /> Payout method saved successfully.
+            </div>
+          )}
+
+          {showPayoutSetup && (
+            <div className="mb-6 p-4 bg-slate-800/60 border border-slate-700 rounded-xl space-y-4">
+              <h3 className="font-semibold text-white text-sm">Vendor Payout Setup</h3>
+
+              {/* Method picker */}
+              <div>
+                <label className="block text-xs text-slate-400 mb-2">Pick Payout Method</label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {(['paypal', 'bank', 'zelle', 'venmo', 'email'] as const).map(m => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setPayoutMethod(m)}
+                      className={`py-2 px-3 rounded-lg border text-sm capitalize transition-colors ${
+                        payoutMethod === m
+                          ? 'bg-purple-500/30 border-purple-400 text-purple-200'
+                          : 'bg-slate-900/50 border-slate-600 text-slate-300 hover:border-slate-500'
+                      }`}
+                    >
+                      {m === 'paypal' ? 'PayPal' : m === 'bank' ? 'Bank Transfer' : m === 'zelle' ? 'Zelle' : m === 'venmo' ? 'Venmo' : 'Email / Phone'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Method-specific fields */}
+              {payoutMethod === 'email' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Email</label>
+                    <input value={payoutDetails.email} onChange={e => setPayoutDetails(p => ({ ...p, email: e.target.value }))}
+                      className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white text-sm focus:border-purple-500/50 focus:outline-none" placeholder="vendor@email.com" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Phone</label>
+                    <input value={payoutDetails.phone} onChange={e => setPayoutDetails(p => ({ ...p, phone: e.target.value }))}
+                      className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white text-sm focus:border-purple-500/50 focus:outline-none" placeholder="+1 (555) 000-0000" />
+                  </div>
+                </div>
+              )}
+
+              {payoutMethod === 'paypal' && (
+                <div>
+                  <label className="block text-xs text-slate-400 mb-1">PayPal Email</label>
+                  <input value={payoutDetails.paypal_email} onChange={e => setPayoutDetails(p => ({ ...p, paypal_email: e.target.value }))}
+                    className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white text-sm focus:border-purple-500/50 focus:outline-none" placeholder="paypal@email.com" />
+                </div>
+              )}
+
+              {payoutMethod === 'zelle' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Zelle Email</label>
+                    <input value={payoutDetails.zelle_email} onChange={e => setPayoutDetails(p => ({ ...p, zelle_email: e.target.value }))}
+                      className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white text-sm focus:border-purple-500/50 focus:outline-none" placeholder="zelle@email.com" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Zelle Phone</label>
+                    <input value={payoutDetails.zelle_phone} onChange={e => setPayoutDetails(p => ({ ...p, zelle_phone: e.target.value }))}
+                      className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white text-sm focus:border-purple-500/50 focus:outline-none" placeholder="+1 (555) 000-0000" />
+                  </div>
+                </div>
+              )}
+
+              {payoutMethod === 'venmo' && (
+                <div>
+                  <label className="block text-xs text-slate-400 mb-1">Venmo Handle</label>
+                  <input value={payoutDetails.venmo_handle} onChange={e => setPayoutDetails(p => ({ ...p, venmo_handle: e.target.value }))}
+                    className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white text-sm focus:border-purple-500/50 focus:outline-none" placeholder="@handle" />
+                </div>
+              )}
+
+              {payoutMethod === 'bank' && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Bank Name</label>
+                      <input value={payoutDetails.bank_name} onChange={e => setPayoutDetails(p => ({ ...p, bank_name: e.target.value }))}
+                        className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white text-sm focus:border-purple-500/50 focus:outline-none" placeholder="Chase, Wells Fargo..." />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Name on Account</label>
+                      <input value={payoutDetails.account_name} onChange={e => setPayoutDetails(p => ({ ...p, account_name: e.target.value }))}
+                        className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white text-sm focus:border-purple-500/50 focus:outline-none" placeholder="Full legal name" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Account #</label>
+                      <input value={payoutDetails.account_number} onChange={e => setPayoutDetails(p => ({ ...p, account_number: e.target.value }))}
+                        className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white text-sm focus:border-purple-500/50 focus:outline-none" placeholder="••••••••" type="password" />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Routing #</label>
+                      <input value={payoutDetails.routing_number} onChange={e => setPayoutDetails(p => ({ ...p, routing_number: e.target.value }))}
+                        className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white text-sm focus:border-purple-500/50 focus:outline-none" placeholder="9 digits" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Vendor / Organization Name</label>
+                    <input value={payoutDetails.organization_name} onChange={e => setPayoutDetails(p => ({ ...p, organization_name: e.target.value }))}
+                      className="w-full px-3 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white text-sm focus:border-purple-500/50 focus:outline-none" placeholder="Legal business name" />
+                  </div>
+                </div>
+              )}
+
+              {payoutMethod && (
+                <button
+                  onClick={handleSavePayoutSetup}
+                  disabled={payoutSaving}
+                  className="w-full py-2.5 bg-purple-500/20 border border-purple-500/50 text-purple-300 rounded-lg hover:bg-purple-500/30 disabled:opacity-50 transition-colors text-sm font-medium"
+                >
+                  {payoutSaving ? 'Saving...' : 'Confirm & Save Payout Setup'}
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Pending payouts list */}
           {dashboard?.vendor_payouts && dashboard.vendor_payouts.length > 0 ? (
             <div className="space-y-3">
               {dashboard.vendor_payouts.map((payout) => (
@@ -398,7 +571,7 @@ const VenueCommandCenter: React.FC<VenueCommandCenterProps> = ({ onBack, venueId
                   </div>
                   <div className="flex items-center space-x-4">
                     <div className="text-right">
-                      <p className="text-lg font-bold text-emerald-400">{formatCurrency(payout.amount_cents)}</p>
+                      <p className="text-lg font-bold text-emerald-400">${formatCurrency(payout.amount_cents)}</p>
                       <p className="text-xs text-slate-400">{payout.status}</p>
                     </div>
                   </div>

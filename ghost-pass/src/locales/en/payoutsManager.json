@@ -1,5 +1,30 @@
 {
-  "title": "Vendor Payouts",
+  "title": "Vendor Payout Setup",
   "pending": "Pending Payouts",
-  "history": "Payout History"
+  "history": "Payout History",
+  "configured": "Payout method configured. You can update it below.",
+  "pickMethod": "Pick Payout Method",
+  "paypalEmail": "PayPal Email",
+  "venmoHandle": "Venmo Handle",
+  "zelleEmail": "Zelle Email",
+  "zellePhone": "Zelle Phone",
+  "email": "Email",
+  "phone": "Phone",
+  "nameOnAccount": "Name on Account",
+  "bankName": "Bank Name",
+  "accountNumber": "Account Number",
+  "routingNumber": "Routing Number",
+  "orgName": "Vendor Organization Name",
+  "confirmSetup": "Confirm Payout Setup",
+  "saving": "Saving...",
+  "saved": "Payout setup saved",
+  "selectMethod": "Please select a payout method",
+  "saveFailed": "Failed to save payout setup",
+  "methods": {
+    "paypal": "PayPal",
+    "bank_transfer": "Bank Transfer",
+    "zelle": "Zelle",
+    "venmo": "Venmo",
+    "email_phone": "Email / Phone"
+  }
 }
